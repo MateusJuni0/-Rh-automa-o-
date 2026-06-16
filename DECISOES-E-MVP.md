@@ -195,4 +195,5 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Inputs antes da call:** ficheiro do que o cliente precisa + ficheiro do que a função faz + CV do candidato → o bot estuda e prepara.
 - [x] **2026-06-16 — Armazenamento:** transcrição guardada como **memória RAG por candidato** (factos indexados por competência/requisito), não como bloco de texto.
 - [x] **2026-06-16 — Banco de candidatos:** entra como **complemento** (construir completo), alimentado pela memória RAG; o centro é o copiloto ao vivo.
+- [x] **2026-06-16 — RAG por cliente:** os clientes repetem → guardamos um **perfil/RAG por cliente** (o que ele valoriza, acumulado a cada vaga) + a vaga específica. Afia a lente do cliente automaticamente nas vagas seguintes.
 
