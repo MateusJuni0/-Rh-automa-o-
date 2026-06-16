@@ -1,0 +1,178 @@
+# Critérios de Aceitação — o que "funciona" significa em cada passo
+
+> Fonte: `INTAKE-E-JULGAMENTO.md Parte C` define 4 regras anti-achismo. Este documento
+> traduz essas regras + os passos de `PLANO-CONSTRUCAO.md` em critérios testáveis.
+> Um passo só é declarado "feito" quando o critério passa.
+
+---
+
+## Regras anti-achismo → testes de sistema
+
+Estas quatro regras da Parte C são **requisitos de produto transversais** — aplicam-se
+ao briefing, ao copiloto ao vivo, ao relatório e ao parecer.
+
+### Regra 1 — Todo veredito cita evidência
+
+**Teste:** pegar num parecer gerado e checar que **cada afirmação sobre o candidato**
+tem um dos seguintes:
+- Uma citação direta do candidato com timestamp (`"disse '...' em 12:04"`)
+- Uma referência a um rubric level (`"bate no nível FORTE do rubric de React"`)
+
+**Como verificar:** regex/grep no markdown do parecer por padrão `"disse '` ou `"nível"`.
+Se há parágrafo sem nenhum destes → falha.
+
+**Critério de aceitação para P3.1:** ≥ 80% das frases que contêm "candidato" ou "ele/ela"
+têm evidência associada. A Filipa consegue apontar o trecho de onde veio cada conclusão.
+
+---
+
+### Regra 2 — Facto separado de opinião
+
+**Teste:** abrir o parecer e o painel do copiloto. Verificar que:
+- A secção "O que o candidato disse" usa linguagem neutra ("disse que", "descreveu", "explicou")
+- A secção "Avaliação" usa linguagem de conclusão ("demonstrou", "ficou por confirmar", "nível FORTE")
+- Nunca misturado no mesmo parágrafo sem demarcação
+
+**Critério de aceitação para P3.1:** o template do parecer tem **duas secções distintas**:
+`## O que o candidato disse` (factos) e `## Avaliação` (conclusões do bot).
+
+---
+
+### Regra 3 — Incerteza é dita, não escondida
+
+**Teste:** simular uma entrevista onde o candidato menciona uma skill mas não a demonstra.
+Verificar que o estado vivo e o parecer marcam aquela skill como `"pendente / não confirmado"`
+em vez de `"coberto"`.
+
+**Critério de aceitação para P2.3 e P3.1:**
+- Se uma competência do rubric não foi sondada → aparece como `⬜ não abordado`
+- Se foi sondada mas a resposta foi vaga → aparece como `🟡 incerto — vale cavar`
+- Só aparece `✅ coberto` se há evidência concreta
+
+**Como testar:** entrevista de teste de 5 min onde intencionalmente **não se pergunta** sobre React.
+O relatório deve mostrar React como `⬜ não abordado`, não inferir que "parece saber".
+
+---
+
+### Regra 4 — Linguagem simples sempre
+
+**Teste:** pegar num parecer de um dev React e procurar por jargão cru:
+- Termos proibidos no output para a Filipa: `hooks`, `reconciliation`, `memoization`,
+  `useState`, `useEffect`, `TypeScript strict`, `bundle size`, `treeshaking`, etc.
+- Cada um destes deve aparecer **só** se seguido de tradução em parênteses.
+
+**Critério de aceitação para P1.5 e P3.1:**
+- O role profile tem a tabela `linguagem_filipa` com tradução de pelo menos 5 termos técnicos.
+- O briefing usa a tradução, não o jargão.
+- O parecer final: zero jargão sem explicação.
+
+**Como verificar:** a Filipa (ou alguém sem background técnico) lê o parecer e consegue
+explicar ao cliente o que o candidato sabe — sem precisar perguntar o que significa
+nenhum termo.
+
+---
+
+## Critérios de aceitação por passo de build
+
+### P0.1 — Scaffold
+- [ ] `npm run dev` sem erros de build
+- [ ] Login funciona com email+senha
+- [ ] Recruiter logado vê dashboard vazio (sem dados de outra agência)
+
+### P0.2 — Multi-tenant (RLS)
+- [ ] Criar agência A e agência B com um recruiter cada
+- [ ] Recruiter A não consegue ver jobs da agência B (HTTP 403 ou 0 resultados)
+- [ ] Recruiter B não consegue ver candidates da agência A
+
+### P1.1 — Criar vaga + upload
+- [ ] Formulário de criação de vaga aceita texto colado OU PDF
+- [ ] Claude Haiku extrai ≥3 campos: role, nível, skills
+- [ ] Preview de confirmação mostrado à Filipa antes de gravar
+- [ ] Vaga aparece na lista com os campos extraídos
+
+### P1.2 — Role Profile
+- [ ] Ao criar vaga, trigger de web search dispara (verificar log)
+- [ ] Tabela `role_profile` tem entrada para o role-type
+- [ ] Role profile tem ≥3 `competencias_esperadas` não-genéricas
+- [ ] Role profile tem ≥2 entradas em `linguagem_filipa`
+- [ ] `o_que_e_bom` tem pelo menos 1 requisito com descrição concreta
+- [ ] **Regra 4 (linguagem simples):** nenhum campo de `linguagem_filipa` usa jargão cru
+
+### P1.3 — CV upload
+- [ ] PDF de CV processado → campos extraídos: nome, experiência (anos), skills declaradas
+- [ ] Candidato criado na tabela `candidate` com `profile` não-vazio
+
+### P1.4 — Gap analysis
+- [ ] Comparar candidato com vaga e role profile
+- [ ] Output tem `match_score` (0-100) + lista de `gaps_a_investigar`
+- [ ] Cada gap tem label em linguagem simples (não jargão)
+- [ ] **Regra 4:** Filipa consegue explicar os gaps a alguém não-técnico
+
+### P1.5 — Briefing / roteiro
+- [ ] Gerado com ≥5 perguntas
+- [ ] Cada pergunta tem `lente` (técnica / cliente / gap_cv)
+- [ ] Cada pergunta tem `boa_resposta_esperada` baseada no role profile (não genérica)
+- [ ] `boa_resposta_esperada` em linguagem simples
+- [ ] Pelo menos 1 pergunta na lente "cliente" baseada nos requisitos do cliente
+- [ ] **Regra 4:** Filipa consegue ler todas as perguntas sem precisar de dicionário técnico
+
+### P2.1 — Captura de áudio
+- [ ] Bot "entra" em call de teste com 2 participantes
+- [ ] Stream de áudio recebido confirmado por log (bytes/segundo > 0)
+
+### P2.2 — Transcrição + diarização
+- [ ] Call de teste de 5 min transcrita
+- [ ] Cada frase tem `speaker_id` (A ou B)
+- [ ] ≥ 90% das frases atribuídas ao falante correto (verificar manualmente)
+
+### P2.3 — Estado vivo + análise
+- [ ] Após cada ~5 frases do candidato, o estado vivo é atualizado (verificar by log)
+- [ ] Sugestão aparece em ≤3s após frase relevante
+- [ ] Sugestão tem `lente` (técnica / cliente / gap)
+- [ ] **Regra 3 (incerteza):** competência não sondada aparece como `⬜ não abordado`, não `✅ coberto`
+- [ ] **Regra 1 (evidência):** sugestão cita o que o candidato disse (se relevante)
+
+### P2.4 — UI copiloto
+- [ ] Painel lateral abre e mostra sugestão em destaque
+- [ ] Semáforo de cobertura (✅ / 🟡 / ⬜) por competência
+- [ ] Filipa usa em call de teste e consegue ler sem parar a conversa
+
+### P3.1 — Relatório / parecer
+- [ ] **Regra 1:** ≥80% das afirmações sobre o candidato têm evidência
+- [ ] **Regra 2:** secções "O que disse" e "Avaliação" separadas
+- [ ] **Regra 3:** competências não confirmadas marcadas explicitamente
+- [ ] **Regra 4:** zero jargão sem explicação
+- [ ] Filipa consegue enviar ao cliente sem editar (ou com edição mínima)
+
+### P3.2 — Export
+- [ ] PDF gerado em ≤5s
+- [ ] Email rascunho pronto com campos preenchidos
+- [ ] PDF legível (layout não quebrado)
+
+### P3.3 — RAG por candidato
+- [ ] Query "o que o [candidato] disse sobre [competência]?" devolve ≤3 trechos relevantes
+- [ ] Cada trecho tem timestamp correto
+- [ ] Trechos irrelevantes não aparecem
+
+### P3.4 — RAG por cliente (veredito)
+- [ ] Veredito "recusado — fit cultural" gravado em `client_verdict`
+- [ ] Após 3 vereditos do mesmo cliente, o briefing da próxima vaga inclui pergunta sobre `reason_type` observado
+- [ ] `bot_predicted` vs `verdict` aparecem no dashboard de calibração
+
+### P4.1 — Telegram bot
+- [ ] Filipa encaminha PDF para o bot
+- [ ] Bot responde com preview do que extraiu em ≤10s
+- [ ] Filipa confirma → documento aparece na vaga correta na web app
+- [ ] Filipa não precisa de abrir a web app para fazer o upload
+
+---
+
+## Como usar este documento no build
+
+1. Antes de começar um passo P_x → ler os critérios de P_x
+2. Implementar até todos os critérios passarem
+3. Fazer `git commit` só quando os critérios passam
+4. Mover para o passo seguinte
+
+Se um critério não for testável automaticamente → fazer teste manual e registar o resultado
+em `BRAIN.md` ("P1.2 testado manualmente — role profile OK para dev React pleno, 2026-06-16").
