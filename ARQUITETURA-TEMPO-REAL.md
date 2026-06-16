@@ -62,6 +62,11 @@ sendo atualizado:
     "Inglês":       { "status": "pendente" },
     "Testes":       { "status": "investigar", "nota": "mencionou mas não detalhou" }
   },
+  // o que ESTE cliente quereria saber (extraído dos ficheiros do cliente antes da call)
+  "interesses_cliente": [
+    { "tema": "liderou time?",      "status": "pendente" },
+    { "tema": "disponível remoto?", "status": "coberto", "evidencia": "12:10" }
+  ],
   "afirmacoes_candidato": [
     { "t": "11:58", "diz": "5 anos de React", "conflito_cv": "CV diz 3 anos" }
   ],
@@ -73,9 +78,16 @@ sendo atualizado:
 
 A cada "tick" (numa pausa da fala, ou a cada N falas), enviamos ao Claude **só**:
 o roteiro + o estado vivo + a **janela recente** de transcrição (não as 2h). O Claude
-devolve o estado atualizado + a **próxima sugestão**. De tempos a tempos, destilamos
-a transcrição antiga para dentro do `resumo_corrente` (rolling summary) e descartamos
-o texto cru — assim o custo por tick é **constante**, não cresce com a duração.
+devolve o estado atualizado + a **próxima sugestão**, classificada por **lente**:
+🔧 técnica/vaga · 🟢 **lente do cliente** (o que o cliente da Filipa quereria perguntar)
+· 🔍 gap do CV. De tempos a tempos, destilamos a transcrição antiga para dentro do
+`resumo_corrente` (rolling summary) e descartamos o texto cru — assim o custo por
+tick é **constante**, não cresce com a duração.
+
+> **Memória persistente por candidato (RAG):** o que é destilado não é só um buffer
+> da sessão — é gravado como **memória do candidato**, partida em factos com
+> timestamp/falante e indexada por competência/requisito (ver `VISAO-FILIPA.md`).
+> Alimenta o relatório com evidência e fica reutilizável em vagas futuras.
 
 > Técnica de apoio: **prompt caching** (a vaga, o roteiro e o system prompt ficam em
 > cache na API da Anthropic) → corta latência e custo nos ticks repetidos.

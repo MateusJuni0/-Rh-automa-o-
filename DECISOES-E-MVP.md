@@ -191,4 +191,8 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Transcrição:** **tempo real, com diarização** (separar falantes), análise ao vivo, sessões longas (2h). Reusa Soniox+LiveKit do `cmtec-voice-platform`.
 - [x] **2026-06-16 — Consentimento/LGPD:** não é bloqueador; tratado no onboarding (contrato + aceite no início da call).
 - [x] **2026-06-16 — Captura de áudio:** **híbrido (C)** — online (bot na call) + presencial (captura local). Construir online primeiro, presencial logo a seguir. Ver `ARQUITETURA-TEMPO-REAL.md §5`.
+- [x] **2026-06-16 — Lente do cliente:** o copiloto sugere também as perguntas que **o cliente da Filipa** quereria fazer (não só avaliação técnica genérica). Diferencial central. Ver `VISAO-FILIPA.md`.
+- [x] **2026-06-16 — Inputs antes da call:** ficheiro do que o cliente precisa + ficheiro do que a função faz + CV do candidato → o bot estuda e prepara.
+- [x] **2026-06-16 — Armazenamento:** transcrição guardada como **memória RAG por candidato** (factos indexados por competência/requisito), não como bloco de texto.
+- [x] **2026-06-16 — Banco de candidatos:** entra como **complemento** (construir completo), alimentado pela memória RAG; o centro é o copiloto ao vivo.
 
