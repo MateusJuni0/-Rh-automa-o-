@@ -1,7 +1,14 @@
 # Build-Ready — o que está decidido e o que falta confirmar
 
-> **Status (2026-06-16):** spec completa. 4 decisões bloqueadoras aguardam aprovação
-> do Mateus. Quando fechadas, o scaffold (P0.1) pode começar no dia seguinte.
+> **Status (2026-06-16):** spec completa e **todas as decisões fechadas** (D1–D5
+> abaixo). **Pronto para arrancar o scaffold (P0.1).**
+
+## 🔒 Decisões fechadas pelo Mateus (2026-06-16)
+- **D4 — Hosting:** **Tudo na VPS** (app Next.js + WebSocket + Supabase em Docker Compose).
+- **D1 — Web search:** **Exa (principal) + Brave (fallback).**
+- **D2 — Bot na call:** **LiveKit próprio desde já** (reusa cmtec-voice-platform; ~3–5 semanas → o "antes" entrega valor primeiro).
+- **D5 — Ingestão:** **Telegram + WhatsApp em paralelo** (não esperar validação do Telegram).
+- **D3 — Embeddings:** pgvector no Supabase (já confirmado).
 
 ---
 
@@ -57,7 +64,7 @@
 
 ---
 
-## 🟦 Decisões que o Mateus precisa de fechar (bloqueadoras)
+## ✅ Decisões (FECHADAS 2026-06-16) — detalhe e racional
 
 ### D4 — Hosting ← **DESBLOQUEIA O SCAFFOLD (P0.1) — fechar primeiro**
 
@@ -70,7 +77,7 @@
 
 Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de deploy Vercel.
 
-**Resposta:** `Vercel + VPS` / `Tudo na VPS`
+**✅ Escolhido: Tudo na VPS** (Docker Compose — app Next.js + WebSocket + Supabase no mesmo sítio).
 
 ---
 
@@ -84,7 +91,7 @@ Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de
 - SDK JS nativo (`exa-js`).
 - Brave Search como fallback ($3/1k, keyword, bom para PT-BR).
 
-**Resposta:** `Exa` / `Brave Search` / `Ambos (Exa + Brave fallback)`
+**✅ Escolhido: Exa (principal) + Brave (fallback).**
 
 ---
 
@@ -97,32 +104,38 @@ Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de
 - LiveKit headless próprio: 3–5 semanas, mas zero custo operacional depois.
 - O que valida o produto é a qualidade das sugestões — não o mecanismo de captura. Recall agora, migrar depois.
 
-**Resposta:** `Recall.ai para MVP` / `LiveKit próprio desde o início`
+**✅ Escolhido: LiveKit próprio desde já** (reusa cmtec-voice-platform; zero custo por bot-hora. Custo: ~3–5 semanas de construção → por isso o "antes" (vaga → Role Profile → briefing) é entregue primeiro, enquanto o tempo real é montado em paralelo.)
 
 ---
 
 ### D5 — WhatsApp (Canal C) ← não bloqueia nada agora
 
-> Já recomendado: só após Canal B (Telegram) validado com a Filipa em ≥3 docs reais.
-
-**Resposta:** `Confirmar` / `Avançar em paralelo`
+**✅ Escolhido: avançar em paralelo** — Telegram (Canal B) e WhatsApp (Canal C) construídos ao mesmo tempo. Partilham o mesmo motor de ingestão (classificar → confirmar → gravar); o WhatsApp usa a Evolution API já no VPS.
 
 ---
 
 ## 🚀 Sequência para começar a construir
 
+Decisões fechadas → arranca já. Dois carris em paralelo:
+
 ```
-Fechar D4 → arrancar P0.1 (scaffold + auth + schema base)
-Fechar D1 → arrancar P1.2 (Role Profile web search)
-Fechar D2 → arrancar P2.1 (bot na call)
-D3 (pgvector) → verificar com: SELECT * FROM pg_extension WHERE extname = 'vector';
+CARRIL A (valor cedo, "o antes"):
+  P0.1 scaffold (VPS) → P0.2 RLS → P1.1 vaga → P1.2 Role Profile (Exa+Brave)
+  → P1.3 candidato/CV → P1.4 match → P1.5 briefing   ← já entrega "uau" sem call
+
+CARRIL B (tempo real, ~3–5 sem, em paralelo desde o início):
+  P2.1 LiveKit próprio → P2.2 Soniox diarização → P2.3 estado vivo → P2.4 painel
+
+CARRIL C (ingestão, paralelo): Telegram (P4.1) + WhatsApp (Evolution) juntos
+Depois: P3.x parecer + memória RAG + calibração
 ```
 
-**Passo 0 imediato após D4 fechada:**
+**Passo 0 imediato (tudo na VPS, Docker Compose):**
 ```bash
 npx create-next-app@latest rh-copiloto --typescript --tailwind --app
-# + supabase init
-# + drizzle-kit init
+# + supabase (self-hosted VPS, já existe) — criar schema via drizzle-kit
+# + docker compose: web (Next.js) + ws (WebSocket) + telegram-bot (grammy/PM2)
+# verificar pgvector: SELECT * FROM pg_extension WHERE extname = 'vector';
 ```
 
 ---

@@ -206,4 +206,10 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Julgamento via conhecimento externo + rubric:** o bot busca conhecimento de fora (mundo + pesquisa) e, antes da call, gera um **rubric** (fraca/ok/forte por requisito); o julgamento é "bate em que nível?", não palpite. `INTAKE-E-JULGAMENTO.md` Parte B.
 - [x] **2026-06-16 — Garantia anti-achismo (4 regras):** todo veredito cita evidência; facto separado de opinião; incerteza é dita; linguagem simples. Viram requisitos + testes. Parte C.
 - [x] **2026-06-16 — Calibração:** registamos o veredito do cliente (aprovou/recusou/porquê) → mede-se a precisão do bot ao longo do tempo (Camada 3a). Parte D.
+- [x] **2026-06-16 — D4 Hosting:** **Tudo na VPS** (Docker Compose: web Next.js + WebSocket + Supabase). Sem Vercel.
+- [x] **2026-06-16 — D1 Web search:** **Exa (principal) + Brave (fallback)** para o Role Profile.
+- [x] **2026-06-16 — D2 Bot na call:** **LiveKit próprio desde já** (reusa cmtec-voice-platform; ~3–5 sem → carril "antes" entrega valor primeiro).
+- [x] **2026-06-16 — D5 Ingestão:** **Telegram + WhatsApp em paralelo** (não esperar validação do Telegram; mesmo motor de ingestão, WhatsApp via Evolution API).
+- [x] **2026-06-16 — D3 Embeddings:** pgvector no Supabase self-hosted (confirmado).
+- ✅ **Todas as decisões fechadas → spec build-ready.** Próximo: scaffold P0.1. Ver `BUILD-READY.md`.
 

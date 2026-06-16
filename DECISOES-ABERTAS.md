@@ -1,5 +1,10 @@
 # Decisões Abertas — recomendação + critério de fecho
 
+> ✅ **FECHADAS TODAS (2026-06-16):** D4=Tudo na VPS · D1=Exa+Brave · D2=LiveKit próprio
+> · D5=Telegram+WhatsApp em paralelo · D3=pgvector. Detalhe e racional em
+> `BUILD-READY.md`; log em `DECISOES-E-MVP.md §11`. O texto abaixo fica como histórico
+> das opções consideradas.
+
 > Estas 5 decisões foram identificadas em `PLANO-CONSTRUCAO.md`. Cada uma tem uma
 > recomendação técnica com razão. O Mateus fecha com SIM / NÃO / alternativa.
 > Quando uma decisão fechar, o item vai para `DECISOES-E-MVP.md §11`.
