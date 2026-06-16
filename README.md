@@ -34,6 +34,7 @@ dela quereria fazer**), em linguagem que ela entende.
 | [`TELEGRAM-BOT-SPEC.md`](./TELEGRAM-BOT-SPEC.md) | Canal B: ingestão por Telegram (voz, multi-msg, identificação do cliente) |
 | [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (tabelas, RLS, pgvector) + DDL |
 | [`PLANO-CONSTRUCAO.md`](./PLANO-CONSTRUCAO.md) | Sequência P0→P4, cada passo com garantia verificável |
+| [`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md) | **Cola para construir em paralelo:** módulos, contratos das junções, env, wiring, carris de subagente |
 | [`TESTES-ACEITACAO.md`](./TESTES-ACEITACAO.md) | Como provar que cada passo está realmente feito |
 | [`DECISOES-ABERTAS.md`](./DECISOES-ABERTAS.md) | Detalhe das decisões D1–D5 |
 | [`DECISOES-E-MVP.md`](./DECISOES-E-MVP.md) | Log cronológico de todas as decisões fechadas |

@@ -154,3 +154,4 @@ npx create-next-app@latest rh-copiloto --typescript --tailwind --app
 | `TESTES-ACEITACAO.md` | Verificar que cada passo está realmente feito |
 | `DECISOES-ABERTAS.md` | Referência para D1-D5 |
 | `PLANO-CONSTRUCAO.md` | Sequência P0→P4 com garantias por passo |
+| `ARQUITETURA-INTEGRACAO.md` | **Contratos + módulos + env + wiring** — o que cada subagente recebe para construir sem colidir |
