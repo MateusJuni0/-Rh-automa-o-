@@ -6,15 +6,23 @@
 Copiloto de IA para **agência de RH** (a Filipa intermédia profissionais para empresas-clientes).
 Jornada: **Ingestão de docs → Briefing (roteiro) → Copiloto AO VIVO → Relatório → Memória**.
 
-## Status (2026-06-16 — sessão de loop de spec)
+## Status (2026-06-16 — loop de spec: 2ª iteração)
 
-**Fase: spec completa. Pronto para arrancar código.**
+**Fase: spec completa + Telegram bot spec'd. Pronto para confirmar D1-D4 e arrancar.**
 
-Docs escritos esta sessão (commits `a819a9a` + `5ccce44`):
+Docs desta iteração (loop /):
+- `TELEGRAM-BOT-SPEC.md` (NOVO) — fluxos A–E completos, commands, edge cases, API endpoints, tech stack grammy+Redis
+- `BUILD-READY.md` (NOVO) — checklist do que está decidido + 4 perguntas ao Mateus (D1-D4)
+- `MODELO-DADOS.md` (ATUALIZADO) — `recruiter.telegram_chat_id`, tabela `intake_session`, campos Telegram em `intake_message`
+- `ACESSO-E-CONHECIMENTO.md §8` (ATUALIZADO) — voz + multi-mensagem + problema de identificação de cliente resolvido
+- `PLANO-CONSTRUCAO.md P4.1` (ATUALIZADO) — sub-passos a→d + referência ao TELEGRAM-BOT-SPEC.md
+- `TESTES-ACEITACAO.md` (ATUALIZADO) — P4.1a-d com critérios para voz, multi-mensagem, CV, setup
+
+Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 - `CAMADA-CONHECIMENTO.md` — Role Profile JSON, 3 sub-camadas, caching, migração progressiva web→interno
-- `ACESSO-E-CONHECIMENTO.md §8` — 3 canais de ingestão de docs (upload web / Telegram / WhatsApp)
+- `ACESSO-E-CONHECIMENTO.md` — base 3 canais de ingestão de docs
 - `PLANO-CONSTRUCAO.md` — 14 passos (P0–P4) com entrada/saída/garantia verificável
-- `MODELO-DADOS.md` — 15 tabelas SQL + DDL completo + RLS + índices
+- `MODELO-DADOS.md` — 16 tabelas SQL + DDL completo + RLS + índices
 - `DECISOES-ABERTAS.md` — 5 decisões com recomendação técnica (D1-D5)
 - `TESTES-ACEITACAO.md` — critérios de aceitação por passo + 4 regras anti-achismo como testes
 
@@ -66,6 +74,8 @@ Docs escritos esta sessão (commits `a819a9a` + `5ccce44`):
 | `DIA-A-DIA-RECRUTADOR.md` | O dia-a-dia real da Filipa (contexto) |
 | `UI-DESIGN.md` | Design das telas |
 | `PLANO.md` | Plano inicial (histórico) |
+| `TELEGRAM-BOT-SPEC.md` | Fluxos A–E do bot, commands, API endpoints, tech stack |
+| `BUILD-READY.md` | Checklist pré-build + 4 perguntas ao Mateus (D1-D4) |
 
 ## Estilo de trabalho com o Mateus (neste projeto)
 - Ser **decisivo**, propor e avançar; não encher de ressalvas.

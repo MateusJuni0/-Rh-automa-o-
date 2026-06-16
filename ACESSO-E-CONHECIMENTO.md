@@ -120,9 +120,11 @@ em duas:
 
 **Canal B — Telegram forward (MVP+, construir logo a seguir)**
 - Felipa recebe requisitos do cliente no WhatsApp/Telegram → encaminha para o nosso **Telegram bot** (@RHCopiloto_bot ou similar).
-- O bot deteta o tipo (requisitos de vaga, CV, ou pergunta avulsa), processa com Claude Haiku, e responde: *"Guarda como nova vaga para o cliente [X]?"*
-- Se sim: cria a vaga, extrai requisitos, atualiza a pasta do cliente — **tudo automático**.
-- A Filipa nunca abre a web app para fazer upload; a ingestão acontece no próprio chat.
+- O bot deteta o tipo (requisitos de vaga, CV, feedback, ou áudio) e processa com Claude Haiku.
+- **Problema central resolvido:** quando Filipa encaminha, o bot não sabe de qual cliente veio. Solução: contexto de sessão 30 min + seleção por botão — ver `TELEGRAM-BOT-SPEC.md §4`.
+- **Mensagens de voz:** muito comuns no WhatsApp. O bot transcreve o áudio via Soniox antes de extrair. Ver `TELEGRAM-BOT-SPEC.md §6`.
+- **Multi-mensagem:** cliente que envia 5 mensagens sobre a mesma vaga. Filipa abre sessão com `/nova_vaga`, acumula, e fecha com `/fechar_vaga`. Ver `TELEGRAM-BOT-SPEC.md §7`.
+- Fluxo completo de conversa (A–E) + commands + edge cases: **`TELEGRAM-BOT-SPEC.md`**.
 
 **Canal C — WhatsApp direto (Fase 2)**
 - Evolution API já corre no VPS (:8080). Um número WhatsApp dedicado recebe os encaminhamentos da Filipa.

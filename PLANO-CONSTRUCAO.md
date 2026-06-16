@@ -127,8 +127,14 @@ agency, recruiter (liga a auth.users), job, candidate, document
 
 ### P4.1 — Telegram bot (Canal B)
 **Depende de:** P1.1 + P1.3 (fluxo web funcional)  
-**O que fazemos:** Filipa encaminha msg/doc do cliente para @RHCopiloto_bot → bot processa + confirma  
-**Garantia:** doc de requisitos chega via Telegram, é extraído, e aparece na vaga correta na app — sem Filipa abrir a web app para upload
+**Spec completa:** ver `TELEGRAM-BOT-SPEC.md` (fluxos A–E, commands, edge cases, API endpoints, tech stack)  
+**O que fazemos:** Filipa liga conta (§2), encaminha msg/doc/áudio → bot identifica cliente (§4), transcreve se necessário (§6), extrai, mostra para confirmação, grava com proveniência.  
+**Novos sub-passos:**
+- P4.1a: bot básico (setup + texto simples + identificação de cliente + fluxo A)
+- P4.1b: mensagens de voz (Soniox transcrição + fluxo B)
+- P4.1c: sessão multi-mensagem + /nova_vaga (fluxo C)
+- P4.1d: CV forward + consultas rápidas (fluxos D e E)  
+**Garantia:** Filipa encaminha (texto / PDF / áudio) para o bot; conteúdo aparece na vaga correta na web app — sem abrir a web app para upload.
 
 ### P4.2 — Captura presencial (microfone local)
 **Depende de:** P2.1-P2.4 (bot online funcional)  

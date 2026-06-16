@@ -159,11 +159,30 @@ nenhum termo.
 - [ ] Após 3 vereditos do mesmo cliente, o briefing da próxima vaga inclui pergunta sobre `reason_type` observado
 - [ ] `bot_predicted` vs `verdict` aparecem no dashboard de calibração
 
-### P4.1 — Telegram bot
-- [ ] Filipa encaminha PDF para o bot
-- [ ] Bot responde com preview do que extraiu em ≤10s
-- [ ] Filipa confirma → documento aparece na vaga correta na web app
+### P4.1a — Telegram bot (texto + identificação de cliente)
+- [ ] Setup: Filipa usa código de ligação → conta ligada → bot confirma nome dela
+- [ ] Filipa encaminha texto com requisitos de vaga → bot pergunta qual vaga (se 2+)
+- [ ] Filipa seleciona vaga → bot mostra extração → Filipa confirma → aparece na web app
 - [ ] Filipa não precisa de abrir a web app para fazer o upload
+- [ ] Extração em ≤10s para texto puro
+- [ ] Se Filipa tem 1 vaga ativa, bot assume e confirma (não pede seleção)
+- [ ] Contexto de sessão mantido 30 min (segunda mensagem não pede cliente de novo)
+
+### P4.1b — Telegram bot (mensagem de voz)
+- [ ] Filipa encaminha áudio (≤2 min) → bot transcreve em ≤15s
+- [ ] Bot mostra transcrição + extração no mesmo reply
+- [ ] Requisitos extraídos do áudio são os mesmos que se transcrição fosse colada como texto
+
+### P4.1c — Telegram bot (multi-mensagem / nova vaga)
+- [ ] Filipa manda `/nova_vaga TechCorp` → bot abre sessão
+- [ ] Filipa envia 3 mensagens separadas → bot acumula (confirma "recebido" em cada)
+- [ ] Filipa manda `/fechar_vaga` → bot mostra extração consolidada
+- [ ] Filipa confirma → vaga criada na DB com todos os requisitos das 3 mensagens
+
+### P4.1d — Telegram bot (CV de candidato)
+- [ ] Filipa encaminha PDF que parece CV → bot classifica como CV automaticamente
+- [ ] Bot pergunta para que vaga → Filipa seleciona → candidato criado na DB
+- [ ] Perfil do candidato tem ≥3 campos extraídos
 
 ---
 

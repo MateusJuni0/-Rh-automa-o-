@@ -43,11 +43,13 @@ CREATE TABLE agency (
 
 -- Recrutador (liga a Supabase Auth)
 CREATE TABLE recruiter (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agency_id   UUID NOT NULL REFERENCES agency(id),
-  user_id     UUID NOT NULL REFERENCES auth.users(id) UNIQUE,
-  name        TEXT NOT NULL,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id         UUID NOT NULL REFERENCES agency(id),
+  user_id           UUID NOT NULL REFERENCES auth.users(id) UNIQUE,
+  name              TEXT NOT NULL,
+  telegram_chat_id  BIGINT UNIQUE,         -- ligado via /start no bot (ver TELEGRAM-BOT-SPEC.md §2)
+  telegram_linked_at TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
@@ -256,6 +258,30 @@ CREATE TABLE client_verdict (
 -- Nota: bot_predicted vs verdict = métrica de precisão que acompanhamos (Parte D de INTAKE-E-JULGAMENTO.md)
 ```
 
+### Sessão de ingestão multi-mensagem (Telegram)
+
+```sql
+-- Sessão de criação de vaga via múltiplas mensagens no Telegram
+-- Mantida em Redis (TTL 30 min) para contexto vivo; persistida aqui só ao fechar
+-- Ver TELEGRAM-BOT-SPEC.md §7 (Fluxo C)
+CREATE TABLE intake_session (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id       UUID NOT NULL,
+  recruiter_id    UUID NOT NULL REFERENCES recruiter(id),
+  telegram_chat_id BIGINT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'open',    -- 'open' | 'confirmed' | 'cancelled' | 'expired'
+  target_entity   TEXT,                            -- 'new_job' | 'existing_job' | 'candidate_cv'
+  target_job_id   UUID REFERENCES job(id),         -- preenchido quando Filipa seleciona a vaga
+  target_client_id UUID REFERENCES client(id),
+  messages_raw    JSONB NOT NULL DEFAULT '[]',     -- [{type, content, received_at}]
+  extraction      JSONB,                           -- extração acumulada de todas as mensagens
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  closed_at       TIMESTAMPTZ,
+  expires_at      TIMESTAMPTZ DEFAULT NOW() + INTERVAL '2 hours'
+);
+CREATE INDEX ON intake_session (telegram_chat_id, status) WHERE status = 'open';
+```
+
 ### Ingestão de mensagens
 
 ```sql
@@ -265,8 +291,13 @@ CREATE TABLE intake_message (
   agency_id       UUID NOT NULL,
   recruiter_id    UUID NOT NULL REFERENCES recruiter(id),
   source          TEXT NOT NULL,                          -- 'telegram' | 'web_upload' | 'email'
+  telegram_chat_id BIGINT,                               -- preenchido quando source='telegram'
+  telegram_msg_id  BIGINT,                               -- ID da mensagem no Telegram
+  session_id      UUID REFERENCES intake_session(id),    -- se faz parte de uma sessão multi-mensagem
   raw_text        TEXT,
-  doc_path        TEXT,                                   -- se foi ficheiro
+  doc_path        TEXT,                                   -- se foi ficheiro (Supabase Storage)
+  audio_path      TEXT,                                   -- se foi áudio (transcrito via Soniox)
+  audio_transcript TEXT,                                  -- transcrição do áudio, se aplicável
   extracted       JSONB,                                  -- o que Claude Haiku extraiu
   entity_type     TEXT,                                   -- 'job_requirements' | 'candidate_cv' | 'client_feedback' | 'unknown'
   entity_id       UUID,                                   -- ligado a job/candidate/client após confirmação
@@ -314,7 +345,7 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 Ordem de criação (respeitando FKs):
 1. `agency`
-2. `recruiter`
+2. `recruiter` ← inclui `telegram_chat_id`
 3. `client`
 4. `job`
 5. `role_profile`
@@ -327,6 +358,7 @@ Ordem de criação (respeitando FKs):
 12. `client_memory_fact` + embedding
 13. `candidate_memory_fact` + embedding
 14. `client_verdict`
-15. `intake_message`
+15. `intake_session` ← novo (Telegram multi-mensagem)
+16. `intake_message` ← inclui campos Telegram + audio_transcript
 
 Extensões necessárias: `pgvector` (já disponível no Supabase self-hosted desde v0.5+).
