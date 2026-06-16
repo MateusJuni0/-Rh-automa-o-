@@ -63,9 +63,9 @@ Por que este recorte é o certo:
 4. **Adia o que é caro e arriscado:** captura de áudio multiplataforma, latência,
    WebSocket e o peso de LGPD de **gravar** ao vivo.
 
-🟦 **DECISÃO DO MATEUS:** aceitar este recorte de MVP (jornada assíncrona) **ou**
-preferir começar ainda menor, só pela **Triagem** isolada (a feature de alívio mais
-imediato), deixando briefing/relatório para a iteração seguinte.
+✅ **DECIDIDO (2026-06-16):** MVP = **jornada completa assíncrona**
+(`Triagem → Briefing → Relatório`, copiloto sobre transcrição). Não começamos só
+pela triagem isolada — entregamos o ciclo de valor inteiro, sem infra de tempo real.
 
 ---
 
@@ -171,10 +171,18 @@ produto; passos 4–6 fecham a jornada. Tempo real (Fase 2) só depois de valida
 
 ## 10. O que falta para arrancar o código
 
-Só duas respostas do Mateus destravam o scaffold:
-
-1. **Escopo do MVP:** jornada assíncrona completa (§3) ou só Triagem primeiro?
-2. **Stack/hosting:** confirma Next.js + Supabase e onde hospedar?
+1. ✅ **Escopo do MVP:** jornada assíncrona completa (§3). **DECIDIDO 2026-06-16.**
+2. **Stack/hosting:** confirma Next.js + Supabase e onde hospedar? *(em discussão)*
 
 Com isso, o passo seguinte é abrir as fatias do §9 como tarefas pequenas e começar
 pelo scaffold (passo 1).
+
+---
+
+## 11. Discussão de planeamento (decisões finas, uma a uma)
+
+Registo das decisões à medida que as fechamos com o Mateus.
+
+- [x] **2026-06-16 — Escopo do MVP:** jornada completa assíncrona.
+- [ ] **De onde vem a transcrição** da entrevista no MVP assíncrono (ver discussão em curso).
+
