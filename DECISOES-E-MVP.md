@@ -196,4 +196,10 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Armazenamento:** transcrição guardada como **memória RAG por candidato** (factos indexados por competência/requisito), não como bloco de texto.
 - [x] **2026-06-16 — Banco de candidatos:** entra como **complemento** (construir completo), alimentado pela memória RAG; o centro é o copiloto ao vivo.
 - [x] **2026-06-16 — RAG por cliente:** os clientes repetem → guardamos um **perfil/RAG por cliente** (o que ele valoriza, acumulado a cada vaga) + a vaga específica. Afia a lente do cliente automaticamente nas vagas seguintes.
+- [x] **2026-06-16 — Fluxo real = headhunting, não triagem em massa:** a Filipa caça direto no LinkedIn (1 candidato de cada vez). Centro do MVP = jornada de **um** candidato (estudar→entrevistar→parecer→pasta). Triagem de muitos CVs = feature **opcional** (só com volume/nicho). Ver `ACESSO-E-CONHECIMENTO.md §6`.
+- [x] **2026-06-16 — Entregável final:** o bot gera o **parecer para o cliente** (editável + exportável PDF/markdown + "preparar email"). Ver `ACESSO-E-CONHECIMENTO.md §4`.
+- [x] **2026-06-16 — Linguagem simples (regra dura):** zero jargão cru; o bot traduz sempre (a Filipa não é técnica). `ACESSO-E-CONHECIMENTO.md §5`.
+- [x] **2026-06-16 — Ritmo:** 5+ perguntas iniciais antes da call; durante, novas surgem conforme o candidato fala (não 1/seg).
+- [x] **2026-06-16 — Formato durante a call:** **painel lateral fixo** (janela estreita / 2º ecrã / tablet), **não popup**. `ACESSO-E-CONHECIMENTO.md §3`.
+- [x] **2026-06-16 — Acesso (regra-mãe):** tudo o que o bot destila é acessível pela Filipa via web app + **chat-com-bot por entidade (RAG)** + export aberto (md/pdf). Não fechado. `ACESSO-E-CONHECIMENTO.md`.
 
