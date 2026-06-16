@@ -63,9 +63,13 @@ Por que este recorte é o certo:
 4. **Adia o que é caro e arriscado:** captura de áudio multiplataforma, latência,
    WebSocket e o peso de LGPD de **gravar** ao vivo.
 
-✅ **DECIDIDO (2026-06-16):** MVP = **jornada completa assíncrona**
-(`Triagem → Briefing → Relatório`, copiloto sobre transcrição). Não começamos só
-pela triagem isolada — entregamos o ciclo de valor inteiro, sem infra de tempo real.
+⚠️ **SUPERSEDED (2026-06-16):** o Mateus decidiu ir **direto ao tempo real** — o
+copiloto ao vivo é o MVP, não uma fase posterior. O raciocínio "async primeiro"
+acima fica como registo do caminho que **não** seguimos. A arquitetura escolhida
+está em **[`ARQUITETURA-TEMPO-REAL.md`](./ARQUITETURA-TEMPO-REAL.md)**.
+
+O "antes" (triagem, briefing) e o "depois" (relatório) continuam assíncronos; o
+**"durante" é ao vivo** desde o início.
 
 ---
 
@@ -183,6 +187,8 @@ pelo scaffold (passo 1).
 
 Registo das decisões à medida que as fechamos com o Mateus.
 
-- [x] **2026-06-16 — Escopo do MVP:** jornada completa assíncrona.
-- [ ] **De onde vem a transcrição** da entrevista no MVP assíncrono (ver discussão em curso).
+- [x] **2026-06-16 — Escopo do MVP:** jornada completa, com **copiloto ao vivo desde o início** (não async-first). Ver [`ARQUITETURA-TEMPO-REAL.md`](./ARQUITETURA-TEMPO-REAL.md).
+- [x] **2026-06-16 — Transcrição:** **tempo real, com diarização** (separar falantes), análise ao vivo, sessões longas (2h). Reusa Soniox+LiveKit do `cmtec-voice-platform`.
+- [x] **2026-06-16 — Consentimento/LGPD:** não é bloqueador; tratado no onboarding (contrato + aceite no início da call).
+- [ ] **Captura de áudio:** bot entra na call (A) vs captura local (B) vs híbrido (C) — ver `ARQUITETURA-TEMPO-REAL.md §5`. *(próxima discussão)*
 
