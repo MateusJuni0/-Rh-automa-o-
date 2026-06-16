@@ -202,4 +202,8 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Ritmo:** 5+ perguntas iniciais antes da call; durante, novas surgem conforme o candidato fala (não 1/seg).
 - [x] **2026-06-16 — Formato durante a call:** **painel lateral fixo** (janela estreita / 2º ecrã / tablet), **não popup**. `ACESSO-E-CONHECIMENTO.md §3`.
 - [x] **2026-06-16 — Acesso (regra-mãe):** tudo o que o bot destila é acessível pela Filipa via web app + **chat-com-bot por entidade (RAG)** + export aberto (md/pdf). Não fechado. `ACESSO-E-CONHECIMENTO.md`.
+- [x] **2026-06-16 — Intake automático:** a Filipa reenvia docs/mensagens do cliente → o bot extrai, **mostra o que entendeu para confirmação** e atualiza a memória do cliente/vaga **com proveniência**. `INTAKE-E-JULGAMENTO.md` Parte A.
+- [x] **2026-06-16 — Julgamento via conhecimento externo + rubric:** o bot busca conhecimento de fora (mundo + pesquisa) e, antes da call, gera um **rubric** (fraca/ok/forte por requisito); o julgamento é "bate em que nível?", não palpite. `INTAKE-E-JULGAMENTO.md` Parte B.
+- [x] **2026-06-16 — Garantia anti-achismo (4 regras):** todo veredito cita evidência; facto separado de opinião; incerteza é dita; linguagem simples. Viram requisitos + testes. Parte C.
+- [x] **2026-06-16 — Calibração:** registamos o veredito do cliente (aprovou/recusou/porquê) → mede-se a precisão do bot ao longo do tempo (Camada 3a). Parte D.
 
