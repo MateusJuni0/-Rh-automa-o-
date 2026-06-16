@@ -121,13 +121,15 @@ e separar bem os falantes.
 | **B) Captura local** | app desktop / aba do navegador capta o áudio do sistema + microfone | Média (1 stream misto → diarização por algoritmo) | ✅ sim | instalar/abrir o app |
 | **C) Híbrido** | bot nas calls online; captura local no presencial | Melhor dos dois | ✅ sim | mais para construir |
 
-**Recomendação:** começar por **A (bot entra na call)** — é onde a maioria das
-entrevistas de agência acontece (online) e dá **a melhor diarização** (faixa por
-pessoa = separação perfeita, que é exatamente o "separar direitinho quem fala" que
-o Mateus pediu). O presencial entra logo a seguir com a captura local (caminho C).
+✅ **DECIDIDO (2026-06-16): caminho C (híbrido)** — cobre online **e** presencial.
+Ordem de construção dentro do MVP (não muda o destino, só o que sai primeiro):
+1. **Online (bot na call)** primeiro — separação de falantes perfeita (faixa por
+   pessoa) e é onde está o volume das entrevistas de agência.
+2. **Presencial (captura local por microfone)** logo a seguir, no mesmo MVP.
 
 > Nota de construção: o "bot que entra na call" pode ser próprio (LiveKit + headless)
-> ou via serviço dedicado de meeting-bots. A confirmar na discussão.
+> ou via serviço dedicado de meeting-bots — decido na implementação. No presencial,
+> um stream misto → diarização do Soniox separa os falantes.
 
 ---
 

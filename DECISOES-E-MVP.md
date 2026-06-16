@@ -190,5 +190,5 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — Escopo do MVP:** jornada completa, com **copiloto ao vivo desde o início** (não async-first). Ver [`ARQUITETURA-TEMPO-REAL.md`](./ARQUITETURA-TEMPO-REAL.md).
 - [x] **2026-06-16 — Transcrição:** **tempo real, com diarização** (separar falantes), análise ao vivo, sessões longas (2h). Reusa Soniox+LiveKit do `cmtec-voice-platform`.
 - [x] **2026-06-16 — Consentimento/LGPD:** não é bloqueador; tratado no onboarding (contrato + aceite no início da call).
-- [ ] **Captura de áudio:** bot entra na call (A) vs captura local (B) vs híbrido (C) — ver `ARQUITETURA-TEMPO-REAL.md §5`. *(próxima discussão)*
+- [x] **2026-06-16 — Captura de áudio:** **híbrido (C)** — online (bot na call) + presencial (captura local). Construir online primeiro, presencial logo a seguir. Ver `ARQUITETURA-TEMPO-REAL.md §5`.
 
