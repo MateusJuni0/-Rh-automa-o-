@@ -6,9 +6,11 @@
 Copiloto de IA para **agência de RH** (a Filipa intermédia profissionais para empresas-clientes).
 Jornada: **Ingestão de docs → Briefing (roteiro) → Copiloto AO VIVO → Relatório → Memória**.
 
-## Status (2026-06-16 — loop de spec: 2ª iteração)
+## Status (2026-06-17 — spec FECHADA, dispatch-ready)
 
-**Fase: spec completa + Telegram bot spec'd. Pronto para confirmar D1-D4 e arrancar.**
+**Fase: spec 100% completa, decisões D1–D5 LOCKED, doc de integração escrito.
+Pronto para dispatchar subagentes (scaffold P0.1 ainda não arrancado — Mateus quis
+planear tudo primeiro). Entrada: `BUILD-READY.md`. Cola para paralelo: `ARQUITETURA-INTEGRACAO.md`.**
 
 Docs desta iteração (loop /):
 - `TELEGRAM-BOT-SPEC.md` (NOVO) — fluxos A–E completos, commands, edge cases, API endpoints, tech stack grammy+Redis
@@ -39,17 +41,17 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 9. **RAG por candidato e por cliente:** embeddings pgvector, factos com proveniência.
 10. **Anti-achismo (4 regras):** evidência em todo veredito, facto separado de opinião, incerteza dita, linguagem simples. Ver `INTAKE-E-JULGAMENTO.md Parte C`.
 
-## Decisões abertas (5 — ver `DECISOES-ABERTAS.md`)
+## Decisões D1–D5 — FECHADAS (2026-06-17)
 
-| # | Decisão | Recomendação | Desbloqueia |
-|---|---|---|---|
-| D1 | Web Search API | Exa | P1.2 (Role Profile) |
-| D2 | Bot de call | Recall.ai para MVP | P2.1 (captura) |
-| D3 | Embeddings | pgvector (confirmar extensão) | P3.3 (RAG) |
-| D4 | Hosting | Vercel (app) + VPS (WS) | **P0.1 (scaffold)** |
-| D5 | WhatsApp Canal C | Só após Telegram validado | não bloqueia agora |
+| # | Decisão | **Escolha do Mateus** |
+|---|---|---|
+| D1 | Web Search API | **Exa (principal) + Brave (fallback)** |
+| D2 | Bot de call | **LiveKit próprio desde já** (reusa cmtec-voice-platform; "antes" entrega valor primeiro) |
+| D3 | Embeddings | **pgvector** (Supabase self-hosted) |
+| D4 | Hosting | **Tudo na VPS** (Docker Compose) — sem Vercel |
+| D5 | WhatsApp Canal C | **Telegram + WhatsApp em paralelo** |
 
-**Próximo passo imediato:** Mateus confirma D4 → arrancar P0.1 (scaffold).
+**Próximo passo imediato:** dispatchar subagentes. **Agente 1 (Fundação: `packages/db` + `packages/core` + scaffold + docker + Auth/RLS) vai PRIMEIRO**; depois 2–6 em paralelo (ver `ARQUITETURA-INTEGRACAO.md §5`).
 
 ## Crux de engenharia
 
@@ -75,7 +77,8 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 | `UI-DESIGN.md` | Design das telas |
 | `PLANO.md` | Plano inicial (histórico) |
 | `TELEGRAM-BOT-SPEC.md` | Fluxos A–E do bot, commands, API endpoints, tech stack |
-| `BUILD-READY.md` | Checklist pré-build + 4 perguntas ao Mateus (D1-D4) |
+| `BUILD-READY.md` | **Entrada** — decisões fechadas + sequência de arranque + carris |
+| `ARQUITETURA-INTEGRACAO.md` | **Cola p/ paralelo** — módulos (`apps`+`packages`), contratos das junções, env, wiring, 6 carris de subagente |
 
 ## Estilo de trabalho com o Mateus (neste projeto)
 - Ser **decisivo**, propor e avançar; não encher de ressalvas.
