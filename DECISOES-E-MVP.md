@@ -322,6 +322,7 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 ### ⚠️ REGRA DE FASES (Mateus, 2026-06-17) — NADA DE CÓDIGO até à Fase 3
 - **Fase 1 = o cérebro** (specs) ✅ · **Fase 2 = embalagem & design** (specs/mockups) — ATUAL · **Fase 3 = codar tudo** (build). **Só na Fase 3 se escreve código.** Até lá, tudo é spec.
 - [x] **Mockups dark (Vera):** overlay ao vivo ✅, assistente pessoal ✅, dashboard/pipeline ✅, comparar candidatos ✅. Validaram o HUD escuro p/ ao-vivo E telas de gestão.
-- [ ] **Mockups que faltam:** briefing pré-entrevista + parecer (Tela 5 e 7). *(spec, não código.)*
+- [x] **Mockups COMPLETOS (6/6):** overlay ✅, assistente ✅, dashboard ✅, comparar ✅, briefing ✅, parecer ✅ — todos dark HUD / Vera.
+- ✅✅ **FASE 2 (EMBALAGEM & DESIGN) — essencialmente COMPLETA em spec.** Resta só o que é **implementação** (Fase 3): abertos D1-D8 do `APP-DESKTOP` (áudio macOS, code-signing, canal de updates…), frames de controlo WS → `packages/core`, e o bug de enroll da biometria a resolver na origem antes de clonar. **Próxima fase = FASE 3 (codar tudo), quando o Mateus der GO.**
 - ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
 
