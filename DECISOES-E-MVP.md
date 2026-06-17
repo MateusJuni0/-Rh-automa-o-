@@ -285,5 +285,10 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - [x] **Entrada de candidato sourced (A1):** encaminha CV/cola LinkedIn + "é p/ vaga X" → `intencao='novo_candidato'`, dedup (candidato global, nunca duplica), cria `process`, porta de confirmação. `INTAKE`.
 - [x] **Versionamento de requisitos (H4):** `rubric.version`; muda a meio→recompila+avisa, frame adota nova versão, parecer diz "avaliado contra v2", comparação assinala réguas diferentes. `CAMADA-CONHECIMENTO` + `MODELO-DADOS §8`.
 - [x] **Fecha A5 (feedback ao candidato):** agora é capacidade do assistente (gera o rascunho). A2 (agendar call+bot entra) = embalagem, anotado.
-- ⏸️ **Honesto, fica p/ embalagem/config:** canal+antecedência lembretes; A2 sala LiveKit; ecrãs/UI. **Creio que a Parte 1 (cérebro) está agora sólida — à espera do Mateus confirmar se vê mais.**
+- ⏸️ **Honesto, fica p/ embalagem/config:** canal+antecedência lembretes; A2 sala LiveKit; ecrãs/UI.
+
+### Migração completa + anatomia do agente (2026-06-17)
+- [x] **Migração = CÓDIGO determinístico, não o agente a improvisar** (repetível/auditável/reversível; o agente executa+verifica, não inventa passos). `INFRA-E-MIGRACAO §0`.
+- [x] **Spec de migração COMPLETA** (`INFRA-E-MIGRACAO.md` reescrito): reusa a receita PROVADA do Cronos (`playbook_vercel_to_vps_migration`); empacotar/**compactar** = bundle portável (docker-compose + imagens `docker save`/GHCR + pg_dump + storage tar + secrets sops + models ONNX + `bootstrap.sh` + RUNBOOK); runbook 14 passos (DB/embeddings/storage/segredos/biometria/agente/túnel/DNS/crons/OAuth/auto-deploy); cutover+verificação(contagens origem==destino)+rollback(origem intacta 1-2sem); gotchas Cronos + novos RH (pgvector dim, ONNX pesados, role Postgres, OAuth re-consent, estado do agente migra com DB); desktop=distribuir instalador; comprador recebe via nós-migramos OU bundle auto-instalável.
+- [x] **Anatomia do agente desenhada** (`ASSISTENTE-PESSOAL §2.1`): grafo ReAct (Roteador→Planeador→Executor→Verificador→Respondedor), tool registry com `efeito` (leitura livre / escrita_externa = confirmação), estado persistido (recupera após queda), salvaguardas (kill switch, auditoria, orçamento por pedido, escopo RGPD), ferramentas longas assíncronas com progresso, slots de modelo por nó, deploy FastAPI+LangGraph no bundle.
 

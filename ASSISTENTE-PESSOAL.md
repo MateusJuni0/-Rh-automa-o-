@@ -59,6 +59,59 @@ um email para o cliente? **Pede aqui** — e o assistente já tem o **contexto d
 > Reuso real: o padrão do `Lince Brain` (grafo de nós + tools + audit + kill switch)
 > é o molde. Não construímos um agente do zero — adaptamos o que já corre.
 
+### 2.1 Anatomia do agente (como o fazemos, em concreto)
+
+**O grafo (loop ReAct, como o Lince Brain):**
+```
+  pedido da Filipa
+       │
+   ┌───▼────────┐   entende o pedido + resolve o ALVO (cliente/vaga/candidato)
+   │ ROTEADOR   │   (nunca adivinha — desambigua, INTAKE) + recupera contexto/memória (RAG)
+   └───┬────────┘
+   ┌───▼────────┐   decide a sequência de ferramentas (1 ou várias)
+   │ PLANEADOR  │   estima custo; se for caro/loop, pede orientação
+   └───┬────────┘
+   ┌───▼────────┐   chama a ferramenta → observa → repete até resolver
+   │ EXECUTOR   │◄─┐  (cada chamada registada em assistant_action)
+   └───┬────────┘  │
+       │  precisa de efeito externo? (enviar/marcar/publicar/entrar-na-call)
+   ┌───▼────────┐  │  SIM → PORTA DE CONFIRMAÇÃO (a Filipa aprova) → executa
+   │ VERIFICADOR│──┘  confere o resultado (deu erro? bate certo?) → re-tenta ou reporta
+   └───┬────────┘
+   ┌───▼────────┐   responde na língua dela, cita fontes, mostra o que fez
+   │ RESPONDEDOR│
+   └────────────┘
+```
+
+**Registo de ferramentas (tool registry)** — cada ferramenta é declarada com:
+`{ nome, descrição, input (schema Zod), efeito: 'leitura' | 'escrita_externa',
+slot_modelo, precisa_confirmação }`. O **efeito** decide a porta de segurança: `leitura`
+e gerar rascunho = livres; `escrita_externa` (enviar email, marcar, publicar, pôr-se na
+call, apagar) = **confirmação obrigatória**. Adicionar capacidade = registar uma
+ferramenta nova, **não** mexer no grafo.
+
+**Estado (persistido em Postgres, recupera após queda):** conversa + **contexto ativo**
+(em que cliente/vaga/candidato ela está) + plano corrente + resultados intermédios.
+Memória: `recruiter_memory_fact` (estilo/preferências) + RAG sobre os dados dela.
+
+**Salvaguardas (do Lince Brain):**
+- **Kill switch** — corta o agente se descarrilar.
+- **Auditoria** — toda ação em `assistant_action` (quem, o quê, quando, resultado).
+- **Orçamento por pedido** — limite de passos/tokens por tarefa (não entra em loop caro;
+  liga à disciplina de tokens, `ARQUITETURA-TEMPO-REAL §3`).
+- **Escopo/RGPD** — só toca nos dados a que tem direito; pessoal fora do juízo.
+
+**Ferramentas longas (ex.: sourcing no LinkedIn)** correm **assíncronas**, com progresso
+(*"a procurar… 3 perfis encontrados"*), sem bloquear o chat; se a plataforma bloquear ou
+uma API cair, **degrada e avisa** (não finge sucesso).
+
+**Modelos por nó (slots de `MODELOS-E-API`):** PLANEADOR/RESPONDEDOR/geração de
+qualidade = `ARCHITECT`; tarefas simples/extração = `EXTRACTOR`; faceta ao vivo = `LIVE`.
+
+**Empacotamento/deploy:** FastAPI + grafo (LangGraph) num container próprio do RH (o
+"Lince clonado"), estado no Postgres do RH, parte do bundle de migração
+(`INFRA-E-MIGRACAO.md`).
+
 ---
 
 ## 3. As ferramentas (o que ela pede que ele FAÇA — ela não opera nada)
