@@ -15,18 +15,33 @@ Monorepo (pnpm workspaces). Cada subagente é dono de **uma pasta** → zero col
 ```
 rh-copiloto/
 ├── apps/
-│   ├── web/         # Next.js 15 (App Router): UI + route handlers (/api/*)
-│   ├── ws/          # Servidor WebSocket (Node): empurra estado vivo → UI
-│   ├── realtime/    # Worker de áudio: LiveKit (entra na call) + Soniox (STT+diarização)
+│   ├── web/         # Next.js 15 (App Router): UI + route handlers (/api/*) — TODO o "resto"
+│   ├── desktop/     # App de SECRETÁRIA (Electron; Tauri = alt. mais leve): overlay ao vivo + CAPTA áudio local
+│   ├── ws/          # Servidor WebSocket (Node): empurra estado vivo → overlay desktop
+│   ├── realtime/    # Worker: LiveKit (bot entra na call) + Soniox (STT multi-idioma + diarização)
 │   └── bot/         # Ingestão: Telegram (grammy) + WhatsApp (Evolution API)
 ├── packages/
 │   ├── db/          # Drizzle schema + migrations  ← ÚNICA fonte do MODELO-DADOS.md
-│   ├── core/        # tipos + Zod schemas + CONTRATOS (importado por todos)
+│   ├── core/        # tipos + Zod schemas + CONTRATOS (importado por todos, incl. desktop)
 │   ├── ai/          # wrappers Claude: rubric, briefing, parecer, tick + prompts
 │   └── knowledge/   # Role Profile (Exa/Brave) + RAG pgvector (candidato/cliente)
 ├── docker-compose.yml   # web + ws + realtime + bot + (supabase já existe na VPS)
 └── .env.enc             # sops+age (padrão CMTec) → decriptado no boot
 ```
+
+### Dois clientes, um backend (decisão 2026-06-17)
+- **`apps/desktop` = SÓ o "durante"** (overlay ao vivo + captura de áudio local). É um
+  **app desktop**, não um separador de browser — uma página web não fica *always-on-top*
+  por cima do Zoom/Meet. **Electron** (leve, multiplataforma); **Tauri** anotado como
+  alternativa mais leve a avaliar na construção.
+- **`apps/web` = TODO o resto** (cadastros cliente/vaga/candidato, Role Profile/rubric,
+  relatórios, Q&A, agenda do assistente proativo).
+- **Mesmo backend** (`/api/*` do Next.js + `packages/*`) serve os dois. O desktop é um
+  cliente "fino": autentica-se na API, abre WebSocket para o estado vivo, e empurra o
+  áudio captado para `realtime`. Não tem lógica de negócio própria — importa de `core`.
+- **Single-tenant v1 (só IRIS):** sem multi-tenant/RLS por agência nesta versão (ver
+  `MODELO-DADOS.md` §RLS). O `agency_id` permanece no schema como costura para o
+  futuro, mas a v1 não o usa para isolar — acesso interno é total.
 
 **Princípio:** toda a lógica partilhada (tipos, schemas, contratos) vive em
 `packages/core` e `packages/db`. As `apps/*` e os outros `packages/*` **importam**
@@ -109,7 +124,8 @@ ANTES (vaga)    web ──► /api/vagas ──► ai(extrai) ──► db
 ANTES (cand.)   web ──► /api/candidatos ──► ai(CV) ──► db
                             └► /api/.../match ──► ai(Sonnet) ──► db
 ANTES (roteiro) web ──► /api/briefing ──► ai(Opus, usa role_profile+rubric+RAG cliente) ──► db
-DURANTE         /api/interviews ──► realtime(LiveKit sala) ; realtime►Soniox►tick►ai(Sonnet)►EstadoVivo►ws►UI(painel)
+DURANTE         desktop(capta áudio local) ─► realtime(LiveKit sala + Soniox STT/diariz.) ─► tick ─► ai(Sonnet) ─► EstadoVivo ─► ws ─► desktop(overlay)
+                desktop(chat ao vivo "ele falou de salário?") ─► ws/api ─► ai(responde do estado+transcrição corrente, sem parar a captura)
 DEPOIS          /api/interviews/:id/report ──► ai(Opus parecer) ──► db ; destila ──► knowledge(RAG candidato, pgvector)
 CALIBRAÇÃO      /api/candidatos/:id/verdict ──► db.client_verdict ──► knowledge(afia RAG cliente)
 ```
@@ -129,7 +145,7 @@ de `core`/`db` e arrancam.
 | 2 — Conhecimento | `packages/knowledge` | Role Profile (Exa+Brave) + RAG pgvector |
 | 3 — IA | `packages/ai` | prompts + rubric/briefing/parecer/tick |
 | 4 — Web "antes" | `apps/web` | rotas + UI: vaga, candidato, match, briefing, parecer, acesso |
-| 5 — Tempo real | `apps/realtime` + `apps/ws` | LiveKit+Soniox + painel lateral |
+| 5 — Tempo real | `apps/realtime` + `apps/ws` + `apps/desktop` | LiveKit+Soniox (multi-idioma) + WebSocket + **app desktop overlay/captura** |
 | 6 — Ingestão | `apps/bot` | Telegram + WhatsApp (mesmo motor de intake) |
 
 Cada carril valida-se com o seu bloco em [`TESTES-ACEITACAO.md`](./TESTES-ACEITACAO.md)
