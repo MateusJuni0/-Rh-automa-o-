@@ -161,7 +161,7 @@ presencial). Não cobre o rosto do candidato.
 - **Rede de segurança no fim:** ao sinalizar "a fechar" (ou perto do tempo), a tela
   levanta os **must-have ainda por cobrir** — *"Antes de terminar: falta confirmar
   Inglês e Liderança."* É o seguro contra o "esqueci-me de perguntar".
-- **A sugestão auto-desaparece** após ~10s **OU** quando a Camada B deteta que (a) a
+- **A sugestão auto-desaparece** após ~30s **OU** quando a Camada B deteta que (a) a
   Filipa **já fez** aquela pergunta, ou (b) o candidato **já a respondeu**. A Filipa
   não tem de gerir a fila — limpa-se sozinha.
 - **Corrigir "quem falou" num toque:** se a diarização trocar os falantes, a Filipa

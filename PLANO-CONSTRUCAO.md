@@ -103,7 +103,7 @@ stream chega ao `realtime`.
 ### P2.4 — UI copiloto (overlay desktop, always-on-top)
 **Depende de:** P2.3  
 **O que fazemos:** WebSocket → **overlay do app desktop** (always-on-top, sem moldura,
-arrastável) com sugestão em destaque (auto-desaparece ~10s ou quando perguntada/
+arrastável) com sugestão em destaque (auto-desaparece ~30s ou quando perguntada/
 respondida), semáforo de estados, correção de falante num toque, e **caixa de chat ao
 vivo**. As sugestões são privadas (só a Filipa vê). Ver `UI-DESIGN.md` Tela 6.  
 **Garantia:** Filipa usa em call de teste real; lê a sugestão por cima do Meet/Zoom sem

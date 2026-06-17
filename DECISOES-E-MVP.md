@@ -225,7 +225,7 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - ✅ **Revisão 360°** do ciclo completo → `REVISAO-360-2026-06-17.md` (gaps priorizados).
 
 ### Evolução de design — 2026-06-17 (ronda 2)
-- [x] **App desktop de secretária** (Electron; Tauri alt.) para o overlay ao vivo: always-on-top, sem moldura, arrastável, cara do bot, 1 sugestão de cada vez que **auto-desaparece** (~10s ou quando já perguntada/respondida). **Também capta o áudio local.** A **web app mantém-se** para todo o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
+- [x] **App desktop de secretária** (Electron; Tauri alt.) para o overlay ao vivo: always-on-top, sem moldura, arrastável, cara do bot, 1 sugestão de cada vez que **auto-desaparece** (~30s ou quando já perguntada/respondida). **Também capta o áudio local.** A **web app mantém-se** para todo o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
 - [x] **STT multi-idioma:** PT-PT, PT-BR, inglês e francês (+ misturas); a Filipa fala inglês; saída em PT. `ARQUITETURA-TEMPO-REAL §2`.
 - [x] **Assistente proativo** (além do RAG): consciência da **agenda** (resumo de preparação antes das reuniões) + **deteção de lacunas** no mandato. Calendário Google **ou** manual `[A CONFIRMAR]`. `ASSISTENTE-PROATIVO.md` (NOVO).
 - [x] **Diarização:** caminho principal = **falante ativo da plataforma** (bot na call); fallback = voz + **enrollment da Filipa**; suporta **3+ vozes** (cliente na call → preferências reveladas ao vivo); **correção de falante num toque**. Sugestões/avaliação **privadas** no overlay. `ARQUITETURA-TEMPO-REAL §2/§6`.
