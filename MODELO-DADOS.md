@@ -465,17 +465,68 @@ para *recall* (o bot pode responder à Filipa) mas são invisíveis ao juízo de
 adequação. Regimes de retenção: cru (`transcript_chunk.retain_until`) curto;
 profissional durável; pessoal o mais curto possível.
 
+### 6. Ronda 2 (2026-06-17) — agenda, voz, pesos, apagamento recuperável, override
+
+```sql
+-- Agenda do assistente proativo (ver ASSISTENTE-PROATIVO.md)
+CREATE TABLE agenda_event (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  process_id    UUID REFERENCES process(id),    -- a que entrevista/candidatura se refere
+  title         TEXT NOT NULL,
+  starts_at     TIMESTAMPTZ NOT NULL,
+  source        TEXT NOT NULL DEFAULT 'manual',  -- 'manual' | 'google_calendar'  [A CONFIRMAR]
+  external_ref  TEXT,                            -- id do evento no Google Calendar, se aplicável
+  prep_sent_at  TIMESTAMPTZ,                     -- quando o resumo de preparação foi enviado
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enrollment da voz da Filipa (fallback de diarização — ARQUITETURA-TEMPO-REAL §2)
+ALTER TABLE recruiter ADD COLUMN voice_enrollment_path TEXT;   -- amostra gravada 1×
+ALTER TABLE recruiter ADD COLUMN voice_enrolled_at TIMESTAMPTZ;
+
+-- Diarização: marcar trechos reatribuídos pela Filipa
+ALTER TABLE transcript_chunk ADD COLUMN speaker_corrected BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Pesos do rubric: cada critério ganha obrigatoriedade (avaliação holística — Parte F)
+-- rubric.criteria[].peso  : 'must' | 'normal' | 'nice'   (client_criteria.peso já existe)
+-- (rubric.criteria é JSONB; documentar o campo no shape, não precisa de DDL)
+
+-- Override da Filipa ao veredito do bot (alimenta calibração — INTAKE Parte D)
+ALTER TABLE report ADD COLUMN filipa_verdict_override TEXT;   -- 'strong'|'ok'|'weak' segundo a Filipa
+ALTER TABLE report ADD COLUMN filipa_override_reason  TEXT;
+ALTER TABLE report ADD COLUMN bot_verdict             TEXT;   -- o que o bot tinha dito (p/ comparar)
+
+-- Apagamento recuperável (RGPD — ordem da Filipa "apaga tudo deste cliente/candidato")
+-- Já temos deleted_at (soft-delete). Acrescentar a janela até purge definitivo:
+ALTER TABLE candidate ADD COLUMN purge_after TIMESTAMPTZ;   -- NULL = não agendado p/ purge
+ALTER TABLE client    ADD COLUMN purge_after TIMESTAMPTZ;
+-- Cron faz hard-delete só após purge_after; antes disso, dá para "voltar atrás" (limpar deleted_at/purge_after).
+```
+
+> **Reutilização entre clientes:** como é **permitida** (decisão 2026-06-17, RGPD do
+> lado da Filipa), `candidate_memory_fact` (global ao candidato) **não** precisa de
+> restrição de âmbito por cliente. Cai o `visibility_scope` que a `REVISAO-360` D1
+> sugeria. Single-tenant v1 reforça: sem fronteiras internas a impor.
+
 ### Ordem de criação (delta sobre a lista original)
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
-(+ embedding). Junto de `client`: **`client_criteria`**. No fim:
-**`placement_outcome`**. ALTERs do §5 aplicam-se às tabelas já existentes.
+(+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
+**`agenda_event`**. ALTERs (§5 e §6) aplicam-se às tabelas já existentes.
 
 ---
 
 ## RLS — políticas chave
 
+> ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há
+> multi-tenant/RLS por agência**: o acesso interno é **total** (o recrutador vê todos
+> os clientes e candidatos). O `agency_id` **permanece no schema** como costura para o
+> futuro, mas a v1 **não** o usa para isolar. As políticas abaixo ficam como **plano
+> para a v2** (quando houver mais do que uma agência), não como requisito da v1.
+
 ```sql
--- Padrão: cada tabela tem RLS por agency_id
+-- (v2) Padrão futuro: cada tabela tem RLS por agency_id
 -- Exemplo para 'job':
 ALTER TABLE job ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "agency isolation" ON job
