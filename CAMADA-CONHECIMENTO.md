@@ -190,6 +190,15 @@ passa a ser uma **competência de tradução em ambos os sentidos**. O bot fala 
 | **Recrutador** | a Filipa | "ele sabe deixar o site a abrir rápido?" |
 | **Cliente** | a empresa | "garante boa experiência de utilizador em produção" |
 
+> **Multi-idioma (2026-06-17):** a entrevista pode ser em **PT-PT/PT-BR/EN/FR** (a
+> Filipa fala inglês). O bot traduz o significado de qualquer um destes para a saída em
+> **PT** — a "tradução" não é só tech↔negócio, é também entre línguas. Ver
+> `ARQUITETURA-TEMPO-REAL.md §2`.
+>
+> **Arranque a frio:** enquanto a calibração não ganha massa, a leitura semântica
+> apoia-se no **Role Profile** + nos **`client_criteria` declarados** — e sinaliza
+> confiança baixa em vez de fingir certeza (Regra 3). Ver `INTAKE-E-JULGAMENTO.md` Parte D.
+
 ### Q&A Filipa ↔ bot — linguagem natural nos dois sentidos
 A Filipa pergunta **como a um colega**, e o bot responde por **RAG sobre a Camada A**
 (transcrição completa) + os factos destilados:
