@@ -276,5 +276,14 @@ Mateus desafiou ("tem certeza?"). Não estava 100%. Fechados agora:
 - [x] **v1 só OpenRouter (chat) + Filipa troca o modelo na app** (seletor com catálogo+preço por slot); embedder/STT fora do OpenRouter. `MODELOS-E-API §2`.
 - [x] **Robustez de input:** STT de baixa confiança NÃO vira prova → re-sonda (reconexão de áudio = embalagem; a regra de juízo = cérebro). `ARQUITETURA-TEMPO-REAL §9`.
 - [x] **Re-entrevista (H3):** factos gerais reutilizam-se; específicos-do-process só contexto; memória velha re-validada ao vivo. `ASSISTENTE-CONVERSA §4.1`.
-- ⏸️ **HONESTO: fica para a embalagem/config (não cérebro):** canal dos lembretes proativos + antecedência (`ASSISTENTE-PROATIVO §4`); rascunho de feedback ao candidato (A5, produto). **Agora sim a Parte 1 (cérebro) está sólida.**
+- ⏸️ **(revisto abaixo — vários destes foram fechados na ronda do assistente)**
+
+### Ronda /loop — refundar a secretária + varrer mais gaps (2026-06-17)
+Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT dela, software à medida tipo Hermes que aprende", "/loop até resolver todos os gaps". Fechados:
+- [x] **Assistente Pessoal refundado (NOVO `ASSISTENTE-PESSOAL.md`):** não é bot limitado — é o **ChatGPT dela**: ① conversa geral ② conhece o mundo dela (RAG) ③ **age** (gera planilhas, CVs, pareceres, emails, anúncios, shortlists; agenda; comms; exportações; web). **Estrutura agêntica tipo Lince Brain** (grafo+tools+estado+auditoria+kill switch+porta de confirmação p/ ações externas). **APRENDE** (estilo/preferências da Filipa → rascunhos na voz dela; correções treinam). Tabelas: `recruiter_memory_fact`(+emb) + `assistant_action` (auditoria tool-calls). É UMA mente com facetas (conversa/proativo/ao-vivo são facetas).
+- [x] **OpenRouter (resposta ao Mateus):** 1 chave = trocar entre TODOS os modelos do catálogo, por slot, na app; seletor **filtrado por slot** (LIVE só mostra rápidos). `MODELOS-E-API §2`.
+- [x] **Entrada de candidato sourced (A1):** encaminha CV/cola LinkedIn + "é p/ vaga X" → `intencao='novo_candidato'`, dedup (candidato global, nunca duplica), cria `process`, porta de confirmação. `INTAKE`.
+- [x] **Versionamento de requisitos (H4):** `rubric.version`; muda a meio→recompila+avisa, frame adota nova versão, parecer diz "avaliado contra v2", comparação assinala réguas diferentes. `CAMADA-CONHECIMENTO` + `MODELO-DADOS §8`.
+- [x] **Fecha A5 (feedback ao candidato):** agora é capacidade do assistente (gera o rascunho). A2 (agendar call+bot entra) = embalagem, anotado.
+- ⏸️ **Honesto, fica p/ embalagem/config:** canal+antecedência lembretes; A2 sala LiveKit; ecrãs/UI. **Creio que a Parte 1 (cérebro) está agora sólida — à espera do Mateus confirmar se vê mais.**
 

@@ -36,9 +36,16 @@ Trocar de modelo = mudar **config**, nunca código.
   2026-06-17 — uma integração só, simples; chave única, centenas de modelos de vários
   fornecedores, fallback). Provedores diretos ficam para v2 se fizer falta.
 - **A Filipa troca o modelo na própria app/site** (NÃO é preciso mexer em ficheiros):
-  no ecrã de **Definições**, cada slot (`EXTRACTOR`/`ARCHITECT`/`LIVE`) tem um seletor
-  com o **catálogo do OpenRouter** (nome + preço/1k tokens visível) → ela escolhe e
-  grava. *O ecrã detalha-se na embalagem (`UI-DESIGN`); a capacidade decide-se aqui.*
+  basta a **chave do OpenRouter** estar posta → no ecrã de **Definições**, cada slot
+  (`EXTRACTOR`/`ARCHITECT`/`LIVE`) tem um seletor com o **catálogo do OpenRouter**
+  (nome + preço/1k tokens visível) e ela escolhe **qualquer modelo de lá**, por slot.
+  *(Resposta direta ao Mateus: sim — uma chave OpenRouter = acesso a trocar entre todos
+  os modelos do catálogo.)*
+- **O seletor é FILTRADO por slot** pelas amarras do §3: no slot **`LIVE`** só aparecem
+  modelos de **baixa latência** + JSON/tool-use; no `ARCHITECT` os de raciocínio
+  forte/contexto longo. Evita que ela escolha (sem saber) um modelo que parte o tempo
+  real. Mostra um aviso se um modelo não cumprir o requisito do slot.
+- *O ecrã detalha-se na embalagem (`UI-DESIGN`); a capacidade decide-se aqui.*
   Guarda-se por deployment (e por agência na v2).
 - **Embedder e STT NÃO passam pelo OpenRouter** (ele só faz chat/completions) → têm o
   seu próprio provedor configurável (ex.: OpenAI/Gemini para embeddings; Soniox/Deepgram

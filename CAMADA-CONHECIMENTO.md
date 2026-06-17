@@ -376,3 +376,18 @@ client_criteria             │     { requisito, peso(must/normal/nice),
   `ambos`, para o parecer saber se um critério é "de mercado" ou "exigência do cliente".
 - É o rubric resultante que o frame ao vivo (`ARQUITETURA-TEMPO-REAL §9`) usa para
   decidir `fraco/ok/forte` e que pesos aplicar na compensação holística (`INTAKE` Parte F).
+
+### Versionamento — o cliente muda os requisitos a meio (fecha o gap H4)
+
+O cliente acrescenta/muda um requisito **depois** de o rubric e o briefing estarem
+feitos (às vezes a meio das entrevistas). Regra para não se perder:
+- **Rubric e requisitos têm versão** (`rubric.version`, carimbada na geração). Mudar um
+  requisito → o bot **recompila** o rubric (nova versão) e **avisa a Filipa** do que
+  mudou (*"o cliente acrescentou 'inglês fluente' — atualizei o roteiro"*).
+- **O frame ao vivo adota a versão nova** a partir daí; o que já foi provado **não se
+  perde** (os factos do candidato continuam válidos, só se reavalia contra a lista nova).
+- **O parecer diz contra que versão avaliou:** *"avaliado contra os requisitos de
+  17/06 (v2); o critério 'inglês' foi acrescentado depois de 2 entrevistas."* — honesto,
+  sem fingir que tudo foi medido desde o início (Regra 3 anti-achismo).
+- Candidatos avaliados em versões diferentes → a **comparação** (`ASSISTENTE-CONVERSA`
+  Modo C) assinala que não foram medidos pela mesma régua.

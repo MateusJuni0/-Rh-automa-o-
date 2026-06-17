@@ -554,11 +554,64 @@ ALTER TABLE client_memory_fact    ADD COLUMN source_doc_id UUID REFERENCES sourc
 -- Nota: facto 'research'/'a_confirmar' NÃO entra no score até virar 'direto' (confirmado ao vivo).
 ```
 
+### 8. Assistente pessoal — memória que aprende + auditoria de ações (2026-06-17)
+
+> Suporta `ASSISTENTE-PESSOAL.md` (o "ChatGPT dela"). O que o torna *dela*: aprende o
+> estilo/preferências; e regista tudo o que faz (estrutura tipo Lince Brain).
+
+```sql
+-- Memória do RECRUTADOR: estilo, preferências, padrões da Filipa (personalização).
+CREATE TABLE recruiter_memory_fact (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  kind          TEXT NOT NULL,                 -- 'style' | 'preference' | 'pattern' | 'template'
+  fact_text     TEXT NOT NULL,                 -- "escreve emails curtos, assina 'Abraço, Filipa'"
+  source_type   TEXT NOT NULL DEFAULT 'learned', -- 'learned' (de edições/correções) | 'explicit' (ela disse)
+  source_ref    TEXT,                          -- ex.: o rascunho que ela editou
+  confidence    TEXT NOT NULL DEFAULT 'media',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at    TIMESTAMPTZ
+);
+CREATE INDEX ON recruiter_memory_fact (recruiter_id, kind);
+
+CREATE TABLE recruiter_memory_embedding (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  fact_id     UUID NOT NULL REFERENCES recruiter_memory_fact(id) ON DELETE CASCADE,
+  agency_id   UUID NOT NULL,
+  embedding   VECTOR(1536) NOT NULL
+);
+CREATE INDEX ON recruiter_memory_embedding USING ivfflat (embedding vector_cosine_ops);
+
+-- Trilho de auditoria das AÇÕES do assistente (tool-calls) — defensável, tipo Lince Brain.
+-- Ações para fora (enviar email, marcar, apagar) exigem confirmed_by antes de executar.
+CREATE TABLE assistant_action (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  tool          TEXT NOT NULL,                 -- 'gen_spreadsheet'|'gen_cv'|'send_email'|'create_event'|'export'|'web_search'|...
+  args          JSONB NOT NULL DEFAULT '{}',
+  result_ref    TEXT,                          -- storage path do artefacto, id do email, etc.
+  needs_confirm BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE p/ ações com efeito externo
+  confirmed_by  UUID REFERENCES recruiter(id), -- NULL até a Filipa confirmar (porta de segurança)
+  status        TEXT NOT NULL DEFAULT 'done',  -- 'pending_confirm'|'done'|'rejected'|'failed'
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX ON assistant_action (recruiter_id, created_at);
+
+-- Versionamento de requisitos/rubric (gap H4 — cliente muda requisitos a meio)
+ALTER TABLE rubric ADD COLUMN version INT NOT NULL DEFAULT 1;
+ALTER TABLE rubric ADD COLUMN superseded_at TIMESTAMPTZ;   -- quando uma versão foi substituída
+ALTER TABLE report ADD COLUMN rubric_version INT;          -- contra que versão o parecer avaliou
+```
+
 ### Ordem de criação (delta sobre a lista original)
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
 (+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
-**`agenda_event`**, **`source_doc`** (+ embedding). ALTERs (§5, §6, §7) aplicam-se às
-tabelas já existentes.
+**`agenda_event`**, **`source_doc`** (+ embedding), **`recruiter_memory_fact`**
+(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7) aplicam-se às tabelas já
+existentes.
 
 ---
 

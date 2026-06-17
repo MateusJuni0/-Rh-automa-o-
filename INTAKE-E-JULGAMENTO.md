@@ -94,6 +94,36 @@ de verdade"*, *"pergunto sempre a pretensão salarial"*). Isto:
    `RELATORIO-CLIENTE.md`). É o **primeiro travão ao ping-pong**: o relatório já
    responde de antemão ao que o cliente ia perguntar.
 
+### Entrada de um candidato "caçado" → cria o `process` (fecha o gap A1)
+
+A Filipa faz **headhunting**: encontra a pessoa no LinkedIn e traz **um** candidato
+para uma vaga. Faltava o fluxo de **como ele entra no sistema** (a `REVISAO-360` A1).
+
+```
+Filipa traz o candidato  (encaminha o CV  OU  cola o link/URL do LinkedIn)
+        │  + diz "é para a vaga X"  (alvo=candidato, intencao='novo_candidato')
+        ▼
+1. O bot resolve se é candidato NOVO ou JÁ EXISTENTE (talent pool global):
+     - procura por nome/linkedin_url → se existe, REUSA (não duplica)
+     - se não, extrai o perfil do CV (Haiku) e cria `candidate`
+2. Cria o `process` (candidate × job) no estado 'sourced'/'screening'
+        ▼
+3. Porta de segurança: "Vou ligar o **João** à vaga **Dev React/TechCorp**. Confirmas?"
+        ▼
+4. Confirmado → candidato + process prontos; o briefing pode ser gerado.
+```
+
+- Acrescenta-se `intencao='novo_candidato'` ao envelope tipado (alvo=`candidato`).
+- **Dedup obrigatório:** candidato é **global**; nunca criar duplicado — liga ao
+  existente e abre só um `process` novo (reusa a memória que já temos dele — re-entrevista,
+  `ASSISTENTE-CONVERSA §4.1`).
+- Sem CV (só LinkedIn): o bot pode **pesquisar o perfil público** (ciclo de pesquisa,
+  `source_doc`, marcado indício) para arrancar o briefing — confirma-se na entrevista.
+
+> **Agendar a call + o bot entrar nela** (A2) — quem cria a sala LiveKit e como o
+> candidato é convidado — é **mecânica de captura/transporte = embalagem**
+> (`ARQUITETURA-TEMPO-REAL §5`), não cérebro. Fica anotado para a Parte 2.
+
 ### Canais de intake (a escolher na implementação)
 | Canal | Como | Nota |
 |---|---|---|
