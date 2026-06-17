@@ -153,3 +153,89 @@ O bot detecta automaticamente quando tem dados suficientes para diminuir a depen
 - Extração: Claude Haiku com output estruturado (JSON Schema) → barato, rápido.
 - Storage: tabela `role_profiles` no Supabase, indexada por `(agency_id, role_type_slug)`.
 - **Não fazer web search durante a entrevista ao vivo** — caro, lento, e o Role Profile já foi preparado. O web search acontece só no "Antes".
+
+---
+
+## Como esta camada é APLICADA — compreensão semântica, não palavras-chave (2026-06-17)
+
+O Role Profile (`o_que_e_bom`, `sinais_de_nivel_errado`) **não** é usado como uma
+lista de palavras a "caçar" na transcrição. É usado pela **Camada B** (compreensão
+semântica — ver `ARQUITETURA-TEMPO-REAL.md §8–§9`) como **gabarito de significado**:
+
+- O bot **interpreta** a resposta do candidato e compara o *significado* com o nível
+  do rubric — não procura o token "reconciliation".
+- Exemplo: o `o_que_e_bom["React"]` diz *"explica quando NÃO usaria useEffect"*. Se o
+  candidato disser *"deixei de pôr lógica naquele sítio que corre depois do render
+  porque estava a disparar duas vezes"* — **sem nomear `useEffect`** — a Camada B
+  reconhece que ele demonstrou exatamente o critério e marca `coberto-com-prova`.
+- Isto fecha o buraco do candidato que **sabe mas não fala "à manual"**, e do
+  candidato que **decora o jargão sem substância** (diz "reconciliation" mas a
+  explicação é oca → fica `raso`).
+
+> O Role Profile dá o *chão epistemológico* (o que é bom); a Camada B dá a *leitura*
+> (o candidato demonstrou isso?). Os dois juntos eliminam o achismo **sem** depender
+> de gatilhos lexicais.
+
+---
+
+## O bot é BILINGUE — tech ↔ recrutador ↔ cliente (decisão 2026-06-17)
+
+A `linguagem_para_filipa` do Role Profile deixa de ser só um glossário estático e
+passa a ser uma **competência de tradução em ambos os sentidos**. O bot fala três
+"línguas" e converte entre elas sem que a Filipa tenha de se tornar técnica:
+
+| Língua | Quem a usa | Exemplo |
+|---|---|---|
+| **Técnica** | o candidato | "fiz code-splitting e lazy loading das rotas" |
+| **Recrutador** | a Filipa | "ele sabe deixar o site a abrir rápido?" |
+| **Cliente** | a empresa | "garante boa experiência de utilizador em produção" |
+
+### Q&A Filipa ↔ bot — linguagem natural nos dois sentidos
+A Filipa pergunta **como a um colega**, e o bot responde por **RAG sobre a Camada A**
+(transcrição completa) + os factos destilados:
+
+```
+Filipa: "o gajo aguenta liderar uma equipa ou é mais executor?"
+Bot:    "Pelo que disse, mais executor com pendor para liderar: contou que
+         'organizou as tarefas do trio e fez a ponte com o cliente' (34:12) —
+         é coordenação informal, não gestão formal de pessoas. Não falou de
+         avaliar/contratar/dar feedback. Se o cliente quer um líder a sério,
+         vale confirmar isso." [trecho 34:12 ▸]
+```
+
+- A resposta é **rastreável** (cita o trecho com timestamp da Camada A).
+- O bot traduz a pergunta coloquial da Filipa para o significado técnico, procura, e
+  **devolve em linguagem dela** — com a fonte.
+
+### Segundo travão ao ping-pong (anti-recontacto)
+Quando o **cliente** manda uma pergunta nova depois da entrevista
+(*"ele já trabalhou com bases de dados grandes?"*), a Filipa **pergunta ao bot
+primeiro**. Se a resposta **está na transcrição** (Camada A), o bot responde **na
+hora** — a Filipa nunca tem de recontactar o candidato por algo que já foi dito.
+Só se **não estiver** lá é que se marca como "a confirmar com o candidato". Ver
+também o primeiro travão (relatório critério-a-critério) em `RELATORIO-CLIENTE.md`.
+
+---
+
+## Calibração — agora fecha com o RESULTADO da colocação (decisão 2026-06-17)
+
+A sub-camada ② (acumulado do cliente) ganha um sinal novo e mais forte que o veredito
+da entrevista: **o que aconteceu DEPOIS de colocar**.
+
+```
+veredito da entrevista (bot disse "forte")
+        │
+        ▼
+veredito do cliente (aprovou / recusou — porquê)        ← já existia (Camada 3a)
+        │
+        ▼
+RESULTADO da colocação (ficou? saiu dentro da garantia?) ← NOVO sinal de verdade
+```
+
+- Se o bot disse "forte", o cliente contratou, e a pessoa **ficou** → confirma o
+  julgamento. Se **saiu na garantia** → sinal de que o rubric ou a lente do cliente
+  falhou algo (skill real? fit? expectativa mal alinhada?).
+- Este resultado é o **ground-truth** mais valioso do sistema — vale mais que
+  qualquer auto-avaliação. Alimenta a migração web→interno (sub-camada ③) com dados
+  que são *outcomes reais*, não opiniões. Modelo: `placement_outcome` em
+  `MODELO-DADOS.md`.
