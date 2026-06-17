@@ -510,10 +510,55 @@ ALTER TABLE client    ADD COLUMN purge_after TIMESTAMPTZ;
 > restrição de âmbito por cliente. Cai o `visibility_scope` que a `REVISAO-360` D1
 > sugeria. Single-tenant v1 reforça: sem fronteiras internas a impor.
 
+### 7. Ciclo de pesquisa (`source_doc`) — o que o bot guarda do que pesquisa (2026-06-17)
+
+> Resolve o gap "ele pesquisa e faz o quê com o conteúdo?". Ver
+> `CAMADA-CONHECIMENTO.md` ("O que o bot FAZ com o que pesquisa").
+
+```sql
+-- Conteúdo CRU pesquisado/fetchado (web, repo, site) — rastreável e pesquisável (RAG).
+-- Vale para o Role Profile (Antes) E para a pesquisa ao vivo (link/repo do candidato).
+CREATE TABLE source_doc (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  kind          TEXT NOT NULL,                 -- 'web' | 'repo' | 'site' | 'doc'
+  url           TEXT,                          -- origem (NULL se veio de upload)
+  title         TEXT,
+  raw_text      TEXT,                          -- conteúdo extraído (limpo)
+  summary       TEXT,                          -- resumo destilado (Haiku)
+  fetched_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- a que entidade se refere (uma só, conforme o uso):
+  job_id        UUID REFERENCES job(id),       -- pesquisa de mercado/role
+  candidate_id  UUID REFERENCES candidate(id), -- repo/portfólio do candidato
+  client_id     UUID REFERENCES client(id),    -- empresa/cliente
+  confianca     TEXT NOT NULL DEFAULT 'media',  -- 'alta' | 'media' | 'baixa' (fonte fraca/contraditória)
+  expires_at    TIMESTAMPTZ,                   -- role/mercado: +90d; candidato: NULL (snapshot mantido)
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX ON source_doc (candidate_id);
+CREATE INDEX ON source_doc (job_id);
+
+CREATE TABLE source_doc_embedding (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_id   UUID NOT NULL REFERENCES source_doc(id) ON DELETE CASCADE,
+  agency_id   UUID NOT NULL,
+  embedding   VECTOR(1536) NOT NULL
+);
+CREATE INDEX ON source_doc_embedding USING ivfflat (embedding vector_cosine_ops);
+
+-- Proveniência web nos factos destilados (além do transcript):
+ALTER TABLE candidate_memory_fact ADD COLUMN source_type TEXT NOT NULL DEFAULT 'interview'; -- 'interview'|'research'|'cv'
+ALTER TABLE candidate_memory_fact ADD COLUMN source_doc_id UUID REFERENCES source_doc(id);  -- se veio de pesquisa
+ALTER TABLE candidate_memory_fact ADD COLUMN estado_prova TEXT NOT NULL DEFAULT 'direto';   -- 'direto'|'a_confirmar' (research = a_confirmar até o candidato confirmar)
+ALTER TABLE client_memory_fact    ADD COLUMN source_doc_id UUID REFERENCES source_doc(id);
+-- Nota: facto 'research'/'a_confirmar' NÃO entra no score até virar 'direto' (confirmado ao vivo).
+```
+
 ### Ordem de criação (delta sobre a lista original)
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
 (+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
-**`agenda_event`**. ALTERs (§5 e §6) aplicam-se às tabelas já existentes.
+**`agenda_event`**, **`source_doc`** (+ embedding). ALTERs (§5, §6, §7) aplicam-se às
+tabelas já existentes.
 
 ---
 

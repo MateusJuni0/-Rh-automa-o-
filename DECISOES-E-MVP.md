@@ -108,7 +108,7 @@ Confirmado contra a referência atual da Anthropic (jun/2026):
 | Estruturar vaga (colar → campos) | Haiku 4.5 | `claude-haiku-4-5-20251001` | extração simples, barato e rápido |
 | Triagem / match de CVs | Sonnet 4.6 | `claude-sonnet-4-6` | volume (N CVs) com bom julgamento; custo controlado |
 | Gerar o **roteiro** (briefing) | Opus 4.8 | `claude-opus-4-8` | é o "uau" de qualidade; vale o custo, é 1× por vaga |
-| Relatório pós-entrevista | Sonnet 4.6 | `claude-sonnet-4-6` | bom resumo + score, custo razoável |
+| Relatório pós-entrevista | ~~Sonnet 4.6~~ → **Opus 4.8** | `claude-opus-4-8` | **reclassificado 2026-06-17:** é o entregável ao cliente, sem pressão de tempo → qualidade. Ver `MODELOS-E-API.md §2` |
 | Copiloto ao vivo (Fase 2) | Sonnet 4.6 | `claude-sonnet-4-6` | latência manda no tempo real |
 
 Princípio: **Opus onde a qualidade é o produto** (roteiro), **Sonnet no grosso**,
@@ -237,4 +237,35 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **v1 single-tenant (só IRIS):** acesso interno total; **sem RLS por agência** (adiado p/ v2). `MODELO-DADOS §RLS`.
 - [x] **Override da Filipa ao veredito alimenta a calibração**; **arranque a frio** apoia-se no Role Profile + critérios declarados. `INTAKE` Parte D.
 - ✅ **REVISAO-360 atualizada:** 4 dos 6 bloqueadores resolvidos; sobram auth do desktop/WS + validação com a Filipa.
+
+### Decisões — 2026-06-17 (ronda 3: autenticação)
+- [x] **Auth (LOCKED) — biometria facial primeiro, email+senha alternativa.** Reusa o **engine/código** do `cmtec-face` (YuNet+SFace+liveness FSM; veredito single-use → sessão Supabase via `generateLink`) **CLONADO numa instância própria do RH** — **não** partilha o serviço do painel (regra do Mateus: não misturar projetos). Identidade/sessão = **Supabase Auth (JWT)** nos dois caminhos. Magic-link (GoTrue/SMTP VPS) = device-binding + recuperação. **Fecha o bloqueador #5.** Desenho + adaptador desktop + caveats em [`AUTENTICACAO.md`](./AUTENTICACAO.md).
+- [x] **Auth do WebSocket:** JWT na 1ª mensagem (não em query-string) → servidor WS valida assinatura Supabase + extrai `recruiter_id` + **verifica posse da `interview_id`**. Refresh silencioso a meio das 2h.
+- [ ] **A resolver ANTES de clonar (outro dia, na origem — não nesta fase de spec):** bug de enroll/flash liveness do `cmtec-face` (cadastra rápido demais, sem tela colorida). `AUTENTICACAO.md §6 C1`; memória `project_cmtec_face_enroll_bug_2026_06_17`.
+
+### Parte 1 (o cérebro) — refinamentos validados 2026-06-17 (FECHAR antes da embalagem)
+- [x] **O FOSSO = aprofundamento reativo ao vivo** (não a pergunta de topo, que recrutadora+ChatGPT já geram). Validado no caso #1 (Filipa fez quase as mesmas 🟢; C2 ela falhou = valor nosso). O bot decompõe a afirmação dita em follow-ups de prova ancorados no que foi DITO. `ARQUITETURA-TEMPO-REAL §9` ("Aprofundamento reativo") + `validacao-caso-01-mateus-securegpt.md`.
+- [x] **Pesquisa AO VIVO** quando o candidato dá link/projeto/repo: o bot pesquisa (D1 Exa+Brave, agora também ao vivo) + lê o link/código e ancora os probes/veredito no que VIU. Compensa a falta de contexto da empresa-cliente. Indício, não veredito; marca incerteza. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Veredito de resposta ao vivo** (forte/rasa/atenção) para a Filipa, quase em tempo real, em linguagem simples, citando evidência (anti-achismo). Surfacing da máquina de estados+rubric, não juízo novo. Visual (pulso/semáforo/animação) = criatividade na embalagem (`UI-DESIGN` Tela 6); aqui fixa-se o comportamento. `ARQUITETURA-TEMPO-REAL §9`.
+- ⚠️ **REGRA DO MATEUS:** **não avançar para a spec da embalagem antes de fechar TODA a Parte 1.**
+
+### Parte 1 — fecho de gaps do cérebro (2026-06-17, ronda profunda)
+Mapa do cérebro revisto (Antes/Durante/Depois) → 7 gaps encontrados. Fechados:
+- [x] **Nicho-agnóstico:** o bot serve QUALQUER área (enfermeiro, comercial, advogado…), não só tech. `role_type_slug` livre, Role Profile é molde neutro, `linguagem_filipa` traduz qualquer jargão, lente "técnica"→"da função/competência". Exemplo não-tech (Enfermeiro UCI) na spec. `CAMADA-CONHECIMENTO`.
+- [x] **Ciclo de vida da pesquisa:** o que o bot faz com o conteúdo da web/repo → ① guarda o cru (`source_doc`+embedding, rastreável/RAG) ② destila em factos COM proveniência+confiança → role_profile / candidate_memory_fact (`'a_confirmar'`, fora do score até o candidato confirmar) / client_memory_fact ③ fica citável. Web=indício, não veredito. `CAMADA-CONHECIMENTO` + `MODELO-DADOS §7`.
+- [x] **CONFLITO resolvido:** "sem web search ao vivo" (antigo) vs pesquisa ao vivo (novo) → Role Profile no Antes; pesquisa pontual ao vivo event-triggered/assíncrona/indício. `CAMADA-CONHECIMENTO`.
+- [x] **Cérebro do chatbot (NOVO doc `ASSISTENTE-CONVERSA.md`):** RAG ancorado (cita sempre fonte, nunca inventa, "não foi dito" é resposta válida), Opus. 4 modos: A=Q&A candidato, B=Q&A cliente, **C=COMPARAR candidatos** (matriz critério-a-critério vs client_criteria+pesos, trade-off honesto, nunca elimina por nice, Filipa decide), D=chat ao vivo. RGPD: pessoal só recall, fora do juízo.
+- [x] **Confiança por requisito:** frame carrega `alta/média/baixa`; parecer di-la ("forte mas confiança baixa — só 1 menção"); apanha inflação sem acusar. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Compilação do rubric (G3):** rubric = fusão `role_profile.competencias` + `client_criteria` (peso do cliente manda); cada linha guarda `origem`. `CAMADA-CONHECIMENTO`.
+- [x] **Parecer puxa da pesquisa/código visto** com selo de origem (✅ provado / 🔎 verificado na fonte / 🔎 indício a confirmar); só-pesquisa não conta como capacidade provada. `RELATORIO-CLIENTE §5`.
+- [x] **Métrica de calibração (D.1):** precisão = % de acerto de `bot_predicted` vs `client_verdict` e vs `placement_outcome` (ground-truth), por cliente/role; erro recorrente por `reason_type`→regra explícita; alimenta migração web→interno; mostrada à Filipa. `INTAKE` Parte D.1.
+- ✅ **PARTE 1 (o cérebro) FECHADA — 7/7 gaps resolvidos.** Pronto para, quando o Mateus quiser, atacar a **embalagem** (app desktop/WS/overlay/captura áudio/clone biometria) dispatch-ready.
+
+### Modelos & API — AGNÓSTICA ao fornecedor + produto-para-vender (2026-06-17) — NOVO doc `MODELOS-E-API.md`
+- [x] **Agnóstico ao modelo (correção do Mateus):** o sistema chama **CAPACIDADES (slots)**, não "Claude". Slots: `EXTRACTOR`/`ARCHITECT`/`LIVE`/`EMBEDDER`/`STT`, cada um config (`model_id`), trocável por OpenRouter ou direto. O comprador pode pôr Gemini/Voyage/Deepgram/etc. **Defaults = nossa recomendação** (Haiku/Opus/Sonnet/text-embedding-3-small/Soniox), NÃO requisito.
+- [x] **3 amarras ao trocar (não partir):** (1) EMBEDDER muda dimensão pgvector → re-index (escolher no arranque); (2) LIVE tem de ser baixa-latência (avisa se passa 1-3s); (3) JSON/tool-use obrigatório em LIVE+ARCHITECT.
+- [x] **Via OpenRouter** (chave única; Mateus paga enquanto connosco; vender = trocar chaves+modelos+host, zero reescrita; interface fina por capacidade = adapter por fornecedor). Chaves por deployment (sops+age). Custo dominante = STT/hora + ticks LIVE.
+- [x] **Produto para VENDER ("sair de nós"):** pronto a apresentar **já com APIs ligadas**; multi-tenant v2 (agency_id na costura); futura VPS do comprador (Docker Compose portável).
+- [x] **Comportamentos ao vivo afinados (`ARQUITETURA-TEMPO-REAL §9`):** pesquisa ao vivo = **varredura em 2º plano da ESTRUTURA do projeto**; **progresso de cobertura** ("riscar até fechar tudo", X/Y cobertos, fecha a checklist antes do fim).
+- ✅ **Calendário/proativo já no escopo** (`ASSISTENTE-PROATIVO.md` — Google Calendar OAuth, `agenda_event`): o bot tem acesso à agenda da Filipa + resumo de preparação antes das reuniões + deteção de lacunas.
 

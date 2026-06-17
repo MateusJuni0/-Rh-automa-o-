@@ -183,6 +183,35 @@ A garantia final não é "o bot é esperto"; é **medirmo-nos**:
   declarados** do cliente (`client_criteria`) — julga com o que está escrito e com o
   conhecimento externo, e diz quando a confiança é baixa (Regra 3).
 
+### D.1 — A métrica concreta (o "número que acompanhamos")
+
+Cada entrevista deixa um par **(o que o bot previu, o que aconteceu)**. Dois sinais,
+do mais fraco ao mais forte:
+
+```
+bot_predicted (strong/ok/weak)   ──►  vs  client_verdict (approved/rejected)   ← sinal médio
+bot_predicted                    ──►  vs  placement_outcome (stayed/left)      ← ground-truth
+```
+
+- **Precisão** = % de vezes em que o bot acertou a direção: previu `strong` → cliente
+  **aprovou** (e a pessoa **ficou** na garantia); previu `weak` → cliente recusou.
+  Calculada por **cliente** e por **role_type** (não só global — um cliente pode pesar
+  fit cultural que o mercado não pesa).
+- **Sinal de erro acionável:** quando o bot diz `strong` mas o desfecho é negativo,
+  regista-se o **`reason_type`** do `client_verdict` (skill_gap / cultural_fit /
+  salary / other). Se um `reason_type` se repete (ex.: `cultural_fit`), é um **buraco do
+  rubric/lente** → cria-se uma **regra explícita** para esse cliente (*"pesa fit
+  cultural acima de skill"*) antes de tentar calibração estatística.
+- **Cadência:** revisão a cada **N vereditos** (ex.: 10) por cliente/role; não há número
+  mágico de arranque — começa qualitativo (ler os erros) e só vira estatística com massa.
+- **Liga à migração web→interno** (`CAMADA-CONHECIMENTO` sub-camada ③): quando a precisão
+  interna de um role_type supera consistentemente o Role Profile de mercado, o peso
+  desloca-se para os **nossos** dados. O `placement_outcome` (ficou/saiu) é o que mais
+  pesa — vale mais que qualquer auto-avaliação do bot.
+- **Honestidade:** a precisão é **mostrada à Filipa** ("neste cliente acertámos 8/10");
+  baixa confiança nunca é escondida (Regra 3). É isto que nos torna defensáveis — os
+  concorrentes (Metaview/BrightHire) não fecham este loop até ao outcome real.
+
 ---
 
 ## Parte E — o resto do trabalho do recrutador (motivação, logística, venda)

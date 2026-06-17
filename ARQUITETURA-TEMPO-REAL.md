@@ -253,6 +253,42 @@ não-tocado  ──►  raso  ──►  coberto-com-prova
 Este estado é o que pinta o semáforo da UI (✅/🟡/⬜/⚠) e o que o relatório usa para
 saber o que está provado e o que ficou por confirmar.
 
+**Confiança por requisito (2026-06-17):** além do estado, cada requisito carrega uma
+**confiança** (`alta`/`média`/`baixa`) — quão forte é a evidência. Um `coberto-com-prova`
+com um caso concreto + número = `alta`; uma única menção de passagem = `baixa`. A
+confiança é **dita** (Regra 3 anti-achismo), nunca escondida: o parecer escreve *"forte,
+confiança alta"* ou *"aparenta forte, mas confiança baixa — só uma menção"*. Apanha o
+candidato que **infla** (H2) sem o acusar. Persiste em `candidate_memory_fact` e no
+estado vivo.
+
+**Progresso de cobertura — "riscar até fechar tudo" (2026-06-17):** o bot tem **todos os
+requisitos da vaga na memória** (`rubric` ← `job.requirements` + `client_criteria`) e
+trata a entrevista como uma **checklist viva**: cada requisito que passa a
+`coberto-com-prova` fica **riscado**; a UI mostra o **progresso** (ex.: *"8/12 cobertos
+· faltam: liderança, inglês, Azure, salário"*). A Filipa vê, num relance, **o que já
+está garantido e o que falta** — ataca diretamente a dor dela ("esqueço-me sempre de
+perguntar alguma coisa").
+
+**Cada requisito é um TÓPICO de aprofundamento (a ideia do Mateus, afinada):** se a vaga
+pede 12 coisas, são **12 tópicos** — e cada um **não se fecha com uma pergunta**, fecha-se
+com o **aprofundamento reativo** (a escada de prova acima) até haver evidência real
+*daquela* coisa que **este cliente** pede. "React?" não é riscado por um "sim" — é
+riscado quando o candidato **prova** (caso/número/exemplo). Pensando como a Filipa:
+
+- **Peso manda no esforço:** vai **fundo nos `must`**, leve nos `nice` — não gasta a
+  entrevista a esmiuçar um desejável (compensação holística, `INTAKE` Parte F).
+- **Conversa lidera, não a lista:** risca os tópicos **conforme o candidato os traz**
+  naturalmente; só **puxa** um por cobrir quando há deixa ou o tempo aperta (a escada
+  de prioridade já faz isto). Nada de interrogatório por ordem.
+- **Pode ficar a meio:** um tópico `raso` fica marcado para **voltar atrás** quando
+  surgir abertura — não força tudo de uma vez (respeita ritmo/rapport).
+- **Há tópicos que se PROVAM sozinhos:** ex. o **inglês** — se a entrevista decorre em
+  inglês, o nível **demonstra-se ao vivo** (a Camada B infere da própria fala) sem uma
+  pergunta forçada; o bot risca-o por observação e di-lo no parecer.
+
+O objetivo do motor é **fechar a lista inteira**; a **rede de segurança** abaixo garante
+que nenhum `must` fica por riscar no fim.
+
 ### Escada de prioridade — qual sugestão sobe (1 de cada vez)
 Quando há pausa/mudança de tópico e o limiar de silêncio permite, a Camada B escolhe
 **uma** sugestão, por esta ordem (a primeira que dispara ganha):
@@ -270,6 +306,93 @@ Quando há pausa/mudança de tópico e o limiar de silêncio permite, a Camada B
 
 Se nada disto dispara → **silêncio** (a UI fica calma: *"no caminho — segue a
 conversa"*). Não se inventa pergunta para preencher.
+
+### ⭐ Aprofundamento reativo — O FOSSO (gerar follow-ups DA resposta, ao vivo)
+
+> **Validado a 2026-06-17** (`validacao-caso-01-mateus-securegpt.md`): a *pergunta de
+> topo* não é o diferencial — uma recrutadora com ChatGPT já lá chega. **O fosso é a
+> profundidade reativa:** o bot ouve o que foi **mesmo dito** e, na hora, decompõe-no
+> em **perguntas de prova** específicas. É isto que uma pessoa a ouvir+avaliar+anotar
+> não consegue, e que uma lista de perguntas pré-gerada também não faz.
+
+**Mecanismo (corre em cada tick, sobre a janela recente):** para cada **afirmação com
+peso** que surge, a Camada B pergunta-se *"o que PROVARIA ou QUEBRARIA isto?"* e gera
+2–4 follow-ups concretos, **ancorados nas palavras do candidato** — depois sobe **o
+mais afiado** (sempre 1 de cada vez, respeitando o ritmo abaixo).
+
+**Exemplo (real, da entrevista do Mateus):** a recrutadora toca em *"7.559 landing
+pages"*. O bot **não** fica pela pergunta genérica — gera, ao vivo:
+- *"Quais fizeste à mão e quais foram geradas pela ferramenta?"*
+- *"Leste o código antes de publicar, ou aprovaste e seguiste?"*
+- *"Que problema concreto tiveste numa delas — e como o resolveste?"*
+- *"Dá a última vez que rejeitaste o que a IA gerou e refizeste à mão."*
+
+Cada follow-up nasce do que foi dito **agora**, não de um guião. O briefing pré-call
+(`VISAO-FILIPA`/roteiro) **semeia as aberturas**; este motor gera a **profundidade**.
+
+**Ligação à máquina de estados:** uma afirmação `raso` em algo que o cliente valoriza
+**não fica `raso`** — o motor encadeia follow-ups até **`coberto-com-prova`** (deu
+exemplo/número/caso real) **ou** até se revelar **inflacionado** (não consegue
+provar → sinal honesto no parecer, não um vago "tem experiência"). É a alínea 3 da
+escada, mas **perseguida em profundidade**, não uma pergunta única.
+
+**Guarda-corpos (herdam o ritmo):** continua **1 sugestão de cada vez**; não vira
+interrogatório — só fura quando a afirmação é relevante (must-have ou preferência do
+cliente) e há deixa natural; respeita o limiar de silêncio/rapport abaixo.
+
+### ⭐ Pesquisa ao vivo (link / projeto / repo que o candidato dá)
+
+> **Decisão 2026-06-17:** quando o candidato **menciona, mostra ou dá o link** de um
+> projeto/repo/site/empresa, o bot **pesquisa na hora** e analisa o que encontra —
+> e os follow-ups e o veredito passam a basear-se **no que ele viu de facto**, não só
+> no que foi dito. É o que torna a profundidade **personalizada**, não genérica.
+
+**Mecanismo (em SEGUNDO PLANO, não trava a call):**
+1. O motor deteta uma referência verificável (URL, nome de repo/produto/empresa).
+2. Dispara a pesquisa **em segundo plano**: **web search (Exa principal + Brave
+   fallback — a D1, agora usada AO VIVO)** + busca do próprio link, para perceber **pelo
+   menos a ESTRUTURA do projeto** (ler o README/árvore de ficheiros/código de um repo
+   GitHub, abrir o site e ver como está feito). Não precisa de auditar tudo — basta o
+   suficiente para gerar perguntas personalizadas ("vi que usas X para Y — porquê?").
+3. Quando o resultado chega (pode atrasar alguns segundos — tudo bem), gera probes
+   **ancorados no que viu** e cruza com o que o candidato afirmou.
+
+**Exemplo (Mateus):** dá o repo do *Lince Brain* → o bot lê, vê o grafo de 11 nós e os
+262 testes → pergunta específico: *"vi que separaste X e Y em nós distintos — porquê?"*
+e **verifica** a afirmação contra o código real (afirmou 262 testes "ponta a ponta"?
+o repo confirma o tipo?).
+
+**Por que importa agora:** enquanto **não temos o contexto da empresa-cliente** (caso
+do SecureGPT — temos a vaga, não a empresa), a pesquisa ao vivo é o que **compensa** e
+dá personalização real. Quando tivermos o RAG do cliente, soma-se (não substitui).
+
+**Guarda-corpos:** nunca bloquear o fluxo à espera da pesquisa; se falhar, degrada em
+silêncio; **marcar incerteza** quando a fonte é fraca (regra anti-achismo "incerteza é
+dita"); o que vier da web é **indício**, não veredito — a prova final é o que o
+candidato explica. Ver `CAMADA-CONHECIMENTO.md` (web search / Role Profile).
+
+### ⭐ Veredito de resposta ao vivo (boa / fraca, para a Filipa)
+
+> **Decisão 2026-06-17:** quando o candidato **responde** a uma pergunta relevante, o
+> bot mostra à Filipa, **quase em tempo real**, se a resposta foi **forte, rasa ou
+> bandeira vermelha** — para ela saber na hora se já está provado ou se vale insistir.
+
+**O que é:** é o **surfacing ao vivo** da máquina de estados + rubric (não uma camada
+nova de juízo). Assim que a resposta fecha, o bot classifica-a contra o requisito e
+emite um sinal curto, em **linguagem simples** (a Filipa não é técnica):
+- ✅ **Forte** — *"deu um caso concreto com número → fica provado."*
+- 🟡 **Rasa** — *"respondeu por alto, sem prova → vale pedir um exemplo."*
+- ⚠️ **Atenção** — *"bate com o que está no CV / com o que disse antes."*
+
+**Regras (anti-achismo, sempre):** o veredito **cita a evidência** (o trecho/segundo),
+**separa facto de opinião** e **diz a incerteza** — nunca um "bom/mau" pelado. O juízo
+**continua a ser da Filipa**; o bot só lhe dá o sinal e o porquê.
+
+**Tratamento visual (criatividade — detalhar na embalagem):** pode ser um **pulso de
+cor** na sugestão respondida, um **semáforo** que muda, ou uma **animação curta** ao
+fechar a resposta. *A forma fica para `UI-DESIGN.md` Tela 6;* aqui fixa-se só o
+**comportamento** (a Parte 1 / o cérebro). Continua **glanceable** — um relance, não
+um painel a piscar.
 
 ### Rede de segurança no fim
 Antes de a entrevista encerrar (a Filipa sinaliza "a fechar", ou pelo tempo), a
@@ -308,6 +431,9 @@ summary): permite analisar 2h em tempo real a **custo constante**. O que 2026-06
 acrescenta: **duas camadas** — a **A** guarda *tudo* sem perdas (fonte de verdade +
 Q&A + conhecimento); a **B** *interpreta* significado (não palavras-chave) e mantém o
 **frame de avaliação** que decide, por uma **escada de prioridade**, a única sugestão
-que sobe — com rede de segurança no fim e respeito pelo ritmo da conversa. Captura
-(andar 1) está decidida (caminho C / LiveKit próprio); transcrição (andar 2) e UI
-(andar 4) reusam peças que a CMTec já tem.
+que sobe — com rede de segurança no fim e respeito pelo ritmo da conversa. **O fosso
+do produto (validado 2026-06-17) é o §9 "aprofundamento reativo":** gerar perguntas
+de prova A PARTIR do que foi dito, ao vivo — não a pergunta de topo (essa qualquer um
+gera), mas a profundidade que fura atrás de evidência. Captura (andar 1) está decidida
+(caminho C / LiveKit próprio); transcrição (andar 2) e UI (andar 4) reusam peças que a
+CMTec já tem.

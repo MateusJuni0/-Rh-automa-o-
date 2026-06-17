@@ -152,7 +152,15 @@ O bot detecta automaticamente quando tem dados suficientes para diminuir a depen
 - Web search: testar Exa primeiro (melhor para conteúdo técnico); fallback Brave Search API.
 - Extração: Claude Haiku com output estruturado (JSON Schema) → barato, rápido.
 - Storage: tabela `role_profiles` no Supabase, indexada por `(agency_id, role_type_slug)`.
-- **Não fazer web search durante a entrevista ao vivo** — caro, lento, e o Role Profile já foi preparado. O web search acontece só no "Antes".
+
+> ### CONFLITO resolvido (2026-06-17) — web search ao vivo
+> **Contradiz:** a regra original *"não fazer web search durante a entrevista ao vivo"*.
+> **Evidência nova:** o Mateus decidiu (2026-06-17) que o bot **pesquisa ao vivo** quando
+> o candidato **dá um link / mostra um projeto / nomeia um repo** — ver
+> `ARQUITETURA-TEMPO-REAL.md §9` ("Pesquisa ao vivo").
+> **Resolução (não se contradizem, são dois usos distintos):**
+> - **Role Profile / conhecimento do mercado** → continua no **"Antes"** (pesado, abrangente, preparado e em cache).
+> - **Pesquisa pontual ao vivo** → **event-triggered** (só quando há uma referência verificável), **assíncrona** (nunca trava a call), **estreita** (aquele link/repo), e o resultado é **indício a confirmar**, não veredito. O grosso continua a ser preparado antes.
 
 ---
 
@@ -248,3 +256,123 @@ RESULTADO da colocação (ficou? saiu dentro da garantia?) ← NOVO sinal de ver
   qualquer auto-avaliação. Alimenta a migração web→interno (sub-camada ③) com dados
   que são *outcomes reais*, não opiniões. Modelo: `placement_outcome` em
   `MODELO-DADOS.md`.
+
+---
+
+## ⭐ Nicho-agnóstico — a Filipa recruta MUITO além de tecnologia (decisão 2026-06-17)
+
+> **O Mateus levantou:** a Filipa tem **mais nichos do que tecnologia** — pode estar a
+> recrutar enfermeiros, comerciais, contabilistas, chefs, advogados. **O bot tem de se
+> adaptar a qualquer área**, não pode assumir "dev". Todos os exemplos acima (React,
+> hooks) são só **ilustração** — a máquina por baixo é a mesma para qualquer função.
+
+**Como o desenho já aguenta isto (e o que o torna explícito):**
+
+- **O `role_type_slug` é livre** — `dev_frontend_react_pleno`, `enfermeiro_uci`,
+  `comercial_b2b_senior`, `contabilista_toc`. Não há taxonomia fixa de tecnologia.
+- **O Role Profile é um molde neutro**: "que competências tem um bom *X*?", "o que é
+  uma resposta forte vs fraca?", "que sinais dizem que o nível declarado está errado?"
+  — estas perguntas funcionam para **enfermeiro** tal como para **dev**. A web search
+  só muda as consultas (`"enfermeiro UCI" competências entrevista` em vez de `React`).
+- **A `linguagem_filipa` generaliza**: traduzir jargão→simples vale para qualquer área
+  (jargão clínico, jurídico, financeiro). A regra "a Filipa não é técnica" passa a "a
+  Filipa não é especialista **da área da vaga**" — o bot traduz sempre.
+- **A lente "técnica" passa a chamar-se lente "da função / competência"** — confirma se
+  o candidato domina o que **aquela função** exige, seja código ou cuidados intensivos.
+  (As 3 lentes mantêm-se: 🔧 da função · 🟢 do cliente · 🔍 gaps do CV.)
+
+**Exemplo não-tech (prova de que generaliza) — vaga "Enfermeiro de UCI":**
+```jsonc
+{
+  "role_type": "enfermeiro_uci",
+  "competencias": [
+    { "skill": "ventilação mecânica invasiva", "nivel": "obrigatório" },
+    { "skill": "manejo de fármacos vasoativos", "nivel": "obrigatório" },
+    { "skill": "suporte avançado de vida (SAV)", "nivel": "obrigatório" }
+  ],
+  "o_que_e_bom": {
+    "ventilação": "explica como ajusta parâmetros perante uma dessaturação, não decora protocolo",
+    "trabalho em equipa": "dá um caso real de comunicar uma intercorrência ao intensivista"
+  },
+  "sinais_de_nivel_errado": ["diz 'experiência em UCI' mas não sabe descrever um desmame ventilatório"],
+  "linguagem_para_filipa": {
+    "fármacos vasoativos": "medicamentos que controlam a tensão arterial em doentes graves",
+    "desmame ventilatório": "tirar o doente do ventilador aos poucos, com segurança"
+  }
+}
+```
+> O cérebro não muda. Muda o **conteúdo** que a pesquisa traz. É isto que torna o
+> produto vendável a uma agência que recruta para **qualquer** setor.
+
+---
+
+## ⭐ O que o bot FAZ com o que pesquisa (o ciclo de vida da pesquisa) — decisão 2026-06-17
+
+> **O Mateus levantou:** "ele pega o conteúdo na internet e faz o quê? salva numa
+> pasta, destila e põe na memória? como vai lidar com essa parte?". Faltava desenhar.
+> Aqui fica o ciclo completo — vale para a pesquisa do **Antes** (Role Profile) **e**
+> para a pesquisa **ao vivo** (link/repo do candidato).
+
+```
+  pesquisa (Exa/Brave) ou fetch de um link/repo
+        │
+        ▼
+  ① GUARDA O CRU (rastreável)  → tabela `source_doc` (+ embedding)
+     url · tipo (web/repo/site) · obtido_em · texto/resumo · liga a job|candidate|client
+        │
+        ▼
+  ② DESTILA EM FACTOS (Haiku, output estruturado), COM PROVENIÊNCIA
+     cada facto aponta para o `source_doc` (url + obtido_em) e leva CONFIANÇA
+        │
+        ├─ é sobre a FUNÇÃO/mercado  → alimenta o `role_profile` (cache, TTL 90d)
+        ├─ é sobre o CANDIDATO (repo/portfólio)
+        │     → `candidate_memory_fact` com `source_type='research'`,
+        │       marcado **'indício — a confirmar com o candidato'** (NÃO entra no score
+        │       até ele confirmar ao vivo; vira prova quando confirma)
+        └─ é sobre o CLIENTE/empresa → `client_memory_fact` (`source_type='web_research'`)
+        │
+        ▼
+  ③ FICA PESQUISÁVEL (RAG)  → o embedding do `source_doc` permite ao Q&A e ao
+     parecer **citarem a fonte** ("segundo o repo X, obtido a DD/MM: …")
+```
+
+**Regras (sem achismo):**
+- **Tudo o que vem da web é INDÍCIO, não veredito.** A prova final é o que o candidato
+  **explica/confirma**. Um facto de pesquisa sobre o candidato entra como
+  `'a confirmar'` e só passa a `coberto-com-prova` quando ele o confirma ao vivo.
+- **Proveniência obrigatória:** todo facto destilado aponta para o `source_doc` (url +
+  `obtido_em`). Sem fonte, não se grava.
+- **Confiança explícita:** fonte fraca/contraditória → confiança baixa, **dita** (Regra 3).
+- **Frescura:** Role Profile TTL 90d; pesquisa sobre o candidato = **snapshot** mantido
+  (é evidência do momento da entrevista); sobre o cliente = durável, re-pesquisável.
+- **Custo:** a destilação é Haiku; o cru pesado não vai a cada tick do LLM (só o facto
+  destilado entra no estado vivo) — coerente com o §3 (latência) e §8 (Camada A) de
+  `ARQUITETURA-TEMPO-REAL.md`.
+
+> Tabelas novas (`source_doc` + `source_doc_embedding`) e os campos de proveniência web
+> nos `*_memory_fact`: ver `MODELO-DADOS.md` (Evolução — ciclo de pesquisa).
+
+---
+
+## Como se compila o Rubric (de onde saem as linhas) — fecha o G3
+
+O **rubric** (o gabarito fraco/ok/forte por requisito) não nasce do nada — é
+**compilado** (Opus, no "Antes") de **duas fontes**, e cada linha guarda a sua origem:
+
+```
+role_profile.competencias  ─┐
+  (o que o MERCADO espera)  │
+                            ├─►  RUBRIC (1 linha por requisito)
+client_criteria             │     { requisito, peso(must/normal/nice),
+  (o que ESTE cliente pede) ─┘       fraco/ok/forte, linguagem_filipa, origem }
+```
+
+- **`role_profile`** dá os requisitos da **função** + o que é resposta forte/fraca.
+- **`client_criteria`** dá os requisitos **deste cliente** (incl. os inferidos de
+  vereditos passados) + o **peso** (must/normal/nice).
+- **Fusão:** quando os dois tocam o mesmo requisito, o **peso do cliente manda**; o que
+  só vem do cliente entra na mesma (ex.: *"já liderou equipa?"* mesmo que o mercado não
+  o liste). Cada linha do rubric leva `origem` = `role_profile` | `client_criteria` |
+  `ambos`, para o parecer saber se um critério é "de mercado" ou "exigência do cliente".
+- É o rubric resultante que o frame ao vivo (`ARQUITETURA-TEMPO-REAL §9`) usa para
+  decidir `fraco/ok/forte` e que pesos aplicar na compensação holística (`INTAKE` Parte F).

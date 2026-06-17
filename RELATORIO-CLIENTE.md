@@ -92,6 +92,26 @@ Clicar numa citação abre o trecho (texto + timestamp + falante) na Camada A. S
 caixa-preta: o cliente (e a Filipa) podem **auditar** qualquer conclusão até à fala
 original. É isto que separa o nosso parecer de um "resumo de IA" genérico.
 
+### O parecer também puxa da PESQUISA (link/código visto) — com selo de prova (2026-06-17)
+
+Quando houve **pesquisa ao vivo** (o candidato deu um repo/portfólio/link — ver
+`ARQUITETURA-TEMPO-REAL §9` e `CAMADA-CONHECIMENTO` ciclo de pesquisa), o parecer pode
+usá-la — mas **nunca a confunde com prova dada pelo candidato**. Cada afirmação leva um
+**selo de origem**:
+
+| Selo | Vem de | No parecer |
+|---|---|---|
+| **✅ provado** | o candidato **disse/explicou** (`transcript_chunk`) | citação + timestamp clicável |
+| **🔎 verificado na fonte** | `source_doc` (repo/site) **+** o candidato **confirmou** ao vivo | cita o trecho **e** a url + `obtido_em` |
+| **🔎 indício (a confirmar)** | só `source_doc`, **sem** confirmação do candidato | aparece como *contexto*, nunca como capacidade provada; sugere confirmar |
+
+- Um facto que é **só** pesquisa (`estado_prova='a_confirmar'`) **não conta** como
+  capacidade demonstrada — entra como *"segundo o repo X (obtido DD/MM): … — a confirmar
+  com o candidato"*. É a mesma Regra 3 (incerteza dita) aplicada à pesquisa.
+- Exemplo: *"o repo do Lince Brain mostra 262 testes (obtido 17/06); o candidato
+  confirmou e explicou um bug que um teste apanhou (41:30) → **🔎 verificado na fonte**."*
+  vs. *"o repo aparenta usar LangGraph, mas não foi falado na entrevista → **indício**."*
+
 ---
 
 ## 6. Garantias / critérios de aceitação (resumo — detalhe em TESTES-ACEITACAO.md)
