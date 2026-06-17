@@ -598,9 +598,10 @@ CREATE TABLE assistant_action (
   agency_id     UUID NOT NULL,
   recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
   tool          TEXT NOT NULL,                 -- 'gen_spreadsheet'|'gen_cv'|'send_email'|'create_event'|'export'|'web_search'|...
+  efeito        TEXT NOT NULL DEFAULT 'leitura', -- 'leitura'|'gravar'|'enviar_fora' (do tool registry — AGENTE-TOOLS-E-WS.md)
   args          JSONB NOT NULL DEFAULT '{}',
   result_ref    TEXT,                          -- storage path do artefacto, id do email, etc.
-  needs_confirm BOOLEAN NOT NULL DEFAULT FALSE, -- TRUE p/ ações com efeito externo
+  needs_confirm BOOLEAN NOT NULL DEFAULT FALSE, -- = (efeito ∈ {gravar, enviar_fora}); TRUE p/ ações com efeito durável/externo
   confirmed_by  UUID REFERENCES recruiter(id), -- NULL até a Filipa confirmar (porta de segurança)
   status        TEXT NOT NULL DEFAULT 'done',  -- 'pending_confirm'|'done'|'rejected'|'failed'
   created_at    TIMESTAMPTZ DEFAULT NOW()

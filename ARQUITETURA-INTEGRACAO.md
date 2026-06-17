@@ -97,13 +97,26 @@ gerados; ninguém escreve SQL fora de `packages/db`.
 | **`POST /api/interviews/join`** | "vou para uma reunião"/link → o assistente põe o bot na call | `services/agent`, `realtime` |
 
 ### 2.4 WebSocket (entre `apps/ws` e a UI do painel)
-Mensagens (tipos em `packages/core`):
+Mensagens de dados (tipos em `packages/core`):
 ```jsonc
 { "type": "tick.update",      "interviewId": "...", "estado": { /* EstadoVivo */ } }
 { "type": "suggestion.next",  "interviewId": "...", "pergunta": "...", "lente": "tecnica|cliente|gap" }
 { "type": "coverage.update",  "interviewId": "...", "requisitos": [ /* status */ ] }
 { "type": "alert",            "interviewId": "...", "texto": "5 anos dito, CV diz 3" }
+{ "type": "interview.active", "interviewId": "...", "on": true }   // arranca/encerra o overlay
 ```
+**Frames de CONTROLO (auth + jobs assíncronos) — detalhe em `AGENTE-TOOLS-E-WS.md` (2026-06-17):**
+```jsonc
+// 1ª mensagem do cliente: JWT (NUNCA em query-string) → ver AUTENTICACAO §4
+{ "type": "auth",             "token": "<jwt supabase>", "interviewId": "..." }
+{ "type": "auth.ok" }   { "type": "auth.error", "code": "4401|4403" }   // recusa = close 44xx
+{ "type": "auth.refresh_needed" }   // JWT a expirar → cliente reata com refresh silencioso
+// progresso de ferramenta longa do agente (sourcing, etc.)
+{ "type": "job.progress",     "jobId": "...", "estado": "a procurar… 3 perfis", "pct": 40 }
+{ "type": "job.done",         "jobId": "...", "resultRef": "..." }
+```
+> Estes frames de controlo + close codes `44xx` foram introduzidos pelos docs de Fase 2
+> e **devem entrar em `packages/core`** na construção (eram um gap do contrato — anotado).
 
 ### 2.5 Realtime → ws (interno)
 `apps/realtime` emite `transcript.partial`/`transcript.final` (falante+timestamp) →
