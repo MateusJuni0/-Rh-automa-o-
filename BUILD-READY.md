@@ -20,7 +20,7 @@
 - [x] **Antes:** vaga + candidato → Role Profile (externo) → Rubric → Briefing.
 - [x] **Durante:** transcrição ao vivo (Soniox + LiveKit) + estado vivo + sugestões por WebSocket.
 - [x] **Depois:** parecer em linguagem simples + export md/pdf + email rascunho.
-- [x] **Painel lateral fixo** (não popup) durante a entrevista.
+- [x] **Overlay em app desktop** (Electron/Tauri, always-on-top + capta áudio), não browser — durante a entrevista. STT multi-idioma PT/EN/FR. Chat ao vivo + auto-dismiss.
 - [x] **Lente do cliente** (3 lentes: técnica, o que ESTE cliente quer, gaps do CV).
 
 ### Anti-achismo
@@ -45,7 +45,7 @@
   - `client_memory_fact` + embedding, `client_verdict` (calibração)
   - `interview`, `interview_tick`, `report`
   - `intake_session` (multi-mensagem Telegram), `intake_message`
-- [x] RLS multi-tenant por `agency_id` em todas as tabelas.
+- [x] **v1 single-tenant (só IRIS)** — sem RLS por agência; acesso interno total. `agency_id` fica como costura p/ v2. (Atualizado 2026-06-17.)
 - [x] Embeddings: **pgvector** no Supabase self-hosted (D3 — já confirmado).
 
 ### Modelos de IA por tarefa
