@@ -32,13 +32,16 @@
 | `SUPABASE_*` / `DATABASE_URL` | ✅ (VPS self-hosted) | reuso |
 | `EVOLUTION_API_*` (WhatsApp) | ✅ (VPS :8080) | reuso |
 | `LIVEKIT_*` + `SONIOX_API_KEY` | ⚠️ existem no `cmtec-voice-platform` | **confirma que posso reusar** |
-| `EXA_API_KEY` | ❌ | **precisas criar conta Exa + dar a chave** |
-| `BRAVE_API_KEY` | ❌ | **precisas criar conta Brave Search + dar a chave** |
-| `TELEGRAM_BOT_TOKEN` | ❌ | **cria um bot no @BotFather e dá o token** |
+| `EXA_API_KEY` | ❌ | **OPCIONAL na v0** — criar conta Exa só quando ligarmos web search |
+| `BRAVE_API_KEY` | ❌ | **OPCIONAL na v0** — Brave tem tier grátis ~2k buscas/mês |
+| `TELEGRAM_BOT_TOKEN` | ❌ | **único obrigatório novo** — grátis no @BotFather |
 
-> Sem Exa/Brave → o Role Profile não busca conhecimento externo (carril 2 fica em espera).
-> Sem Telegram token → o bot de ingestão por Telegram não arranca (carril 6 parcial).
-> Tudo o resto consegue avançar à mesma.
+> **Decisão de custo (2026-06-17):** o build arranca a **~€0**. Exa/Brave são
+> **opcionais na v0** — o Role Profile usa primeiro só o conhecimento da Claude (cobre
+> ~95%) e o web search liga-se depois como melhoria. Custo real só aparece com
+> **entrevistas reais** (Soniox por hora de áudio + tokens Claude nos ticks).
+> Único pré-requisito novo mesmo necessário: **Telegram bot token** (grátis) +
+> confirmar **reuso de LiveKit/Soniox** do cmtec-voice-platform.
 
 ### 2b. Confirmações operacionais (1 linha cada)
 - **VPS:** confirmo que deployo no `72.60.88.137` como nos outros projetos? (tenho SSH)
