@@ -465,6 +465,13 @@ Além de empurrar sugestões, o overlay tem uma **caixa de pergunta**: a Filipa 
 (Camada A/B) **sem parar a captura**. É o Q&A (Tela 8 / `CAMADA-CONHECIMENTO.md`)
 disponível *durante* a call, não só depois.
 
+**O "falta algo?" — pelo popup (decisão Mateus 2026-06-17):** perto do fim, a Filipa
+pergunta no overlay *"falta algo?"* e o bot responde **a partir da checklist de
+cobertura** (*"faltam 2 must: confirmar **inglês** e **salário**"*) — é a rede de
+segurança servida sob pedido, não só automática. Tudo pelo **popup/overlay** (o HUD ao
+vivo, estilo Apollo, que vamos criar — o visual fica para `UI-DESIGN.md`); aqui fixa-se
+o comportamento.
+
 ---
 
 ## 10. Resumo

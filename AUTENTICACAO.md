@@ -152,3 +152,43 @@ CMTec) além do email+senha. Mesma sessão, mesmo JWT.
 > Bloqueador #5 (REVISAO-360) passa de 🟠 a ✅ **RESOLVIDO** — desenho fechado e
 > assente em peça já em produção. Sobra só o bloqueador #6 (validar a "lente do
 > cliente" com a Filipa).
+
+---
+
+## 8. Distribuição, multi-dispositivo e segurança (a pergunta do Mateus, 2026-06-17)
+
+> *"como passa pro PC dela? baixa o app e tem acesso a tudo? se quiser outro PC, loga na
+> conta web, baixa o app, continua de onde estava com a memória toda porque está na VPS,
+> certo?"* — **Certo. É exatamente esse o desenho.**
+
+### Cliente fino + estado no servidor (a razão de "continuar de onde estava")
+**Todo o estado e memória vivem na VPS** (Postgres + Storage). O **app desktop** e a
+**web app** são **clientes finos** — não guardam nada crítico localmente.
+
+| Superfície | O que faz | O que guarda localmente |
+|---|---|---|
+| **Web app** (a casa) | tudo: pastas, parecer, chat, comparação, definições | nada (sessão no browser) |
+| **App desktop** (overlay) | login + **captura de áudio** + overlay ao vivo | **só a sessão** (token), no `safeStorage` cifrado do SO |
+
+### Multi-dispositivo (PC novo) — o teu cenário, confirmado
+```
+PC novo → baixa o app → login (biometria facial ou email/senha)
+        → a sessão Supabase valida contra a VPS
+        → TUDO aparece (candidatos, clientes, memória, conversas) — está na VPS
+        → continua exatamente de onde estava.
+```
+Nada se perde ao trocar de máquina, porque **nada de importante estava na máquina.**
+
+### Segurança nas duas superfícies
+- **Login:** biometria facial (1º) ou email/senha — igual na web e no desktop (§2–§5).
+- **Transporte:** HTTPS/túnel Cloudflare; o WS valida JWT + posse da entrevista (§4).
+- **Dados na VPS:** controlo de acesso (RLS por agência na v2), encriptação em repouso,
+  segredos em sops+age, trilho de auditoria (quem viu/fez o quê).
+- **Desktop:** só guarda a **sessão cifrada**; device-binding em `trusted_devices`.
+- **Perdeu/roubaram o PC?** ela **revoga o dispositivo** na web (`trusted_devices`) → a
+  sessão morre; **os dados continuam intactos na VPS**. Re-autenticação facial periódica
+  (24h) limita a janela de abuso.
+
+> É o mesmo princípio do `cmtec-face`/painéis CMTec: a máquina é descartável, a verdade
+> está no servidor. Bom para ela (troca de PC sem dor) **e** para segurança (nada
+> sensível fica no portátil).

@@ -37,13 +37,20 @@ um email para o cliente? **Pede aqui** — e o assistente já tem o **contexto d
 
 ## 2. Estrutura agêntica — **um Hermes/Lince por trás** (decisão 2026-06-17)
 
-> **Pergunta do Mateus:** "não seria melhor pôr um Hermes por trás, ou fazemos manual?"
-> **Resposta: Hermes por trás.** Não construímos o motor agêntico de raiz — seria
-> reinventar o que já está provado no **Lince Brain**. **Instanciamos um Lince/Hermes
-> dedicado ao RH** (FastAPI + grafo LangGraph + tool-calling + estado PostgreSQL +
-> trilho de auditoria + kill switch). **Regra (igual à biometria): clonar/instanciar,
-> NÃO misturar** com o Lince de operações da CMTec — é um agente próprio, com as
-> ferramentas do recrutamento, na infra do RH.
+> **Pergunta do Mateus (2×):** "o agente vai ser o Hermes ou codamos manual?"
+> **Resposta decisiva: o MOTOR é o do Hermes; o AGENTE é nosso e limpo.**
+>
+> - **Reaproveitamos o *core* provado do Lince Brain** — o grafo, o loop de
+>   tool-calling, o estado em Postgres, o trilho de auditoria, o kill switch. Isto **não**
+>   se recoda do zero (é a parte difícil e já está testada).
+> - **NÃO forkamos o bot de operações da CMTec** (o Lince tem tralha interna: Telegram
+>   de ops, monitorização de infra). Isso não pode ir num **produto para vender**.
+> - **Construímos um agente PRÓPRIO do RH** — código limpo, só com as ferramentas de
+>   recrutamento, na infra do RH. O *core* do Hermes entra como **fundação/biblioteca**;
+>   as ferramentas e os nós específicos são nossos.
+>
+> Resultado: **motor provado + produto limpo e vendável.** É a mesma lógica da
+> biometria (reusar o engine, instância própria, não misturar projetos).
 
 É um **agente com ferramentas**, com a arquitetura que já corre no **Lince Brain**:
 
@@ -84,11 +91,19 @@ um email para o cliente? **Pede aqui** — e o assistente já tem o **contexto d
 ```
 
 **Registo de ferramentas (tool registry)** — cada ferramenta é declarada com:
-`{ nome, descrição, input (schema Zod), efeito: 'leitura' | 'escrita_externa',
-slot_modelo, precisa_confirmação }`. O **efeito** decide a porta de segurança: `leitura`
-e gerar rascunho = livres; `escrita_externa` (enviar email, marcar, publicar, pôr-se na
-call, apagar) = **confirmação obrigatória**. Adicionar capacidade = registar uma
-ferramenta nova, **não** mexer no grafo.
+`{ nome, descrição, input (schema Zod), efeito, slot_modelo }`. O **efeito** decide a
+porta de segurança — e a regra é **não chatear** (decisão Mateus 2026-06-17):
+
+| Efeito | Exemplos | Confirma? |
+|---|---|---|
+| `leitura` / `rascunho` / `geração` | procurar, ler, **gerar** um documento/CV/parecer/email (sem enviar), comparar | **NÃO** — flui livre |
+| `gravar` (durável) | **salvar** um documento, criar/editar **candidato/cliente/vaga**, gravar facto na memória | **SIM** |
+| `enviar_fora` (irreversível) | **enviar** email/mensagem, marcar no calendário, publicar, **pôr-se na call** | **SIM** |
+
+> Ou seja: ela pede, ele **faz e mostra** (rascunhos, pesquisas, documentos gerados) sem
+> interromper; **só pergunta quando vai gravar nos registos** (documentos, dados de
+> clientes/candidatos) **ou mandar algo para fora**. Adicionar capacidade = registar uma
+> ferramenta nova, **não** mexer no grafo.
 
 **Estado (persistido em Postgres, recupera após queda):** conversa + **contexto ativo**
 (em que cliente/vaga/candidato ela está) + plano corrente + resultados intermédios.
@@ -145,21 +160,55 @@ qualidade = `ARCHITECT`; tarefas simples/extração = `EXTRACTOR`; faceta ao viv
 
 ---
 
-## 4. APRENDE com ela (o "vai aprendendo" do Hermes)
+## 4. APRENDE com ela — memória que se escreve sozinha e NÃO degrada (long-term)
 
-A memória **cresce** e **personaliza** — é o que o torna *dela*, não genérico:
+> **Porquê isto importa (a 360°, não só código):** o valor deste produto **compõe-se
+> com o tempo** — quanto mais o assistente conhece a Filipa e os clientes dela, melhor
+> serve e mais difícil é largá-lo. **Se a memória degrada ou trava, morre o
+> diferencial.** Por isso a robustez de memória a longo prazo **é o produto**, não um
+> detalhe técnico.
 
-- **Estilo dela:** como escreve aos clientes (tom, formato, assinatura) → os rascunhos
-  saem **na voz dela**, não num inglês de robô.
-- **Preferências:** que template de CV usa para cada cliente, que critérios costuma
-  pesar, como gosta dos pareceres → o assistente antecipa.
-- **Padrões do trabalho:** clientes recorrentes, vagas que se repetem, horários.
-- **Correções = treino:** quando ela edita um rascunho ou rejeita uma sugestão, isso
-  fica e **afina** o próximo (mesma disciplina da calibração — `INTAKE` Parte D).
+O assistente **escreve a sua própria memória** enquanto fala com ela — aprende contínuo:
+- **Estilo dela:** tom, formato, assinatura → os rascunhos saem **na voz dela**.
+- **Preferências:** template de CV por cliente, critérios que pesa, como gosta dos
+  pareceres → antecipa.
+- **Padrões:** clientes recorrentes, vagas que repetem, horários.
+- **Correções = treino:** ela edita um rascunho/rejeita uma sugestão → fica e **afina** o
+  próximo (mesma disciplina da calibração, `INTAKE` Parte D).
 
-Modelo: factos de preferência/estilo em memória (reusa `client_memory_fact` /
-`candidate_memory_fact` + uma **memória do recrutador** — ver §7). Anti-achismo: o
-assistente **mostra o que aprendeu** e pode ser corrigido; não decide em segredo.
+### Duas camadas (como o sistema de memória que já usamos)
+- **Captura granular:** cada interação/correção entra como facto (`recruiter_memory_fact`
+  + embedding), com proveniência.
+- **Camada curada/destilada:** consolidação periódica resume e organiza o que se
+  acumulou (os padrões estáveis sobem; o ruído cai).
+
+### ⚠️ Lição do claude-mem — NUNCA "travar 6 meses depois" (a dor do Mateus)
+O claude-mem do Mateus **parou de destilar em silêncio (abr→jun/2026)** e ninguém
+soube. Este assistente **não pode** repetir isso. Regras duras:
+- **Health check da memória:** a consolidação corre em schedule **e é monitorizada** —
+  se **parar**, **alerta** (não falha calado). É a regra nº1 que aprendemos com a saga
+  do claude-mem.
+- **Crescimento limitado:** factos antigos são **consolidados/resumidos** para a memória
+  não **inchar e abrandar** com os meses (o "6 meses depois trava"). Recall mantém-se
+  rápido independentemente do volume.
+- **Sem ponto único de falha silenciosa:** o recall tem fallback (busca direta na DB) se
+  uma camada falhar; nada depende de um worker que possa morrer sem aviso.
+- **Recall fiável > recall esperto:** preferimos FTS/vetorial estáveis a soluções
+  instáveis (a lição: o vetorial instável foi desligado no claude-mem; aqui escolhemos o
+  que aguenta produção).
+
+### Segurança da memória (parte do 360°)
+- A memória da Filipa é **dela**: isolada por recrutador/agência (RLS na v2), encriptada
+  em repouso, auditável (quem escreveu o quê, quando).
+- **RGPD:** factos pessoais etiquetados, **fora do juízo** (`MODELO-DADOS §5`); ela pode
+  ver, corrigir e **mandar apagar** (soft-delete com `purge_after`).
+- **Anti-achismo:** o assistente **mostra o que aprendeu** e deixa-se corrigir — nunca
+  decide com base em memória que ela não pode inspecionar.
+
+> Modelo: `recruiter_memory_fact` (+embedding) + `client_memory_fact` /
+> `candidate_memory_fact` (§7, `MODELO-DADOS §8`). A consolidação + o health check são
+> um **cron/serviço monitorizado** (entra no `INFRA-E-MIGRACAO` como serviço a recriar
+> em cada salto).
 
 ---
 
