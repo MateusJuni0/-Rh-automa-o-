@@ -465,6 +465,13 @@ para *recall* (o bot pode responder à Filipa) mas são invisíveis ao juízo de
 adequação. Regimes de retenção: cru (`transcript_chunk.retain_until`) curto;
 profissional durável; pessoal o mais curto possível.
 
+**Quem classifica (fecha o gap C3):** o **LLM classifica automaticamente** na
+destilação (deteta "isto é pessoal" — família, saúde, religião, etc. → `personal`,
+`usar_no_score=FALSE`); a **Filipa pode reclassificar** (marca `corrigido_pela_filipa`,
+prioridade humana). **Auditável:** como o score só lê factos `professional` +
+`usar_no_score=TRUE`, dá para **provar exatamente que factos entraram** num juízo (lista
+filtrável) — a prova de que o pessoal não pesou.
+
 ### 6. Ronda 2 (2026-06-17) — agenda, voz, pesos, apagamento recuperável, override
 
 ```sql

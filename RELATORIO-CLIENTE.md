@@ -129,5 +129,13 @@ usá-la — mas **nunca a confunde com prova dada pelo candidato**. Cada afirma�
   permite ver os trechos clicáveis; PDF é mais "fechado".) → decidir.
 - **Quanto da logística** (ex.: salário) entra na versão **cliente** por defeito vs
   fica só na interna até a Filipa decidir? → provável: salário só com aval da Filipa.
-- **Feedback ao candidato:** o relatório gera também um rascunho de feedback para o
-  candidato (dor #7)? Onde vive — aqui ou em doc próprio? → a confirmar.
+- ✅ **Feedback ao candidato (dor #7):** RESOLVIDO — é uma **capacidade do assistente
+  pessoal** (gera o rascunho a pedido), não vive no parecer. `ASSISTENTE-PESSOAL §3`.
+
+## 8. Envio de email — provider (fecha o gap A6/13)
+O botão "preparar email" e o envio do assistente precisam de um provider:
+- **Decisão:** **Resend** (configurável por deployment), igual ao padrão do IRIS —
+  precisa de `RESEND_API_KEY` (gap conhecido, mesmo do IRIS). Alternativa de arranque:
+  o **GoTrue SMTP da VPS** já configurado (`smtp.gmail.com`) para volume baixo.
+- O envio é uma ação `enviar_fora` → passa pela **porta de confirmação** (`ASSISTENTE-PESSOAL §2.1`).
+- ⚠️ Pendência operacional (não bloqueia spec): pôr a chave no deployment (igual ao IRIS).

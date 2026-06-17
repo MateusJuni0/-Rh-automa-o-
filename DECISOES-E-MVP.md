@@ -305,3 +305,11 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - [x] **Onboarding ativo com LISTA** (`ASSISTENTE-PESSOAL §4.1`): no 1º uso apresenta lista de perguntas (estilo, clientes, como trabalha, **pessoal quanto mais melhor**)→`recruiter_memory_fact` explicit; conversa não formulário, editável, mostra o que guardou. **Fecha cold-start.**
 - [x] **Sourcing via APIFY (não browser)** (`ASSISTENTE-PESSOAL §3`): reaproveita skills `lead-scraper-apify`+`lead-enricher` JÁ no Hermes (5 tokens Apify + token broker em produção). **Resolve risco de ToS LinkedIn.**
 
+### Última varredura da Parte 1 (2026-06-17) — fechado antes da Fase 2
+- [x] **C3 — quem classifica pessoal/profissional:** LLM auto-classifica na destilação; Filipa reclassifica (corrigido_pela_filipa); auditável (score só lê professional+usar_no_score). `MODELO-DADOS §5`.
+- [x] **G7 — TESTES-ACEITACAO atualizado:** secção "fluxos novos" (Camada A, frame/checklist/fora-de-ordem, fosso, pesquisa ao vivo, veredito, relatório, agente, comparação, RGPD, calibração, memória long-term, custo). Corrigido P0.2 (single-tenant v1, RLS=v2).
+- [x] **A6/13 — envio email:** Resend (config, igual IRIS) ou GoTrue SMTP da VPS; ação enviar_fora c/ confirmação. `RELATORIO §8`. Pendência operacional: pôr a chave.
+- [x] **A5 feedback ao candidato:** confirmado = capacidade do assistente, não vive no parecer.
+- ⏸️ **Dispatch-cleanup (hygiene, não bloqueia):** coerência de schema (process_id canónico em interview/candidate_memory_fact; contagens de tabelas; diagrama da pasta) — G1/G2/G5; timeouts de no-show/sem-veredito (H6/H5). Anotado p/ a prep de dispatch.
+- ✅✅ **PARTE 1 (O CÉREBRO) DADA COMO SÓLIDA — última varredura feita.** Avançar para a **FASE 2 (embalagem + design)** com GO do Mateus.
+

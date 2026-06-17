@@ -79,10 +79,11 @@ nenhum termo.
 - [ ] Login funciona com email+senha
 - [ ] Recruiter logado vê dashboard vazio (sem dados de outra agência)
 
-### P0.2 — Multi-tenant (RLS)
-- [ ] Criar agência A e agência B com um recruiter cada
-- [ ] Recruiter A não consegue ver jobs da agência B (HTTP 403 ou 0 resultados)
-- [ ] Recruiter B não consegue ver candidates da agência A
+### P0.2 — ~~Multi-tenant (RLS)~~ → ADIADO para v2 (v1 é SINGLE-TENANT)
+> **Atualizado 2026-06-17:** a v1 é **single-tenant (só a IRIS)** — não há RLS por
+> agência (`MODELO-DADOS §RLS`). Estes testes ficam para a **v2** (multi-agência). Na
+> v1 o critério é o inverso: o recrutador tem **acesso interno total**.
+- [ ] (v2) Criar agência A e B; A não vê dados de B (HTTP 403 / 0 resultados).
 
 ### P1.1 — Criar vaga + upload
 - [ ] Formulário de criação de vaga aceita texto colado OU PDF
@@ -183,6 +184,62 @@ nenhum termo.
 - [ ] Filipa encaminha PDF que parece CV → bot classifica como CV automaticamente
 - [ ] Bot pergunta para que vaga → Filipa seleciona → candidato criado na DB
 - [ ] Perfil do candidato tem ≥3 campos extraídos
+
+---
+
+## Critérios para os FLUXOS NOVOS (2026-06-17) — fecha o G7
+
+### Camada A — captura sem perdas
+- [ ] Toda fala (incl. pessoal/divagação) fica em `transcript_chunk` com falante+timestamp.
+- [ ] Apagar texto da janela de trabalho **não** apaga da Camada A (nada se perde).
+- [ ] Q&A encontra um trecho que o bot **não** marcou ao vivo (prova que A guarda tudo).
+
+### Frame, checklist e atribuição fora de ordem
+- [ ] Cada requisito tem estado (não-tocado/raso/coberto-com-prova/contradito) + **confiança**.
+- [ ] UI mostra **progresso** ("8/12 cobertos · faltam …").
+- [ ] Candidato responde um tópico **fora de ordem** → o bot risca o **certo**, não o em foco.
+
+### O fosso — aprofundamento reativo
+- [ ] Quando o candidato faz uma afirmação com peso, o bot gera **follow-ups de prova**
+      ancorados no que foi dito (não a pergunta genérica).
+- [ ] Afirmação `raso` num must é **perseguida** até prova **ou** marcada inflacionada.
+
+### Pesquisa ao vivo
+- [ ] Candidato dá um link/repo → bot pesquisa em 2º plano e gera pergunta ancorada no que viu.
+- [ ] Facto vindo só da web entra como **`a_confirmar`** e **não conta no score** até o candidato confirmar.
+
+### Veredito ao vivo + robustez de input
+- [ ] Após resposta a pergunta relevante, aparece **forte/rasa/atenção** com evidência.
+- [ ] Trecho de STT **baixa confiança** **não** gera `coberto-com-prova` (re-sonda).
+
+### Relatório anti-ping-pong
+- [ ] **Todo** `client_criteria` aparece no parecer com estado explícito (não omite).
+- [ ] Critério não coberto é **assinalado**, nunca inventado.
+- [ ] Facto de pesquisa no parecer leva **selo** (provado / verificado na fonte / indício).
+
+### Assistente pessoal (o agente)
+- [ ] Pede pra gerar planilha/CV/email → **gera sem pedir confirmação**.
+- [ ] Ação de **gravar** (criar candidato/cliente/doc) ou **enviar fora** → **pede confirmação**.
+- [ ] Toda ação fica em `assistant_action` (auditoria).
+- [ ] Onboarding: a lista de perguntas vira `recruiter_memory_fact`; o agente mostra o que guardou.
+- [ ] "Falta algo?" no overlay responde da checklist de cobertura.
+
+### Comparar candidatos
+- [ ] Matriz critério-a-critério vs `client_criteria` com pesos; nunca elimina por `nice`.
+- [ ] Candidatos em versões de rubric diferentes → assinala "réguas diferentes".
+
+### RGPD + calibração
+- [ ] Facto `personal` **nunca** entra no score (só recall) — auditável.
+- [ ] Apagar candidato/cliente = soft-delete recuperável (`purge_after`); cron só apaga depois.
+- [ ] `bot_predicted` vs `client_verdict`/`placement_outcome` produz **% de acerto** por cliente/role.
+
+### Memória long-term (lição claude-mem)
+- [ ] Health check da consolidação **alerta** se a destilação parar (não falha calado).
+- [ ] Com volume grande, o recall mantém-se rápido (consolidação limita o crescimento).
+
+### Custo / tokens
+- [ ] Sessão simulada de ~2h tem **custo ~constante** por tick (não cresce com a duração).
+- [ ] As 2h **nunca** são reenviadas no contexto de um tick.
 
 ---
 
