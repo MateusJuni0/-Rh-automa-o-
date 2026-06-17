@@ -52,6 +52,17 @@ um email para o cliente? **Pede aqui** — e o assistente já tem o **contexto d
 > Resultado: **motor provado + produto limpo e vendável.** É a mesma lógica da
 > biometria (reusar o engine, instância própria, não misturar projetos).
 
+> **Ao VENDER — instância INDEPENDENTE na VPS dela (Mateus 2026-06-17):** quando
+> entregarmos, **montamos um Hermes/agente fresco na VPS do comprador** — **não** um
+> fork que "puxa o nosso". O projeto **é dele**, não nosso. Logo a instância dele:
+> - **não tem cordão umbilical** connosco (não depende da nossa infra/repo em runtime);
+> - **não fica refém da nossa manutenção** (se pararmos de mexer no nosso, o dele continua);
+> - **não fica limitado** pelo que fazemos do lado de cá.
+>
+> O *core* do Hermes que reusamos é **vendorizado dentro do produto** (vai no bundle,
+> `INFRA-E-MIGRACAO`), não puxado de um repo nosso. Mais limpo, mais profissional, e
+> juridicamente claro: entregámos um produto autónomo, não um aluguer da nossa stack.
+
 É um **agente com ferramentas**, com a arquitetura que já corre no **Lince Brain**:
 
 - **Loop de raciocínio com tool-calling:** o assistente decide que ferramenta usar,
@@ -143,13 +154,18 @@ qualidade = `ARCHITECT`; tarefas simples/extração = `EXTRACTOR`; faceta ao viv
 | **Comunicação** | rascunhar (e, com confirmação, **enviar**) emails a clientes/candidatos; WhatsApp/Telegram; follow-ups |
 | **Agenda** | ler/criar/reagendar eventos (Google Calendar); convites |
 | **Dados dela** | procurar/filtrar candidatos no talent pool, shortlist, **exportar** (CSV/Excel/PDF) |
-| **Web & sourcing** ⭐ | pesquisar (Exa/Brave, **APIs pagas que ela já tem**); e, **se ela der acesso**, **navegar e ir ao LinkedIn buscar candidatos** (ou o que ela pedir) — sourcing assistido |
+| **Web & sourcing** ⭐ | pesquisar (Exa/Brave); e **sourcing de candidatos via Apify** (actor de LinkedIn) — reaproveita as skills **`lead-scraper-apify` + `lead-enricher`** que a CMTec **já tem** no Hermes (5 tokens Apify + token broker) |
 | **Recrutamento** | puxar um parecer, **comparar candidatos** (`ASSISTENTE-CONVERSA` Modo C), gerar o briefing, rascunho de **feedback ao candidato** (fecha A5) |
 
-- **Acesso é dela, concedido a ele:** browsing/LinkedIn/sourcing correm com o **acesso
-  que a Filipa concede** (login dela, dentro dos termos das plataformas). Ações com
-  efeito (enviar, marcar, publicar, pôr-se numa call) passam pela **porta de
-  confirmação** (§2).
+- **Sourcing via Apify (não browser arriscado) — decisão Mateus 2026-06-17:** em vez de
+  automatizar o login dela no LinkedIn (território cinzento de ToS + deteção), o
+  sourcing usa **Apify** (actors de scraping geridos) — **reaproveitando o que já temos
+  no Hermes**: as skills `lead-scraper-apify` (busca) + `lead-enricher` (enriquece), com
+  os **5 tokens Apify** + o **token broker** já em produção. Mais limpo, mais robusto,
+  menos risco. Mais tarde dá para outras fontes/actors. *(Resolve o risco de ToS que
+  estava sinalizado.)*
+- **Acesso é dela, concedido a ele:** ações com efeito (enviar, marcar, publicar,
+  pôr-se numa call, gravar dados) passam pela **porta de confirmação** (§2.1).
 - As ferramentas de **documentos Office** (xlsx/docx/pdf) são reais — reaproveitam as
   skills de geração de ficheiros da CMTec. A planilha de comparação é um **artefacto
   gerado** que ela baixa e edita, não um ecrã rígido.
@@ -209,6 +225,30 @@ soube. Este assistente **não pode** repetir isso. Regras duras:
 > `candidate_memory_fact` (§7, `MODELO-DADOS §8`). A consolidação + o health check são
 > um **cron/serviço monitorizado** (entra no `INFRA-E-MIGRACAO` como serviço a recriar
 > em cada salto).
+
+### 4.1 Onboarding — arranque a frio com uma LISTA (decisão Mateus 2026-06-17)
+
+No 1º uso o assistente não a conhece. Em vez de aprender só aos poucos, faz um
+**onboarding ativo**: apresenta-lhe **uma lista de perguntas** para ela responder de
+uma vez (*"para te servir bem, responde quando puderes a estas"*). O Mateus avisa-a de
+que há uma lista — **e quanto mais pessoal ela responder, melhor** (mais personalizado
+fica). Tudo o que ela diz vira `recruiter_memory_fact` (origem `explicit`).
+
+**Blocos da lista (exemplos — o agente adapta):**
+- **Estilo & comunicação:** como assinas os emails? tom (formal/próximo)? PT-PT/PT-BR?
+  frases que usas sempre? o que detestas num email?
+- **Clientes:** quem são os recorrentes? o que cada um valoriza/recusa? quem é exigente?
+- **Como trabalhas:** que critérios pesas sempre? que templates de CV/parecer preferes?
+  horários, dias de entrevistas, antecedência dos lembretes?
+- **Pessoal (quanto mais, melhor):** como gostas que te tratem? nível de detalhe que
+  preferes nas respostas? o que te irrita num assistente? até gostos/contexto que
+  ajudem o tom.
+
+**Regras:** é **conversa, não formulário rígido** (ela responde à vontade, salta o que
+quiser, completa depois); cada resposta é **editável/apagável** (é dela, RGPD); o
+assistente **mostra o que guardou** ("anotei que assinas 'Abraço, Filipa'"). Daí em
+diante a aprendizagem contínua (§4) afina o que o onboarding semeou. **Fecha o
+cold-start** sem ser chato — uma lista de uma vez, não 100 perguntas pingadas.
 
 ---
 

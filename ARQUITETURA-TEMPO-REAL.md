@@ -487,3 +487,37 @@ de prova A PARTIR do que foi dito, ao vivo — não a pergunta de topo (essa qua
 gera), mas a profundidade que fura atrás de evidência. Captura (andar 1) está decidida
 (caminho C / LiveKit próprio); transcrição (andar 2) e UI (andar 4) reusam peças que a
 CMTec já tem.
+
+---
+
+## 11. Concorrência — o copiloto ao vivo E o agente ao mesmo tempo (spec, 2026-06-17)
+
+Durante a entrevista correm **duas coisas ao mesmo tempo**: o **copiloto ao vivo**
+(STT→frame→sugestões) e o **agente pessoal** (ela pode escrever no overlay, perguntar
+"falta algo?", ou pedir algo). Têm de coexistir **sem se atrapalharem**.
+
+**Princípio: processos separados, prioridades separadas.**
+
+| | Copiloto ao vivo (`apps/realtime`) | Agente pessoal (serviço próprio) |
+|---|---|---|
+| Natureza | latência-crítica (tick a cada pausa) | pedido a pedido (chat/tarefas) |
+| Prioridade | **máxima** — nunca pode esperar pelo agente | corre no seu processo, sem bloquear o vivo |
+| Escreve estado da entrevista? | **SIM — escritor único** (frame, ticks, transcript) | **NÃO** — só **lê** durante a call |
+
+**Regras:**
+1. **Escritor único do estado vivo:** só o `apps/realtime` escreve `interview_tick` /
+   `transcript_chunk` / checklist. Elimina corridas — o agente nunca corrompe o frame.
+2. **Q&A ao vivo ("falta algo?", "ele falou de salário?")** é servido **pelo motor ao
+   vivo** (tem o estado quente em memória → resposta rápida, slot `LIVE`). Não passa
+   pelo agente pesado.
+3. **Tarefas do agente durante a call** (gerar um documento, marcar a próxima, sourcing)
+   correm **no serviço do agente, assíncronas** — **não competem** com o caminho
+   latência-crítico do tick. Resultado chega quando estiver pronto.
+4. **Isolamento de falha:** se o agente cai, o copiloto continua a entrevista; se o
+   copiloto cai, o agente continua a responder. Não há processo que derrube o outro.
+5. **Comunicam pela DB** (o estado vivo é a fronteira): o agente lê o que o copiloto
+   escreveu; não há partilha de memória de processo nem chamadas síncronas no tick.
+
+> Em resumo: **o vivo tem sempre prioridade**; o agente vive ao lado, lê o estado e faz
+> o trabalho pesado em segundo plano. A Filipa sente os dois como **um só** assistente,
+> mas por baixo são duas peças que não se pisam.

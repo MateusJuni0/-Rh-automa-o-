@@ -156,6 +156,16 @@ do `/auth`). Code-signing + permissão de microfone do SO ficam na embalagem
 > Docker Compose (D4), chaves por deployment (sops+age), modelos por slot agnósticos
 > (`MODELOS-E-API`), `agency_id` na costura (multi-tenant v2).
 
+### Regra: a instância do comprador é INDEPENDENTE (sem cordão umbilical)
+A VPS do comprador corre uma instância **autónoma** — o *core* do Hermes vai
+**vendorizado dentro do bundle**, **não** puxado de um repo/infra nossa em runtime.
+Consequências (o que o Mateus quer):
+- **Sem dependência da nossa stack** — se desligarmos a nossa, a dele continua.
+- **Sem refém da nossa manutenção** nem limitada pelo nosso lado.
+- **Updates = entrega limpa e opcional** (um bundle/imagem novos que ele aplica se
+  quiser), **não** um push automático nosso para dentro da máquina dele. Decoupled by
+  design. *(Isto fecha o tema "updates a instâncias vendidas".)*
+
 ---
 
 ## 8. Teste LOCAL-FIRST (antes de a Filipa ver)
