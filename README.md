@@ -31,6 +31,7 @@ dela quereria fazer**), em linguagem que ela entende.
 | [`CAMADA-CONHECIMENTO.md`](./CAMADA-CONHECIMENTO.md) | Como o bot sabe "o que é bom" — Role Profile via conhecimento externo |
 | [`INTAKE-E-JULGAMENTO.md`](./INTAKE-E-JULGAMENTO.md) | Input tipado + rubric + 4 regras anti-achismo + motivação/logística/venda + RGPD |
 | [`RELATORIO-CLIENTE.md`](./RELATORIO-CLIENTE.md) | Parecer critério-a-critério (anti-ping-pong), 2 versões |
+| [`ASSISTENTE-PROATIVO.md`](./ASSISTENTE-PROATIVO.md) | Secretário: consciência da agenda + deteção de lacunas no mandato |
 | [`REVISAO-360-2026-06-17.md`](./REVISAO-360-2026-06-17.md) | Revisão 360° do ciclo completo + gaps priorizados |
 | [`ACESSO-E-CONHECIMENTO.md`](./ACESSO-E-CONHECIMENTO.md) | Acesso da Filipa, parecer, painel lateral, canais de ingestão |
 | [`TELEGRAM-BOT-SPEC.md`](./TELEGRAM-BOT-SPEC.md) | Canal B: ingestão por Telegram (voz, multi-msg, identificação do cliente) |

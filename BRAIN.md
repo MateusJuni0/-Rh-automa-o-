@@ -63,6 +63,17 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 16. **Resto do recrutador:** motivação/logística/venda + `placement_outcome` → calibração. **RGPD:** pessoal etiquetado, fora do score.
 > ⚠️ Estas mudanças tocam o schema (candidato global + process) e a Camada A — quem dispatchar o Agente 1 deve ler a secção "Evolução 2026-06-17" do `MODELO-DADOS.md` ANTES. Gaps abertos: `REVISAO-360-2026-06-17.md`.
 
+## Evolução de design — 2026-06-17 (ronda 2)
+
+17. **App DESKTOP de secretária** (Electron/Tauri) = overlay ao vivo **+ captura de áudio local**; always-on-top, sem moldura, 1 sugestão auto-dismiss. **Web app mantém-se** para o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
+18. **STT multi-idioma** PT-PT/PT-BR/EN/FR (Filipa fala inglês; saída PT).
+19. **Assistente PROATIVO** (`ASSISTENTE-PROATIVO.md` NOVO): agenda (resumo de preparação) + deteção de lacunas. Calendário Google/manual `[A CONFIRMAR]`.
+20. **Diarização:** falante ativo da plataforma (bot na call) + fallback voz/enrollment Filipa; 3+ vozes (cliente→prefs ao vivo); correção por toque; sugestões **privadas**.
+21. **Chat ao vivo** no overlay; **desambiguação** sempre confirma alvo; **pesos must/nice + compensação holística**.
+22. **RGPD fechado:** reutilização entre clientes **permitida** (consent = Filipa); consent manual; apagamento soft **recuperável** (`purge_after`); **v1 SINGLE-TENANT (só IRIS, sem RLS por agência)**.
+23. **Calibração:** override da Filipa treina; arranque a frio apoia-se em Role Profile + critérios.
+> ⚠️ **REVISAO-360 ronda 2:** 4/6 bloqueadores resolvidos; sobram **auth do desktop/WS** + **validar com a Filipa**. Novos: distribuição desktop + permissão de microfone do SO, enrollment de voz, janela `purge_after`.
+
 ## Crux de engenharia
 
 **Estado vivo a custo constante em 2h:** estado estruturado comprimido + janela recente + rolling summary → Claude Sonnet por tick. Custo constante, não cresce com duração. Ver `ARQUITETURA-TEMPO-REAL.md §3`.
