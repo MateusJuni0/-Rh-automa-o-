@@ -196,10 +196,13 @@ CREATE TABLE rubric (
   job_id        UUID NOT NULL REFERENCES job(id) UNIQUE,
   agency_id     UUID NOT NULL,
   criteria      JSONB NOT NULL DEFAULT '[]',
-  -- cada critério:
+  -- cada critério (shape — fecha o gap G3, inclui origem + peso):
   -- { requisito: "React", pergunta_sonda: "...",
   --   fraco: "diz que sabe mas não explica", ok: "cita hooks", forte: "explica reconciliation",
-  --   linguagem_filipa: { fraco: "...", ok: "...", forte: "..." } }
+  --   linguagem_filipa: { fraco: "...", ok: "...", forte: "..." },
+  --   peso: "must|normal|nice",
+  --   origem: "role_profile|client_criteria|ambos",     -- de onde veio a linha (CAMADA-CONHECIMENTO)
+  --   origin_criteria_id: "uuid|null" }                  -- FK lógica p/ client_criteria, se origem inclui cliente
   generated_at  TIMESTAMPTZ DEFAULT NOW(),
   model_used    TEXT NOT NULL DEFAULT 'claude-opus-4-8'
 );
@@ -471,6 +474,13 @@ destilação (deteta "isto é pessoal" — família, saúde, religião, etc. →
 prioridade humana). **Auditável:** como o score só lê factos `professional` +
 `usar_no_score=TRUE`, dá para **provar exatamente que factos entraram** num juízo (lista
 filtrável) — a prova de que o pessoal não pesou.
+
+**Default CONSERVADOR para categorias de risco (correção 2026-06-18):** o default geral é
+`professional`, **mas** se o LLM detetar **qualquer sinal de categoria especial** (saúde,
+gravidez, religião, etnia, orientação, filiação) com **dúvida**, o default vira
+`personal`/`usar_no_score=FALSE` — **na dúvida, FORA do score** (nunca o contrário; um
+falso-negativo aqui é um dado sensível a pesar num juízo). Mede-se o **falso-negativo da
+classificação** num teste (`TESTES-ACEITACAO`), não só que `personal` não entra.
 
 ### 6. Ronda 2 (2026-06-17) — agenda, voz, pesos, apagamento recuperável, override
 

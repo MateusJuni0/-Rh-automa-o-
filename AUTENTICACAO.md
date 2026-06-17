@@ -103,8 +103,8 @@ cliente** — vem sempre do device-binding (regra de segurança herdada do paine
 
 Igual nos dois caminhos de login porque ambos terminam num JWT do Supabase:
 
-1. O desktop liga e envia o **`access_token`** (primeira mensagem do WS, **não** em
-   query-string — não fica em logs/URLs).
+1. O desktop liga e envia o **`accessToken`** (campo canónico — primeira mensagem do WS,
+   **não** em query-string — não fica em logs/URLs).
 2. O servidor WS **verifica o JWT** com o segredo do Supabase (assinatura + `exp`).
 3. Extrai `sub` → `recruiter_id`.
 4. **Verifica posse:** `SELECT 1 FROM interview WHERE id=$1 AND recruiter_id=$2`.
@@ -131,7 +131,7 @@ CMTec) além do email+senha. Mesma sessão, mesmo JWT.
 | # | Caveat | Impacto | O que fazer antes de confiar |
 |---|---|---|---|
 | C1 | **Bug de enroll suspeito** no `cmtec-face`: enroll parece cadastrar **rápido demais, sem mostrar a tela colorida (flash liveness)** — foi o que aconteceu da 1ª vez. (Henrique diz que funciona; estado incerto. Também houve a 06-15 um enroll que "recusava com movimentos certos".) | Se o flash liveness não corre, o enroll perde uma camada de vivacidade — e o **clone herda o bug**. | **Resolver OUTRO DIA na origem (painel-cmtec), ANTES de clonar.** Não nesta sessão. Anotado em memória `project_cmtec_face_enroll_bug_2026_06_17`. Gate de qualidade, não de spec. |
-| C2 | **Anti-spoof passivo (MiniFASNet) DESLIGADO** por false-reject. Sobram liveness FSM ativo + device-binding + anti-troca. | Defesa anti-foto/vídeo mais fraca do que o desenho completo. | Aceitável para 1 utilizadora de confiança (Filipa) na v1; reativar/afinar antes de abrir a mais gente (v2). |
+| C2 | **Anti-spoof passivo (MiniFASNet) DESLIGADO** por false-reject. Sobram liveness FSM ativo + device-binding + anti-troca. | Defesa anti-foto/vídeo mais fraca. **Num produto para VENDER, "1 utilizadora de confiança" deixa de valer** (o comprador pode ter >1 recrutador). | **GATE (2026-06-18):** aceitável só na v1-piloto com a Filipa (1 pessoa). **Anti-spoof TEM de estar ON antes de qualquer deployment com >1 utilizador OU venda externa** — não "antes da v2". Ver `LEGAL-E-RGPD §9`. |
 | C3 | O molde foi construído para o **painel web** (cookie/middleware Next.js). O desktop precisa do **adaptador da §3** (device-id no safeStorage + rota `complete` para o backend RH). | Pequena peça nova a construir. | Faz parte do `apps/desktop` + uma rota em `apps/web`. Não é serviço novo. |
 | C4 | Clonar = **novo schema/role/deploy** próprios do RH (não tocar no `cmtec` do painel). Provisionamento do role Postgres teve atrito no painel (syntax de password no `docker exec`). | Setup, não runtime. | Aplicar a migração de face num schema próprio do RH; DSN/role dedicados. |
 

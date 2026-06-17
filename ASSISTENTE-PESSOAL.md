@@ -116,6 +116,16 @@ porta de segurança — e a regra é **não chatear** (decisão Mateus 2026-06-1
 > clientes/candidatos) **ou mandar algo para fora**. Adicionar capacidade = registar uma
 > ferramenta nova, **não** mexer no grafo.
 
+**Segurança da confirmação (correção da auditoria 2026-06-18):**
+- A confirmação de `enviar_fora` mostra **o conteúdo LITERAL + o destinatário exato**
+  (não só "vou enviar um email") — a Filipa vê o que sai antes de sair.
+- **Conteúdo da web/CV/mensagens do cliente é não-confiável** → risco de *prompt
+  injection* indireta (um CV pode tentar manipular o agente). Regra: o que vem de fontes
+  externas entra como **dados a citar**, nunca como **instruções**; o agente não executa
+  ordens encontradas em documentos/web.
+- `save_memory_fact` com `source='inferred'` não confirma, mas **nunca grava `personal`
+  inferido sem revisão** (liga ao default conservador, `MODELO-DADOS §5`).
+
 **Estado (persistido em Postgres, recupera após queda):** conversa + **contexto ativo**
 (em que cliente/vaga/candidato ela está) + plano corrente + resultados intermédios.
 Memória: `recruiter_memory_fact` (estilo/preferências) + RAG sobre os dados dela.
@@ -203,7 +213,10 @@ O claude-mem do Mateus **parou de destilar em silêncio (abr→jun/2026)** e nin
 soube. Este assistente **não pode** repetir isso. Regras duras:
 - **Health check da memória:** a consolidação corre em schedule **e é monitorizada** —
   se **parar**, **alerta** (não falha calado). É a regra nº1 que aprendemos com a saga
-  do claude-mem.
+  do claude-mem. **Destino do alerta = configurável por deployment** (o Telegram/email
+  **do comprador**, não o nosso — senão na VPS independente dele o alerta não chega a
+  ninguém e repete-se a saga). A instância traz um **painel de saúde mínimo** (memória,
+  backups, custo, STT) — vale para todos os falhos silenciosos em produção.
 - **Crescimento limitado:** factos antigos são **consolidados/resumidos** para a memória
   não **inchar e abrandar** com os meses (o "6 meses depois trava"). Recall mantém-se
   rápido independentemente do volume.

@@ -102,7 +102,7 @@ em duas:
 | Memória / chat por entidade | **RAG** (embeddings + busca) sobre a pasta do candidato/cliente |
 | Bot de perguntas | **Claude** responde usando só a pasta daquela entidade |
 | Export | download **md/pdf**; a Filipa leva pra qualquer LLM se quiser |
-| Parecer | gerado por **Claude Opus** (qualidade), editável, exportável |
+| Parecer | gerado pelo slot **`ARCHITECT`** (default Opus — ver `MODELOS-E-API.md`), editável, exportável |
 
 ---
 

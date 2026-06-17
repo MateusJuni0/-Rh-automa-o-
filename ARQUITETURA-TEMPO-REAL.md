@@ -61,7 +61,7 @@ idioma → tradução pelo LLM no tick.
   pessoa, identidade certa. **É a razão de pôr o bot na call.**
 - **Fallback — diarização por voz** (presencial / áudio misturado): separa por
   características de voz. Para etiquetar a Filipa de forma estável, fazemos
-  **enrollment da voz dela 1×** (grava uma amostra → `recruiter.voice_enrollment`).
+  **enrollment da voz dela 1×** (grava uma amostra → `recruiter.voice_enrollment_path`).
 - **Suporta 3+ vozes:** o **cliente** também pode estar na call. Capturar isso ao vivo
   permite registar **preferências reveladas do cliente** durante a entrevista (*"para
   nós é essencial que saiba lidar com pressão"*) → alimenta a **memória do cliente**.
@@ -78,16 +78,17 @@ lento e caríssimo. A solução é manter um **estado estruturado e compacto** q
 sendo atualizado:
 
 ```jsonc
+// ⚠️ estados canónicos = os 4 da máquina de estados do §9 (não-tocado | raso | coberto-com-prova | contradito)
 {
   "requisitos": {
-    "React":        { "status": "coberto",   "evidencia": "12:03 candidato descreveu reconciliation" },
-    "Inglês":       { "status": "pendente" },
-    "Testes":       { "status": "investigar", "nota": "mencionou mas não detalhou" }
+    "React":        { "status": "coberto-com-prova", "confianca": "alta", "evidencia": "12:03 descreveu reconciliation" },
+    "Inglês":       { "status": "não-tocado" },
+    "Testes":       { "status": "raso", "nota": "mencionou mas não detalhou" }
   },
   // o que ESTE cliente quereria saber (extraído dos ficheiros do cliente antes da call)
   "interesses_cliente": [
-    { "tema": "liderou time?",      "status": "pendente" },
-    { "tema": "disponível remoto?", "status": "coberto", "evidencia": "12:10" }
+    { "tema": "liderou time?",      "status": "não-tocado" },
+    { "tema": "disponível remoto?", "status": "coberto-com-prova", "evidencia": "12:10" }
   ],
   "afirmacoes_candidato": [
     { "t": "11:58", "diz": "5 anos de React", "conflito_cv": "CV diz 3 anos" }
@@ -289,6 +290,14 @@ só, levar um requisito a `coberto-com-prova` — fica `raso`/confiança baixa e
 **re-sonda** ("podes repetir isso do…?") em vez de assumir. Nunca se destila um facto
 firme de transcrição duvidosa (`REVISAO-360` B2). Os mecanismos de *reconexão* de
 áudio/stream (B1/B5) são da **embalagem**; esta regra de **juízo** é do cérebro.
+
+**Caso terminal — perdeu-se mesmo um bloco (a entrevista não se repete):** se houver um
+**gap de transcrição acima de um limiar** (queda longa, candidato em túnel), a Camada B
+**marca o intervalo como `não-capturado`** (com os timestamps) e o **parecer assinala-o
+explicitamente** — *"entre 22:10 e 24:30 não houve captura; o que se passou aqui não
+está coberto."*. **Nunca** se infere continuidade por cima de um buraco (é a Regra 3 no
+pior sítio: um parecer que *parece* completo mas perdeu 2 min é pior que um buraco
+assinalado). A Filipa decide se reconfirma esse ponto com o candidato.
 
 **Progresso de cobertura — "riscar até fechar tudo" (2026-06-17):** o bot tem **todos os
 requisitos da vaga na memória** (`rubric` ← `job.requirements` + `client_criteria`) e

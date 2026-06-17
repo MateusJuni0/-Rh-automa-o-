@@ -136,7 +136,8 @@ bilingue do `CAMADA-CONHECIMENTO.md`.
 
 ## 7. Modelo & custo
 
-- **Opus 4.8** para Q&A/comparação (qualidade, sem pressão de tempo); **Sonnet 4.6**
-  para o chat ao vivo (latência). Embeddings: `text-embedding-3-small` (RAG).
+- Slot **`ARCHITECT`** (default Opus) para Q&A/comparação (qualidade, sem pressão de
+  tempo); slot **`LIVE`** (default Sonnet) para o chat ao vivo (latência). Embeddings =
+  slot `EMBEDDER`. Tudo agnóstico/OpenRouter — ver `MODELOS-E-API.md`.
 - Comparação é **1 chamada Opus** sobre estados já calculados (não re-analisa as 2h) →
   barato. O caro (analisar a entrevista) já aconteceu ao vivo.

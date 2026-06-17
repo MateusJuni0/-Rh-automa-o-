@@ -108,7 +108,7 @@ Mensagens de dados (tipos em `packages/core`):
 **Frames de CONTROLO (auth + jobs assíncronos) — detalhe em `AGENTE-TOOLS-E-WS.md` (2026-06-17):**
 ```jsonc
 // 1ª mensagem do cliente: JWT (NUNCA em query-string) → ver AUTENTICACAO §4
-{ "type": "auth",             "token": "<jwt supabase>", "interviewId": "..." }
+{ "type": "auth",             "accessToken": "<jwt supabase>", "interviewId": "..." }   // nome canónico: accessToken (não 'token'/'access_token')
 { "type": "auth.ok" }   { "type": "auth.error", "code": "4401|4403" }   // recusa = close 44xx
 { "type": "auth.refresh_needed" }   // JWT a expirar → cliente reata com refresh silencioso
 // progresso de ferramenta longa do agente (sourcing, etc.)

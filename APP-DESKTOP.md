@@ -95,7 +95,7 @@ Caminhos, por ordem de preferência:
 3. **Só microfone** — degradação aceitável: no **online**, o **bot na call** já dá a voz
    do candidato com diarização perfeita; o áudio de sistema do desktop é então **backup**,
    não obrigatório. No **presencial macOS**, o microfone da sala capta ambos os lados
-   (diarização do Soniox separa por voz, com `voice_enrollment` da Filipa).
+   (diarização do Soniox separa por voz, com `voice_enrollment_path` da Filipa).
 
 > **Decisão de robustez (não varrer):** **online não depende do áudio de sistema do
 > desktop** — depende do bot na call. O áudio de sistema do desktop é **reforço/fallback**.
@@ -291,7 +291,7 @@ Filipa (web/assistente/Telegram): "vou para uma reunião" / cola link Meet
   entrevista dela arranca → **mostra-se e começa a captar**. Não é a Filipa que "abre o
   app e configura" — ele reage.
 - **Presencial:** o assistente sinaliza "presencial" → o desktop **não** espera um bot;
-  capta pelo **microfone** da sala (diarização por voz + `voice_enrollment`).
+  capta pelo **microfone** da sala (diarização por voz + `voice_enrollment_path`).
 - **Arranque manual de recurso:** se o assistente não estiver disponível, há um caminho
   mínimo no tray ("entrar na entrevista X") — rede de segurança, **não** o caminho normal.
 - **Confirmação:** "pôr o bot na call" é `enviar_fora` → passa pela **porta de

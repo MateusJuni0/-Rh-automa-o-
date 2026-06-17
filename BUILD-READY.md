@@ -70,12 +70,8 @@
 
 > Impacto: sem esta decisão, não sabemos onde configurar o scaffold.
 
-**Recomendação:** Vercel (Next.js app) + VPS (WebSocket server)
-- Vercel: deploy instantâneo, preview URLs, zero config para Next.js.
-- VPS: obrigatório para WebSocket persistente (Vercel não suporta).
-- Supabase já corre na VPS — sem infra nova.
-
-Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de deploy Vercel.
+~~**Hipótese inicial:** Vercel + VPS~~ — **SUPERSEDED** pela escolha abaixo (a Vercel saiu;
+ver `INFRA-E-MIGRACAO.md`). Mantido só como registo do raciocínio.
 
 **✅ Escolhido: Tudo na VPS** (Docker Compose — app Next.js + WebSocket + Supabase no mesmo sítio).
 
@@ -99,10 +95,8 @@ Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de
 
 > Impacto: sem isto, o "durante" (coração do produto) não existe.
 
-**Recomendação: Recall.ai para MVP → LiveKit próprio quando houver volume**
-- Recall.ai: 2–3 dias de integração, ~$0.60/bot-hora, cobre Meet + Zoom + Teams, diarização por faixa perfeita.
-- LiveKit headless próprio: 3–5 semanas, mas zero custo operacional depois.
-- O que valida o produto é a qualidade das sugestões — não o mecanismo de captura. Recall agora, migrar depois.
+~~**Hipótese inicial: Recall.ai para MVP**~~ — **SUPERSEDED** pela escolha abaixo (LiveKit
+próprio desde já; reusa cmtec-voice-platform). Mantido só como registo do raciocínio.
 
 **✅ Escolhido: LiveKit próprio desde já** (reusa cmtec-voice-platform; zero custo por bot-hora. Custo: ~3–5 semanas de construção → por isso o "antes" (vaga → Role Profile → briefing) é entregue primeiro, enquanto o tempo real é montado em paralelo.)
 
