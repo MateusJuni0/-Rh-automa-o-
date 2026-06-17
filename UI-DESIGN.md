@@ -276,13 +276,24 @@ melhor**). Salta/completa depois; cada resposta **editável**; mostra o que guar
 
 ---
 
-## Tom visual & marca (direção — a confirmar a paleta)
+## Tom visual & marca — ✅ DIREÇÃO LOCKED (2026-06-17): HUD escuro "Apollo" em TUDO
 
-Alinhado com a casa CMTec (Linear/Stripe): **dark mode** no copiloto ao vivo (call
-longa), base mais clara e respirada na web app; **glassmorphism** subtil no overlay
-(estilo HUD "Apollo" que o Mateus referiu); uma cor de marca (azul/teal sóbrio = ponto
-de partida) + escala semáforo só para status; tipografia Inter, tamanhos generosos no
-modo ao vivo. 🟦 **Paleta/nome final = decisão do Mateus.**
+O Mateus escolheu (de 3 mockups) a **direção B — HUD escuro / "Apollo"** para **todo o
+produto** (overlay ao vivo **e** web app). Decisão fixada:
+- **Dark mode em todo o lado** — overlay e web app. Identidade forte de "copiloto".
+- **Estética HUD "Apollo":** superfícies escuras planas (sem gradiente/blur/glow — flat),
+  **barra de acento** nas zonas ativas, acento **teal/verde** (`#5DCAA5` sobre escuro),
+  cara do bot num círculo, semáforo (verde/âmbar/cinza/vermelho) só para status.
+- **Tipografia** Inter, tamanhos generosos no ao-vivo; sentence case sempre.
+- ⚠️ **Cuidado de conforto (a minha nota, dado que o dark vai p/ as telas de gestão):**
+  não usar **preto puro** — base tipo `#0E1116`/`#11151B`, texto alto-contraste mas não
+  branco-puro (`#E6E8EB`), para o uso diário (dashboard, listas, definições) **não
+  cansar** numa sessão longa de trabalho.
+- 🟦 **Ainda do Mateus:** o **nome/marca** do produto + a cor de acento final (teal é o
+  ponto de partida).
+
+> Os mockups da Fase 2 (dashboard, assistente, comparar, briefing, parecer) seguem esta
+> direção. O mockup do overlay nesta direção já foi aprovado.
 
 ---
 
@@ -292,7 +303,8 @@ modo ao vivo. 🟦 **Paleta/nome final = decisão do Mateus.**
       (Electron; Tauri alt.) always-on-top que também capta o áudio. Não é browser.
 - [x] **Idioma:** ✅ **interface PT**; a **Filipa fala inglês** e o STT cobre
       **PT-PT/PT-BR/EN/FR + misturas** (`ARQUITETURA-TEMPO-REAL.md §2`).
-- [ ] **Marca/nome e paleta final** (azul-teal é só ponto de partida).
+- [x] **Direção visual:** ✅ **HUD escuro "Apollo" em todo o produto** (escolhido de 3 mockups, 2026-06-17).
+- [ ] **Nome/marca + cor de acento final** (teal = ponto de partida). 🟦 Mateus.
 - [ ] **Quanto a IA "fala" sozinha** durante a call vs só quando solicitada.
 
 ---
