@@ -211,5 +211,16 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — D2 Bot na call:** **LiveKit próprio desde já** (reusa cmtec-voice-platform; ~3–5 sem → carril "antes" entrega valor primeiro).
 - [x] **2026-06-16 — D5 Ingestão:** **Telegram + WhatsApp em paralelo** (não esperar validação do Telegram; mesmo motor de ingestão, WhatsApp via Evolution API).
 - [x] **2026-06-16 — D3 Embeddings:** pgvector no Supabase self-hosted (confirmado).
-- ✅ **Todas as decisões fechadas → spec build-ready.** Próximo: scaffold P0.1. Ver `BUILD-READY.md`.
+- ✅ **Todas as decisões D1–D5 fechadas → spec build-ready (2026-06-16).** Ver `BUILD-READY.md`.
+
+### Evolução de design — 2026-06-17 (validadas hoje)
+- [x] **Memória em duas camadas (mata "gatilhos"):** Camada A = captura **sem perdas** (transcrição completa diarizada + chunks/embeddings, nada descartado); Camada B = **compreensão semântica** (interpreta significado, não casa palavras). Ver `ARQUITETURA-TEMPO-REAL.md §8`.
+- [x] **Frame de avaliação ao vivo:** estado por requisito (não-tocado→raso→coberto-com-prova/contradito) + **escada de prioridade** da sugestão + rede de segurança no fim + limiar de silêncio/rapport + PORQUÊ por sugestão. `ARQUITETURA-TEMPO-REAL.md §9`.
+- [x] **Candidato = entidade GLOBAL** (talent pool, cross-cliente); cliente = mandato (multi-vaga); **`process` = candidato × vaga**. `MODELO-DADOS.md` (Evolução).
+- [x] **Relatório contra os critérios do cliente** (anti-ping-pong): critério-a-critério com citação+timestamp; assinala o não-coberto; **duas versões** (interna/cliente). `RELATORIO-CLIENTE.md`.
+- [x] **Q&A Filipa↔bot bilingue** (tech↔recrutador↔cliente), RAG citado; segundo travão ao ping-pong (responde sem recontactar o candidato). `CAMADA-CONHECIMENTO.md`.
+- [x] **Input da Filipa tipado** (alvo + intenção); confirmação antes de escrita durável; correções marcam o facto `corrigido_pela_filipa`. `INTAKE-E-JULGAMENTO.md` Parte A.
+- [x] **Cobrir o resto do recrutador:** motivação/drivers + logística (salário/aviso/contraproposta) + bot ajuda a **vender** a vaga + **resultado da colocação** (ficou/saiu na garantia) volta para calibração. `INTAKE-E-JULGAMENTO.md` Parte E.
+- [x] **RGPD:** factos pessoais etiquetados, **nunca entram no score** (só recall), retenção curta; transcrição crua com janela de retenção. `MODELO-DADOS.md §RGPD`.
+- ✅ **Revisão 360°** do ciclo completo → `REVISAO-360-2026-06-17.md` (gaps priorizados).
 

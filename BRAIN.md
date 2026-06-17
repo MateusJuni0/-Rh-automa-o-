@@ -53,6 +53,16 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 
 **Próximo passo imediato:** dispatchar subagentes. **Agente 1 (Fundação: `packages/db` + `packages/core` + scaffold + docker + Auth/RLS) vai PRIMEIRO**; depois 2–6 em paralelo (ver `ARQUITETURA-INTEGRACAO.md §5`).
 
+## Evolução de design — 2026-06-17 (validada, ANTES de qualquer código)
+
+11. **Memória 2 camadas:** A = captura sem perdas (Camada A, `transcript_chunk`); B = compreensão semântica (mata "gatilhos"). `ARQUITETURA-TEMPO-REAL.md §8–§9`.
+12. **Frame de avaliação ao vivo:** estado por requisito + escada de prioridade + rede de segurança + ritmo/rapport + PORQUÊ por sugestão.
+13. **Candidato GLOBAL** (talent pool) + **`process`** (candidato × vaga); cliente = mandato multi-vaga. `MODELO-DADOS.md`.
+14. **Relatório anti-ping-pong:** critério-a-critério vs `client_criteria`, citação+timestamp, 2 versões. `RELATORIO-CLIENTE.md` (NOVO).
+15. **Q&A bilingue** Filipa↔bot (RAG citado) + **input tipado** (alvo+intenção, `corrigido_pela_filipa`).
+16. **Resto do recrutador:** motivação/logística/venda + `placement_outcome` → calibração. **RGPD:** pessoal etiquetado, fora do score.
+> ⚠️ Estas mudanças tocam o schema (candidato global + process) e a Camada A — quem dispatchar o Agente 1 deve ler a secção "Evolução 2026-06-17" do `MODELO-DADOS.md` ANTES. Gaps abertos: `REVISAO-360-2026-06-17.md`.
+
 ## Crux de engenharia
 
 **Estado vivo a custo constante em 2h:** estado estruturado comprimido + janela recente + rolling summary → Claude Sonnet por tick. Custo constante, não cresce com duração. Ver `ARQUITETURA-TEMPO-REAL.md §3`.
