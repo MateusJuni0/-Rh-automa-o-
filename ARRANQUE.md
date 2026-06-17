@@ -52,8 +52,9 @@
   (PT-PT/PT-BR/EN/FR) e 3+ falantes** no plano Soniox atual.
 - **App desktop:** distribuição é só interna (IRIS) → instalador simples chega; sem
   code-signing/loja na v1? (a confirmar)
-- **Calendário do assistente proativo:** Google Calendar (OAuth) **ou** input manual na
-  v1? (manual = zero dependências; Google = automático). `[A CONFIRMAR]`
+- **Calendário do assistente proativo:** ✅ **Google Calendar (OAuth)** — decidido
+  (Mateus, 2026-06-17). Preciso de criar credenciais OAuth Google + consentimento da
+  Filipa. Input manual fica como fallback.
 
 ---
 

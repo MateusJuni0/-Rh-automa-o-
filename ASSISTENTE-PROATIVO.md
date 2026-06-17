@@ -17,14 +17,15 @@ Esta capacidade é **além do RAG** (que responde quando perguntado). Aqui o bot
 - Também avisa de **conflitos / buracos** na agenda se detetar (duas calls coladas, por
   ex.) — mas o núcleo é o **resumo de preparação atempado**.
 
-### Integração de calendário — `[A CONFIRMAR NA CONSTRUÇÃO]`
-Duas vias possíveis (decidir na implementação):
-- **Google Calendar** (OAuth) — lê os eventos da Filipa automaticamente.
-- **Input manual** — a Filipa diz ao bot ("tenho entrevista com o João amanhã às 15h")
-  ou marca na web app (Tela de agenda).
+### Integração de calendário — **Google Calendar (DECIDIDO 2026-06-17)**
+- **Google Calendar (OAuth)** é o caminho — lê os eventos da Filipa automaticamente. O
+  Mateus confirmou ("liga sim").
+- **Input manual** fica só como **fallback** (a Filipa diz ao bot "tenho entrevista com
+  o João amanhã às 15h" ou marca na web app) — para quando um evento não está no Google
+  ou a ligação falha.
 
-> v1 pode arrancar com **input manual** (zero dependências) e ligar o Google Calendar
-> como melhoria. Marca de tipo: ver `MODELO-DADOS.md` (`agenda_event`).
+> Marca de origem em `agenda_event.source` (`google_calendar` por defeito; `manual` =
+> fallback). Ver `MODELO-DADOS.md` (`agenda_event`).
 
 ---
 
@@ -59,7 +60,7 @@ calado** — ele:
 ---
 
 ## 4. Perguntas em aberto
-- **Calendário:** Google Calendar OAuth na v1 ou só input manual primeiro? `[ABERTO]`
+- **Calendário:** ✅ **DECIDIDO — Google Calendar (OAuth)**; manual é fallback.
 - **Canal dos lembretes:** push na web app, email, ou Telegram (já temos o bot)? Provável:
   reusar o **Telegram bot** para os lembretes proativos (a Filipa já o usa). `[ABERTO]`
 - **Antecedência** do resumo de preparação (1h antes? na véspera? configurável?). `[ABERTO]`

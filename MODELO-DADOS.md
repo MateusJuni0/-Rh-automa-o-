@@ -476,7 +476,7 @@ CREATE TABLE agenda_event (
   process_id    UUID REFERENCES process(id),    -- a que entrevista/candidatura se refere
   title         TEXT NOT NULL,
   starts_at     TIMESTAMPTZ NOT NULL,
-  source        TEXT NOT NULL DEFAULT 'manual',  -- 'manual' | 'google_calendar'  [A CONFIRMAR]
+  source        TEXT NOT NULL DEFAULT 'google_calendar',  -- 'google_calendar' (decidido) | 'manual' (fallback)
   external_ref  TEXT,                            -- id do evento no Google Calendar, se aplicável
   prep_sent_at  TIMESTAMPTZ,                     -- quando o resumo de preparação foi enviado
   created_at    TIMESTAMPTZ DEFAULT NOW()

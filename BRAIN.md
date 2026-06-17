@@ -67,7 +67,7 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 
 17. **App DESKTOP de secretária** (Electron/Tauri) = overlay ao vivo **+ captura de áudio local**; always-on-top, sem moldura, 1 sugestão auto-dismiss. **Web app mantém-se** para o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
 18. **STT multi-idioma** PT-PT/PT-BR/EN/FR (Filipa fala inglês; saída PT).
-19. **Assistente PROATIVO** (`ASSISTENTE-PROATIVO.md` NOVO): agenda (resumo de preparação) + deteção de lacunas. Calendário Google/manual `[A CONFIRMAR]`.
+19. **Assistente PROATIVO** (`ASSISTENTE-PROATIVO.md` NOVO): agenda (resumo de preparação) + deteção de lacunas. **Calendário = Google Calendar (OAuth), decidido**; manual é fallback.
 20. **Diarização:** falante ativo da plataforma (bot na call) + fallback voz/enrollment Filipa; 3+ vozes (cliente→prefs ao vivo); correção por toque; sugestões **privadas**.
 21. **Chat ao vivo** no overlay; **desambiguação** sempre confirma alvo; **pesos must/nice + compensação holística**.
 22. **RGPD fechado:** reutilização entre clientes **permitida** (consent = Filipa); consent manual; apagamento soft **recuperável** (`purge_after`); **v1 SINGLE-TENANT (só IRIS, sem RLS por agência)**.
