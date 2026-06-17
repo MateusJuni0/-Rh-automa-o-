@@ -64,6 +64,24 @@ WhatsApp) é resolvida para um **envelope tipado** antes de qualquer ação:
   prioridade** sobre a inferência do bot e sobre o mercado — e fica auditável (quem,
   quando, do quê para quê).
 
+### Desambiguação — o bot NUNCA adivinha o alvo (10 clientes, 50 candidatos)
+
+Com volume, o risco é gravar no sítio errado. Regra dura: **confirma sempre o alvo
+antes de qualquer escrita durável.** Como se resolve por canal:
+
+- **Web app:** a Filipa **escolhe cliente → vaga** de uma lista **antes** de enviar. O
+  alvo já vem resolvido; não há ambiguidade.
+- **Chat / atalho (Telegram):** o bot **propõe** o match a partir do **conteúdo do
+  documento** (nome da empresa, cargo) **+ contexto ativo** (a janela de minutos em que
+  a Filipa está a trabalhar num cliente). Mas **propõe, não decide** — mostra
+  *"Parece ser para **TechCorp · Dev React**. Confirmas?"* `[✅] [outro]`.
+- **Nada durável** (gravar facto, criar vaga, alterar requisito) acontece **sem o alvo
+  confirmado**. Pergunta (`intencao='pergunta'`) não grava, logo pode responder sem
+  confirmação de alvo.
+
+> O "contexto ativo" é uma conveniência (reduz cliques), nunca uma certeza: mesmo com
+> contexto, a escrita durável passa pela confirmação. Ver `TELEGRAM-BOT-SPEC.md §4`.
+
 ### Critérios do cliente capturados no SETUP (anti-ping-pong, base do relatório)
 
 No setup de cada cliente/mandato, o bot **captura explicitamente as perguntas e
@@ -155,6 +173,15 @@ A garantia final não é "o bot é esperto"; é **medirmo-nos**:
   cultural acima de skill"), depois, se valer a pena, por calibração com dados.
 - Resultado: a precisão do julgamento passa a ser **um número que acompanhamos**, não
   uma fé. É isto que nos torna defensáveis (Metaview/BrightHire não vivem neste loop).
+- **O override da Filipa também calibra (2026-06-17):** quando ela **discorda** do bot
+  (*"o bot disse 'forte', mas para mim é 'ok' — explicou bem mas não tem prática real"*),
+  esse override é registado e entra na calibração tal como o veredito do cliente. A
+  experiência da recrutadora é sinal de treino, não ruído. (Modelo: campo de override
+  no juízo — ver `MODELO-DADOS.md`.)
+- **Arranque a frio:** no início a lente do cliente é fraca (sem histórico). Até a
+  calibração ganhar massa, o bot apoia-se no **Role Profile** + nos **critérios
+  declarados** do cliente (`client_criteria`) — julga com o que está escrito e com o
+  conhecimento externo, e diz quando a confiança é baixa (Regra 3).
 
 ---
 
@@ -190,6 +217,28 @@ mais forte do sistema → fecha o loop de calibração (ver
 
 ---
 
+## Parte F — Pesos e compensação (avaliação HOLÍSTICA, decisão 2026-06-17)
+
+Cada requisito (e cada `client_criteria`) tem **peso**: **obrigatório (`must`)** vs
+**desejável (`nice`)**. Mas a avaliação **não é uma checklist eliminatória**:
+
+- **Nunca eliminar por um desejável.** Se o candidato falha o **inglês** e o inglês é
+  **desejável** (o cliente disse "não é mandatório"), isso **não** o reprova.
+- **O bot mostra o trade-off, a Filipa decide.** Em vez de um "reprovado", o bot diz:
+  > *"Falha **inglês** [desejável] — mas compensa em **X** e **Y** (must-have, ambos
+  > coberto-com-prova). O cliente disse que inglês **não é mandatório**. **Recomendo
+  > avançar.**"*
+- **Holístico, não somatório cego.** Um must-have falhado pesa muito mais que três
+  desejáveis falhados; um desejável forte pode compensar uma fraqueza não-crítica. O
+  bot raciocina sobre o conjunto e **explica o raciocínio** — não devolve só um número.
+
+> Implementação: o `peso` vive em `client_criteria.peso` e no critério do `rubric`
+> (`must`/`normal`/`nice`) — ver `MODELO-DADOS.md`. O parecer
+> (`RELATORIO-CLIENTE.md`) mostra o trade-off explicitamente, não esconde a fraqueza
+> nem elimina por ela.
+
+---
+
 ## RGPD — separar o que é pessoal do que é avaliação (decisão 2026-06-17)
 
 A Camada A guarda **tudo** (inclui conversa pessoal/rapport). Regra dura: factos
@@ -200,6 +249,19 @@ perguntar, mas isso **não** pesa no juízo de adequação). Retenção curta pa
 pessoal; transcrição crua com janela de retenção; conhecimento durável + factos
 profissionais a longo prazo. Classificação e regimes de retenção em `MODELO-DADOS.md`
 (secção RGPD).
+
+### Decisões RGPD fechadas (2026-06-17)
+- **Reutilização de factos do candidato ENTRE clientes = PERMITIDA.** A Filipa pode
+  reaproveitar o que sabe de um candidato noutro processo/cliente. **O consentimento é
+  responsabilidade da Filipa** (pede autorização ao candidato e ao cliente, fora do
+  produto). Isto **remove** o bloqueador de "limitação de finalidade" da `REVISAO-360`.
+- **Consentimento de gravação = manual da Filipa, antes da reunião** (não in-app). O
+  bot é visível como transcritor na call (ver `ARQUITETURA-TEMPO-REAL.md §6`).
+- **Apagamento por ordem da Filipa:** ela diz ao bot *"apaga tudo deste cliente/
+  candidato"* → **soft-delete com janela de recuperação** (dá para voltar atrás antes
+  do purge definitivo). Ver `MODELO-DADOS.md` (`deleted_at` + `purge_after`).
+- **Single-tenant (só IRIS) na v1:** acesso interno total — o recrutador vê todos os
+  clientes/candidatos. Sem multi-tenant/RLS por agência nesta versão.
 
 ---
 
