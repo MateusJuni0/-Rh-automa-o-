@@ -8,22 +8,34 @@
 
 ## Diagrama de relações
 
+> **Mudança estrutural (2026-06-17):** o **candidato é uma entidade GLOBAL**
+> (talent pool da agência), **não** filho de uma vaga. A ligação candidato↔vaga é o
+> **`process`** (candidatura = candidato × vaga). O mesmo candidato participa em
+> vários `process` de vários clientes ao longo do tempo. A entrevista pertence ao
+> `process`. Detalhe e racional na secção **"Evolução 2026-06-17"** mais abaixo.
+
 ```
 agency
- └── recruiter  (liga a auth.users)
-      ├── client
-      │    ├── client_memory_fact   ← o que aprendemos sobre o cliente (RAG)
-      │    └── job
-      │         ├── role_profile    ← conhecimento externo por role-type
-      │         ├── rubric          ← gabarito (fraco/ok/forte) por requisito
-      │         ├── candidate
-      │         │    ├── candidate_memory_fact  ← o que o candidato disse (RAG)
-      │         │    └── interview
-      │         │         ├── interview_tick    ← estado vivo por tick
-      │         │         ├── report            ← parecer final
-      │         │         └── client_verdict    ← veredito do cliente (calibração)
-      │         └── document        ← ficheiros do cliente sobre a vaga
-      └── intake_message            ← msgs encaminhadas para processar
+ ├── recruiter  (liga a auth.users)
+ │    └── intake_message            ← msgs encaminhadas (+ alvo/intenção)
+ │
+ ├── client
+ │    ├── client_memory_fact        ← o que aprendemos sobre o cliente (RAG)
+ │    ├── client_criteria           ← perguntas/critérios que ESTE cliente sempre faz
+ │    └── job (vaga / mandato)
+ │         ├── role_profile         ← conhecimento externo por role-type
+ │         ├── rubric               ← gabarito (fraco/ok/forte) por requisito
+ │         └── document             ← ficheiros do cliente sobre a vaga
+ │
+ └── candidate  (GLOBAL — talent pool, cross-cliente)
+      ├── candidate_memory_fact     ← o que o candidato disse/é (RAG, durável)
+      └── process  (candidatura = candidate × job)
+           ├── interview
+           │    ├── interview_tick       ← estado vivo por tick
+           │    ├── transcript_chunk      ← Camada A: transcrição completa + embedding
+           │    └── report                ← parecer (versão interna + versão cliente)
+           ├── client_verdict            ← veredito do cliente (calibração)
+           └── placement_outcome         ← contratou? ficou/saiu na garantia? (ground-truth)
 ```
 
 ---
@@ -305,6 +317,158 @@ CREATE TABLE intake_message (
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+---
+
+## Evolução 2026-06-17 — candidato global, Camada A, critérios do cliente, RGPD
+
+> Esta secção **supersede** partes do DDL acima onde indicado. Mantemos o DDL
+> original como base e marcamos aqui as mudanças (é doc de design, não migração).
+
+### 1. Candidato GLOBAL + `process` (candidatura) — decisão talent pool
+
+**Problema do modelo antigo:** a entrevista ligava direto a `job_id` + `candidate_id`,
+e o candidato vivia "dentro" da lógica da vaga. Mas o mesmo candidato repete-se entre
+clientes e vagas ao longo do tempo. Prender o candidato a uma vaga perde o **talent
+pool**.
+
+**Modelo novo:** `candidate` é **global** por agência (já não tem nada que o prenda a
+uma vaga — a DDL de `candidate` acima mantém-se, é só reinterpretada como entidade de
+topo). A ligação candidato↔vaga passa a ser o **`process`**:
+
+```sql
+-- Processo = candidatura de UM candidato a UMA vaga (candidate × job)
+-- O mesmo candidate_id aparece em vários process, de vários clientes.
+CREATE TABLE process (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  candidate_id  UUID NOT NULL REFERENCES candidate(id),
+  job_id        UUID NOT NULL REFERENCES job(id),
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  stage         TEXT NOT NULL DEFAULT 'sourced',   -- 'sourced'|'screening'|'interview'|'submitted'|'client_iv'|'offer'|'placed'|'rejected'|'withdrawn'
+  status_reason TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  closed_at     TIMESTAMPTZ,
+  deleted_at    TIMESTAMPTZ,
+  UNIQUE (candidate_id, job_id)
+);
+CREATE INDEX ON process (job_id, stage);
+CREATE INDEX ON process (candidate_id);
+```
+
+**Supersede:** `interview`, `client_verdict` e o novo `placement_outcome` passam a
+referenciar **`process_id`** em vez de `job_id`+`candidate_id` (deriváveis via
+`process`). `candidate_memory_fact.job_id` continua **opcional** e passa a significar
+"o `process` em que o facto surgiu" (NULL = facto geral do candidato, reutilizável).
+
+```sql
+ALTER TABLE interview        ADD COLUMN process_id UUID REFERENCES process(id);
+ALTER TABLE client_verdict   ADD COLUMN process_id UUID REFERENCES process(id);
+-- (job_id/candidate_id ficam como denormalização opcional para queries, ou removem-se na migração real)
+```
+
+### 2. Camada A — transcrição completa sem perdas (`transcript_chunk`)
+
+```sql
+-- A FONTE DE VERDADE da entrevista: transcrição inteira, diarizada, com timestamp.
+-- NADA é descartado (inclui conversa pessoal — ver classificação RGPD §5).
+CREATE TABLE transcript_chunk (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  interview_id  UUID NOT NULL REFERENCES interview(id),
+  agency_id     UUID NOT NULL,
+  seq           INT NOT NULL,                 -- ordem dentro da entrevista
+  speaker       TEXT NOT NULL,                -- 'candidate' | 'recruiter' | 'other'
+  ts_start      TEXT NOT NULL,                -- "12:03"
+  ts_end        TEXT,
+  text          TEXT NOT NULL,                -- o que foi dito, cru
+  classificacao TEXT NOT NULL DEFAULT 'professional', -- 'professional' | 'personal' (RGPD §5)
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  retain_until  TIMESTAMPTZ                   -- janela de retenção (cru); NULL = regra default
+);
+CREATE INDEX ON transcript_chunk (interview_id, seq);
+
+CREATE TABLE transcript_chunk_embedding (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chunk_id    UUID NOT NULL REFERENCES transcript_chunk(id) ON DELETE CASCADE,
+  agency_id   UUID NOT NULL,
+  embedding   VECTOR(1536) NOT NULL
+);
+CREATE INDEX ON transcript_chunk_embedding USING ivfflat (embedding vector_cosine_ops);
+```
+
+> `interview_tick.live_state` continua a ser a **vista de trabalho comprimida** (Camada
+> B); `transcript_chunk` é a **fonte** (Camada A). O Q&A da Filipa e a destilação de
+> factos correm sobre `transcript_chunk`, não sobre o `resumo_corrente`.
+
+### 3. Critérios do cliente (`client_criteria`) — base do relatório
+
+```sql
+-- As perguntas/critérios que ESTE cliente sempre faz (capturados no setup).
+-- Viram linhas do rubric e secções do relatório (RELATORIO-CLIENTE.md).
+CREATE TABLE client_criteria (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  client_id     UUID NOT NULL REFERENCES client(id),
+  job_id        UUID REFERENCES job(id),       -- NULL = vale para todas as vagas deste cliente
+  criterio      TEXT NOT NULL,                 -- "já liderou equipa?", "remoto a sério?"
+  peso          TEXT NOT NULL DEFAULT 'normal', -- 'must' | 'normal' | 'nice'
+  origem        TEXT NOT NULL DEFAULT 'setup',  -- 'setup' | 'verdict_inferido' | 'manual'
+  source_ref    TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  deleted_at    TIMESTAMPTZ
+);
+CREATE INDEX ON client_criteria (client_id);
+```
+
+### 4. Resultado da colocação (`placement_outcome`) — ground-truth da calibração
+
+```sql
+CREATE TABLE placement_outcome (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  process_id    UUID NOT NULL REFERENCES process(id) UNIQUE,
+  decision      TEXT NOT NULL,                 -- 'hired' | 'offer_declined' | 'rejected'
+  decline_reason TEXT,                         -- se o candidato recusou (contraproposta?)
+  guarantee_result TEXT,                       -- 'stayed' | 'left_in_guarantee' | 'pending'
+  guarantee_until TIMESTAMPTZ,                 -- fim do período de garantia
+  bot_predicted TEXT,                          -- 'strong'|'ok'|'weak' que o bot tinha dado
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 5. RGPD — classificação pessoal/profissional + correções da Filipa + relatório 2 versões
+
+```sql
+-- Factos etiquetados: 'personal' NUNCA entra na avaliação/score (só recall).
+ALTER TABLE candidate_memory_fact ADD COLUMN classificacao TEXT NOT NULL DEFAULT 'professional'; -- 'professional'|'personal'
+ALTER TABLE candidate_memory_fact ADD COLUMN usar_no_score BOOLEAN NOT NULL DEFAULT TRUE;          -- FALSE p/ personal
+ALTER TABLE candidate_memory_fact ADD COLUMN corrigido_pela_filipa BOOLEAN NOT NULL DEFAULT FALSE; -- correção humana ganha prioridade
+ALTER TABLE candidate_memory_fact ADD COLUMN corrected_by UUID REFERENCES recruiter(id);
+ALTER TABLE candidate_memory_fact ADD COLUMN retain_until TIMESTAMPTZ;                              -- retenção curta p/ personal
+ALTER TABLE client_memory_fact    ADD COLUMN corrigido_pela_filipa BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Intake tipado (alvo + intenção) — ver INTAKE-E-JULGAMENTO.md
+ALTER TABLE intake_message ADD COLUMN alvo     TEXT;  -- 'cliente'|'vaga'|'candidato'
+ALTER TABLE intake_message ADD COLUMN alvo_id  UUID;
+ALTER TABLE intake_message ADD COLUMN intencao TEXT;  -- 'setup'|'add_requisito'|'corrigir_facto'|'pergunta'|'nova_vaga'
+
+-- Relatório em duas versões (interna + cliente) — ver RELATORIO-CLIENTE.md
+ALTER TABLE report ADD COLUMN content_client_md TEXT;     -- versão polida para o cliente
+ALTER TABLE report ADD COLUMN client_sent_at    TIMESTAMPTZ;
+-- content_md = versão interna (leitura rápida da Filipa); content_edited = edição da Filipa
+```
+
+**Regra de score (RGPD):** qualquer cálculo de adequação/score **filtra**
+`usar_no_score = TRUE` e `classificacao = 'professional'`. Os factos pessoais existem
+para *recall* (o bot pode responder à Filipa) mas são invisíveis ao juízo de
+adequação. Regimes de retenção: cru (`transcript_chunk.retain_until`) curto;
+profissional durável; pessoal o mais curto possível.
+
+### Ordem de criação (delta sobre a lista original)
+Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
+(+ embedding). Junto de `client`: **`client_criteria`**. No fim:
+**`placement_outcome`**. ALTERs do §5 aplicam-se às tabelas já existentes.
 
 ---
 
