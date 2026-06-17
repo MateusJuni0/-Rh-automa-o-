@@ -103,6 +103,19 @@ captura**. É o Modo A, mas servido em tempo real.
 **RGPD:** factos `classificacao='personal'` / `usar_no_score=FALSE` servem para
 **recall** (o bot pode responder) mas **nunca** entram num juízo de adequação/comparação.
 
+### 4.1 — Re-entrevista: o mesmo candidato, outra vaga, meses depois (gap H3)
+
+Como o candidato é **global** (talent pool), ele reaparece. Política de recall:
+- **Factos GERAIS** (transferíveis: skills duráveis, traços, histórico) — `job_id`/
+  `process` **NULL** — **reutilizam-se** na nova vaga (é a vantagem do talent pool: já
+  conhecemos a pessoa).
+- **Factos ESPECÍFICOS do processo** (salário pedido ao cliente X, fit para o role Y) —
+  ligados a um `process` — entram só como **contexto**, **não** como juízo automático
+  na nova vaga (o que pediu ao cliente X não decide a vaga do cliente Z).
+- **Frescura:** facto antigo é **re-validado ao vivo**, não assumido — *"há 6 meses
+  disseste que não tinhas Azure; mudou?"*. O bot trata memória velha como **ponto de
+  partida a confirmar**, nunca como verdade atual (mesma disciplina anti-achismo).
+
 ---
 
 ## 5. Línguas

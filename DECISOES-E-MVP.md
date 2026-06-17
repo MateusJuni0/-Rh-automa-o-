@@ -269,3 +269,12 @@ Mapa do cérebro revisto (Antes/Durante/Depois) → 7 gaps encontrados. Fechados
 - [x] **Comportamentos ao vivo afinados (`ARQUITETURA-TEMPO-REAL §9`):** pesquisa ao vivo = **varredura em 2º plano da ESTRUTURA do projeto**; **progresso de cobertura** ("riscar até fechar tudo", X/Y cobertos, fecha a checklist antes do fim).
 - ✅ **Calendário/proativo já no escopo** (`ASSISTENTE-PROATIVO.md` — Google Calendar OAuth, `agenda_event`): o bot tem acesso à agenda da Filipa + resumo de preparação antes das reuniões + deteção de lacunas.
 
+### Re-exame honesto "fechámos a Parte 1?" (2026-06-17) — +4 itens fechados
+Mateus desafiou ("tem certeza?"). Não estava 100%. Fechados agora:
+- [x] **Atribuição fora de ordem:** candidato responde tópico 5 enquanto no 1 → Camada B roteia o significado ao requisito certo, risca esse, atualiza memória ao vivo; Camada A guarda tudo na hora. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Disciplina de tokens** (regra dura "não chupar token à toa"): nunca reenviar as 2h; prompt caching do fixo; Camada A guardada≠reenviada (RAG sob procura); Haiku nos ticks banais; sem chamada sem motivo; output estruturado curto. `ARQUITETURA-TEMPO-REAL §3`.
+- [x] **v1 só OpenRouter (chat) + Filipa troca o modelo na app** (seletor com catálogo+preço por slot); embedder/STT fora do OpenRouter. `MODELOS-E-API §2`.
+- [x] **Robustez de input:** STT de baixa confiança NÃO vira prova → re-sonda (reconexão de áudio = embalagem; a regra de juízo = cérebro). `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Re-entrevista (H3):** factos gerais reutilizam-se; específicos-do-process só contexto; memória velha re-validada ao vivo. `ASSISTENTE-CONVERSA §4.1`.
+- ⏸️ **HONESTO: fica para a embalagem/config (não cérebro):** canal dos lembretes proativos + antecedência (`ASSISTENTE-PROATIVO §4`); rascunho de feedback ao candidato (A5, produto). **Agora sim a Parte 1 (cérebro) está sólida.**
+

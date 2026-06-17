@@ -32,9 +32,18 @@ Trocar de modelo = mudar **config**, nunca código.
 
 ## 2. Como se troca (config, não código)
 
-- **Chat (`EXTRACTOR`/`ARCHITECT`/`LIVE`)**: roteado por **OpenRouter** (chave única,
-  centenas de modelos de vários fornecedores, fallback) **ou** direto ao fornecedor.
-  Cada slot tem um `model_id` em config:
+- **Chat (`EXTRACTOR`/`ARCHITECT`/`LIVE`)**: **v1 = SÓ via OpenRouter** (decisão Mateus
+  2026-06-17 — uma integração só, simples; chave única, centenas de modelos de vários
+  fornecedores, fallback). Provedores diretos ficam para v2 se fizer falta.
+- **A Filipa troca o modelo na própria app/site** (NÃO é preciso mexer em ficheiros):
+  no ecrã de **Definições**, cada slot (`EXTRACTOR`/`ARCHITECT`/`LIVE`) tem um seletor
+  com o **catálogo do OpenRouter** (nome + preço/1k tokens visível) → ela escolhe e
+  grava. *O ecrã detalha-se na embalagem (`UI-DESIGN`); a capacidade decide-se aqui.*
+  Guarda-se por deployment (e por agência na v2).
+- **Embedder e STT NÃO passam pelo OpenRouter** (ele só faz chat/completions) → têm o
+  seu próprio provedor configurável (ex.: OpenAI/Gemini para embeddings; Soniox/Deepgram
+  para STT). Honesto: "só OpenRouter" vale para os slots de **chat**.
+  Cada slot de chat tem um `model_id` em config (default, que a Filipa pode trocar na UI):
   ```env
   MODEL_EXTRACTOR=anthropic/claude-haiku-4-5   # ou google/gemini-..., openai/gpt-..., etc.
   MODEL_ARCHITECT=anthropic/claude-opus-4-8     # trocável se Opus for caro demais

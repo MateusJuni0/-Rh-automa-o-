@@ -128,7 +128,29 @@ pausas, não a cada palavra.
 - Não sugerimos a cada palavra → sugerimos quando um tópico fecha ou há pausa.
 - Alvo: sugestão aparece **1–3 s** depois do momento relevante. Folgado, porque o
   recrutador também está a processar a resposta.
-- O STT é parcial/contínuo; a análise do Claude corre em paralelo ao próximo trecho.
+- O STT é parcial/contínuo; a análise do modelo corre em paralelo ao próximo trecho.
+
+### Disciplina de tokens/custo (regra dura — "não chupar token à toa")
+Uma entrevista de 2h não pode custar uma fortuna. Regras de construção:
+1. **Nunca reenviar as 2h.** Por tick vai só: `system+vaga+rubric` (em **cache**) +
+   **estado vivo comprimido** + **janela recente** de transcrição + `resumo_corrente`.
+   O custo por tick é **constante**, não cresce com a duração (§2, andar 3).
+2. **Prompt caching** do que é fixo (system, vaga, rubric, Role Profile) → os tokens
+   caros entram **uma vez**, não a cada tick.
+3. **Camada A é guardada, NÃO reenviada.** A transcrição inteira vive em
+   `transcript_chunk` (para Q&A/parecer **depois**), mas **não** entra no contexto de
+   cada tick. Recupera-se por **RAG sob procura**, não por força bruta.
+4. **Modelo certo por tick:** ticks "banais" (só atualizam estado, sem sugestão rica)
+   podem ir ao `EXTRACTOR` (Haiku) em vez do `LIVE` (Sonnet) — decisão por tipo de tick
+   (`REVISAO-360` B4). Destilação de factos = sempre `EXTRACTOR`.
+5. **Sem chamada sem motivo:** se nada mudou de relevante desde o último tick (silêncio,
+   rapport), **não se chama o modelo** — fica em silêncio (a escada já manda isto).
+6. **Output estruturado curto** (JSON do estado/sugestão), não prosa — menos tokens de
+   saída por tick.
+7. **Pesquisa ao vivo** destila com `EXTRACTOR` e guarda **o facto**, não o conteúdo
+   cru, no contexto do tick (o cru vai para `source_doc`).
+> Medir tokens/entrevista num dashboard (`REVISAO-360` F1) e **provar** a constância
+> simulando 2h antes de pôr à frente de um cliente (B6).
 
 ---
 
@@ -261,6 +283,13 @@ confiança alta"* ou *"aparenta forte, mas confiança baixa — só uma menção
 candidato que **infla** (H2) sem o acusar. Persiste em `candidate_memory_fact` e no
 estado vivo.
 
+**A qualidade do STT entra na confiança (robustez de input):** um trecho que o STT
+marcou como **incerto** (ruído, vozes sobrepostas, fala cortada) **não** pode, por si
+só, levar um requisito a `coberto-com-prova` — fica `raso`/confiança baixa e o motor
+**re-sonda** ("podes repetir isso do…?") em vez de assumir. Nunca se destila um facto
+firme de transcrição duvidosa (`REVISAO-360` B2). Os mecanismos de *reconexão* de
+áudio/stream (B1/B5) são da **embalagem**; esta regra de **juízo** é do cérebro.
+
 **Progresso de cobertura — "riscar até fechar tudo" (2026-06-17):** o bot tem **todos os
 requisitos da vaga na memória** (`rubric` ← `job.requirements` + `client_criteria`) e
 trata a entrevista como uma **checklist viva**: cada requisito que passa a
@@ -285,6 +314,20 @@ riscado quando o candidato **prova** (caso/número/exemplo). Pensando como a Fil
 - **Há tópicos que se PROVAM sozinhos:** ex. o **inglês** — se a entrevista decorre em
   inglês, o nível **demonstra-se ao vivo** (a Camada B infere da própria fala) sem uma
   pergunta forçada; o bot risca-o por observação e di-lo no parecer.
+
+**Atribuição FORA DE ORDEM (o ponto do Mateus) — o tópico não é a "pergunta atual":**
+a conversa não segue a lista. Se o bot está no tópico 1 e o candidato, a responder,
+**toca no tópico 5** (*"…aliás, isso foi quando liderei a equipa de 4 pessoas"*), a
+Camada B **reconhece a que requisito aquilo pertence** e **risca o tópico 5**, não o 1 —
+em **tempo real**. Como funciona, ligado às duas camadas (§8):
+- **Camada A** transcreve e guarda **tudo, na hora** (`transcript_chunk` + embedding),
+  independentemente do tópico — nada se perde por ter vindo "fora de sítio".
+- **Camada B** roteia o **significado** de cada fala para **o(s) requisito(s) que ela
+  realmente responde** (pode tocar mais do que um), atualiza o estado desse(s)
+  requisito(s) e o `candidate_memory_fact` correspondente — **não** assume que a
+  resposta é do tópico em foco.
+- Assim, um candidato que "salta à frente" **adianta** a checklist em vez de a baralhar;
+  o bot só **volta a puxar** o que ficou por riscar, na altura certa.
 
 O objetivo do motor é **fechar a lista inteira**; a **rede de segurança** abaixo garante
 que nenhum `must` fica por riscar no fim.
