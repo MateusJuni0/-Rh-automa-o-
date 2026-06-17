@@ -91,9 +91,25 @@ Resolve a dor #4. Antes da call, uma página enxuta:
 
 Esta é a tela que decide se o produto é amado ou abandonado.
 
-### Layout (barra lateral / segunda tela, ~360px)
-Pensada para ficar **ao lado** da janela do Meet/Zoom/Teams, ou em segundo
-monitor / tablet / celular no presencial. Não cobre o rosto do candidato.
+### É um APP DESKTOP, não um separador de browser (decisão 2026-06-17)
+O overlay ao vivo é um **app de secretária** (`apps/desktop` — Electron; Tauri como
+alternativa mais leve), **não** uma página web. Razão: uma aba de browser **não fica
+por cima** do Zoom/Meet/Teams. O app é:
+- **Always-on-top · sem moldura · arrastável**, janela pequena, com a **cara do bot**.
+- **Dupla função:** além de mostrar as sugestões, é ele que **capta o áudio local** da
+  entrevista (microfone/sistema) e o envia para o `realtime`.
+- **Só aparece quando está ATIVO** a ouvir/transcrever. Fora da entrevista, fecha-se.
+- As **sugestões e a avaliação são PRIVADAS** da Filipa (só no overlay dela); o
+  candidato/cliente nunca as veem. O bot é visível na call apenas como **transcritor**
+  (consentido no início — ver `ARQUITETURA-TEMPO-REAL.md §6`).
+
+> **Divisão de superfícies:** `desktop` = SÓ o "durante" (overlay + captura).
+> `web` = TODO o resto (cadastros, Role Profile/rubric, relatórios, Q&A, agenda). Mesmo
+> backend. A Tela 6 abaixo descreve o overlay desktop; as outras telas são web.
+
+### Layout do overlay (~360px, always-on-top)
+Fica **por cima** da janela do Meet/Zoom/Teams (ou em 2º monitor / tablet no
+presencial). Não cobre o rosto do candidato.
 
 ```
 ┌───────────────────────────────┐
@@ -145,6 +161,15 @@ monitor / tablet / celular no presencial. Não cobre o rosto do candidato.
 - **Rede de segurança no fim:** ao sinalizar "a fechar" (ou perto do tempo), a tela
   levanta os **must-have ainda por cobrir** — *"Antes de terminar: falta confirmar
   Inglês e Liderança."* É o seguro contra o "esqueci-me de perguntar".
+- **A sugestão auto-desaparece** após ~10s **OU** quando a Camada B deteta que (a) a
+  Filipa **já fez** aquela pergunta, ou (b) o candidato **já a respondeu**. A Filipa
+  não tem de gerir a fila — limpa-se sozinha.
+- **Corrigir "quem falou" num toque:** se a diarização trocar os falantes, a Filipa
+  reatribui o trecho com um toque (ver `ARQUITETURA-TEMPO-REAL.md §2`).
+- **Caixa de chat AO VIVO:** no overlay há um campo onde a Filipa pergunta ao bot a
+  meio da entrevista — *"ele já falou de salário?"* — e ele responde do **estado +
+  transcrição corrente**, **sem parar a captura**. (É o Q&A da Tela 8, embutido no
+  overlay para uso durante a call.)
 
 ### Anti-padrões a evitar
 - ❌ Parede de texto rolando (a transcrição inteira na cara).
@@ -202,10 +227,10 @@ completa (Camada A) + factos, **na linguagem dela** e **com a fonte**.
 
 ## Decisões de design em aberto
 
-- [ ] **Formato do copiloto ao vivo:** barra lateral na web, app separado no
-      celular, ou extensão de navegador? (provável: começar como web em janela
-      estreita / segundo monitor)
-- [ ] **Idioma da interface:** PT-BR apenas no início?
+- [x] **Formato do copiloto ao vivo:** ✅ **DECIDIDO (2026-06-17)** — **app desktop**
+      (Electron; Tauri alt.) always-on-top que também capta o áudio. Não é browser.
+- [x] **Idioma:** ✅ **interface PT**; a **Filipa fala inglês** e o STT cobre
+      **PT-PT/PT-BR/EN/FR + misturas** (`ARQUITETURA-TEMPO-REAL.md §2`).
 - [ ] **Marca/nome e paleta final** (azul-teal é só ponto de partida).
 - [ ] **Quanto a IA "fala" sozinha** durante a call vs só quando solicitada.
 
