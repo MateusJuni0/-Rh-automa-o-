@@ -35,11 +35,17 @@ um email para o cliente? **Pede aqui** — e o assistente já tem o **contexto d
 
 ---
 
-## 2. Estrutura agêntica (tipo Hermes/Lince — reaproveitamos o que dominamos)
+## 2. Estrutura agêntica — **um Hermes/Lince por trás** (decisão 2026-06-17)
 
-Não é um prompt solto. É um **agente com ferramentas**, com a arquitetura que já temos
-em produção no **Lince Brain** (o Mateus construiu-o: FastAPI + grafo + tools + estado
-PostgreSQL + trilho de auditoria + kill switch):
+> **Pergunta do Mateus:** "não seria melhor pôr um Hermes por trás, ou fazemos manual?"
+> **Resposta: Hermes por trás.** Não construímos o motor agêntico de raiz — seria
+> reinventar o que já está provado no **Lince Brain**. **Instanciamos um Lince/Hermes
+> dedicado ao RH** (FastAPI + grafo LangGraph + tool-calling + estado PostgreSQL +
+> trilho de auditoria + kill switch). **Regra (igual à biometria): clonar/instanciar,
+> NÃO misturar** com o Lince de operações da CMTec — é um agente próprio, com as
+> ferramentas do recrutamento, na infra do RH.
+
+É um **agente com ferramentas**, com a arquitetura que já corre no **Lince Brain**:
 
 - **Loop de raciocínio com tool-calling:** o assistente decide que ferramenta usar,
   usa, observa o resultado, continua — até resolver o pedido.
@@ -55,21 +61,34 @@ PostgreSQL + trilho de auditoria + kill switch):
 
 ---
 
-## 3. As ferramentas (o que ela pode pedir que ele FAÇA)
+## 3. As ferramentas (o que ela pede que ele FAÇA — ela não opera nada)
 
-| Categoria | Exemplos do que gera/faz |
+> **Princípio (Mateus 2026-06-17): a Filipa não precisa de saber mexer nas coisas.**
+> Ela **fala** ("vou entrar numa reunião agora", ou cola o link) e o assistente trata
+> da parte técnica **por trás** — põe o bot na call, prepara tudo. Ela conversa; ele
+> opera. O técnico é problema do assistente, não dela.
+
+| Categoria | Exemplos do que faz |
 |---|---|
-| **Documentos** | **planilhas** (comparação de candidatos, pipeline, shortlist), **CVs** (reformatar o CV de um candidato no template do cliente, ou melhorá-lo), **pareceres**, **propostas**, **anúncios de vaga**, cartas |
-| **Comunicação** | rascunhar (e, com confirmação, **enviar**) emails a clientes/candidatos; mensagens WhatsApp/Telegram; follow-ups |
-| **Agenda** | ler/criar/reagendar eventos (Google Calendar); enviar convites |
-| **Dados dela** | procurar/filtrar candidatos no talent pool, construir shortlist, **exportar** (CSV/Excel/PDF) |
-| **Web** | pesquisar (a mesma camada Exa/Brave) — mercado salarial, empresa, tecnologia |
-| **Recrutamento** | puxar um parecer, **comparar candidatos** (`ASSISTENTE-CONVERSA` Modo C), gerar o briefing de uma entrevista, rascunho de **feedback ao candidato** (fecha o gap A5) |
+| **Operar a entrevista** ⭐ | ela diz *"vou para uma reunião"* / cola o **link do Meet/Zoom** → o assistente **põe o bot na call** (ou prepara a captura local), cria a sala/sessão, arranca o copiloto. **Fecha o A2 do lado dela** — ela não mexe em LiveKit nem em nada. |
+| **Documentos** | **planilhas** (comparação, pipeline, shortlist), **CVs** (reformatar no template do cliente, ou melhorar), **pareceres**, **propostas**, **anúncios de vaga**, cartas |
+| **Comunicação** | rascunhar (e, com confirmação, **enviar**) emails a clientes/candidatos; WhatsApp/Telegram; follow-ups |
+| **Agenda** | ler/criar/reagendar eventos (Google Calendar); convites |
+| **Dados dela** | procurar/filtrar candidatos no talent pool, shortlist, **exportar** (CSV/Excel/PDF) |
+| **Web & sourcing** ⭐ | pesquisar (Exa/Brave, **APIs pagas que ela já tem**); e, **se ela der acesso**, **navegar e ir ao LinkedIn buscar candidatos** (ou o que ela pedir) — sourcing assistido |
+| **Recrutamento** | puxar um parecer, **comparar candidatos** (`ASSISTENTE-CONVERSA` Modo C), gerar o briefing, rascunho de **feedback ao candidato** (fecha A5) |
 
-> As ferramentas de geração de **documentos Office** (xlsx/docx/pdf) são capacidades
-> reais — reaproveitam o que a CMTec já usa (skills de geração de ficheiros). A
-> planilha de comparação **não** é um ecrã rígido: é um **artefacto gerado** que ela
-> baixa e edita.
+- **Acesso é dela, concedido a ele:** browsing/LinkedIn/sourcing correm com o **acesso
+  que a Filipa concede** (login dela, dentro dos termos das plataformas). Ações com
+  efeito (enviar, marcar, publicar, pôr-se numa call) passam pela **porta de
+  confirmação** (§2).
+- As ferramentas de **documentos Office** (xlsx/docx/pdf) são reais — reaproveitam as
+  skills de geração de ficheiros da CMTec. A planilha de comparação é um **artefacto
+  gerado** que ela baixa e edita, não um ecrã rígido.
+
+> **A2 (entrar na call) — reclassificado:** parte é **embalagem** (a mecânica LiveKit/
+> captura), mas o **gatilho e a orquestração são do assistente** — ela nunca configura
+> nada à mão. Ver `ARQUITETURA-TEMPO-REAL §5`.
 
 ---
 
