@@ -304,7 +304,7 @@ produto** (overlay ao vivo **e** web app). Decisão fixada:
 - [x] **Idioma:** ✅ **interface PT**; a **Filipa fala inglês** e o STT cobre
       **PT-PT/PT-BR/EN/FR + misturas** (`ARQUITETURA-TEMPO-REAL.md §2`).
 - [x] **Direção visual:** ✅ **HUD escuro "Apollo" em todo o produto** (escolhido de 3 mockups, 2026-06-17).
-- [ ] **Nome/marca + cor de acento final** (teal = ponto de partida). 🟦 Mateus.
+- [x] **Nome/marca:** ✅ **VERA** (2026-06-17). Marca pública = **Vera** (latim "verdadeira" → o anti-achismo: juízo com prova). **Motor interno = Lince** (não se mistura). Acento **teal** (`#5DCAA5`). *Nos mockups onde aparece "Lince RH" → ler "Vera".*
 - [ ] **Quanto a IA "fala" sozinha** durante a call vs só quando solicitada.
 
 ---
