@@ -318,5 +318,10 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - [x] **UI-DESIGN completo:** +Tela 9 (assistente pessoal: chat+artefactos+confirmação), Tela 10 (comparar: matriz, trade-off, Filipa decide), Tela 11 (onboarding: lista conversacional), Tela 12 (definições: modelo por slot/calendário/dispositivos), Login biométrico+email (tela colorida liveness). Tom visual: dark no ao-vivo, glassmorphism HUD "Apollo", CMTec Linear/Stripe.
 - [x] ✅ **Direção visual LOCKED (de 3 mockups):** **HUD escuro "Apollo" em TODO o produto** (overlay + web app). Flat dark (sem gradiente/blur), barra de acento, teal sobre escuro, cara do bot, semáforo só p/ status. Nota de conforto: não preto puro (`#0E1116`), texto `#E6E8EB`, p/ telas de gestão não cansarem. `UI-DESIGN`.
 - [x] ✅ **NOME/MARCA: "VERA"** (2026-06-17). Marca pública que o cliente vê = **Vera** (latim "verdadeira" = juízo com prova, o anti-achismo). **Motor interno = Lince** (não se mistura, igual à biometria). Acento **teal** `#5DCAA5`. Mockups com "Lince RH" → ler "Vera".
+
+### ⚠️ REGRA DE FASES (Mateus, 2026-06-17) — NADA DE CÓDIGO até à Fase 3
+- **Fase 1 = o cérebro** (specs) ✅ · **Fase 2 = embalagem & design** (specs/mockups) — ATUAL · **Fase 3 = codar tudo** (build). **Só na Fase 3 se escreve código.** Até lá, tudo é spec.
+- [x] **Mockups dark (Vera):** overlay ao vivo ✅, assistente pessoal ✅, dashboard/pipeline ✅, comparar candidatos ✅. Validaram o HUD escuro p/ ao-vivo E telas de gestão.
+- [ ] **Mockups que faltam:** briefing pré-entrevista + parecer (Tela 5 e 7). *(spec, não código.)*
 - ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
 
