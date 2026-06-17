@@ -313,3 +313,9 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - ⏸️ **Dispatch-cleanup (hygiene, não bloqueia):** coerência de schema (process_id canónico em interview/candidate_memory_fact; contagens de tabelas; diagrama da pasta) — G1/G2/G5; timeouts de no-show/sem-veredito (H6/H5). Anotado p/ a prep de dispatch.
 - ✅✅ **PARTE 1 (O CÉREBRO) DADA COMO SÓLIDA — última varredura feita.** Avançar para a **FASE 2 (embalagem + design)** com GO do Mateus.
 
+## FASE 2 — Embalagem & Design (arrancou 2026-06-17)
+- [x] **Integração atualizada (`ARQUITETURA-INTEGRACAO`):** monorepo agora inclui `services/agent` (assistente=motor Hermes clonado, vendorizado) + `services/face` (biometria clonada); +10 rotas API novas (assistant chat/action/onboarding, compare, sourcing, auth/face, settings/models, calendar, interviews/join); env atualizado (OpenRouter, Apify, Google OAuth, Resend, face S2S); **Agente 1 corrigido p/ SINGLE-TENANT** (sem RLS v1); +carris Agente 7 (agente) e 8 (biometria, pré-req: bug enroll).
+- [x] **UI-DESIGN completo:** +Tela 9 (assistente pessoal: chat+artefactos+confirmação), Tela 10 (comparar: matriz, trade-off, Filipa decide), Tela 11 (onboarding: lista conversacional), Tela 12 (definições: modelo por slot/calendário/dispositivos), Login biométrico+email (tela colorida liveness). Tom visual: dark no ao-vivo, glassmorphism HUD "Apollo", CMTec Linear/Stripe.
+- [ ] 🟦 **DECISÃO DO MATEUS:** paleta/nome/marca final (azul-teal = ponto de partida).
+- ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
+

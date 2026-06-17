@@ -38,14 +38,19 @@
 ## Mapa de telas
 
 ```
-Login → Dashboard (pipeline)
+Login (biométrico/email) → Onboarding (1º uso) → Dashboard (pipeline)
             ├── Vaga (criar/editar requisitos)
-            ├── Triagem de candidatos (ranking de CVs)
+            ├── Triagem de candidatos (ranking de CVs) — opcional (headhunting é 1-a-1)
             ├── Candidato (perfil + CV destrinchado)
             ├── Briefing pré-entrevista (roteiro)
-            ├── ⭐ Copiloto ao vivo (durante a entrevista)
-            └── Relatório pós-entrevista (resumo + score + feedback)
+            ├── ⭐ Copiloto ao vivo (app desktop — durante a entrevista)
+            ├── Relatório pós-entrevista (resumo + score + feedback)
+            ├── ⭐ Assistente pessoal (chat geral + ferramentas) ── Tela 9
+            ├── Comparar candidatos ── Tela 10
+            └── Definições (modelo por slot, calendário, conta) ── Tela 12
 ```
+> **Telas novas (2026-06-17):** Login biométrico, Onboarding (Tela 11), Assistente
+> pessoal (Tela 9), Comparar (Tela 10), Definições (Tela 12). Especificadas abaixo.
 
 ---
 
@@ -222,6 +227,62 @@ completa (Camada A) + factos, **na linguagem dela** e **com a fonte**.
   candidato**. Só se faltar é que vira "a confirmar".
 - Tom de copiloto: se não sabe, **diz que não sabe** ("não foi falado na entrevista")
   em vez de inventar.
+
+---
+
+## Tela 9 — ⭐ Assistente pessoal (o "ChatGPT dela" + ferramentas)
+
+A casa do assistente (`ASSISTENTE-PESSOAL.md`). Um **chat** de uso geral, mas com o
+mundo dela e capaz de **fazer** (gerar planilhas/CV/email, sourcing, agenda).
+- **Chat central** (como ChatGPT) + **artefactos gerados** ao lado (cartões para baixar:
+  "📊 comparação.xlsx", "📄 CV reformatado.pdf", "✉️ rascunho de email").
+- **Contexto ativo** visível ("a falar sobre: TechCorp · Dev React") — o que ela escolheu.
+- **Ações com confirmação** aparecem como um cartão *"Vou enviar este email ao cliente.
+  [Enviar] [Editar] [Cancelar]"* — só para `gravar`/`enviar_fora` (resto flui livre).
+- **Tarefas longas** (sourcing) mostram **progresso** ("a procurar… 3 perfis"), não bloqueiam.
+- Tom de copiloto, linguagem dela, cita fontes (herda Tela 8).
+
+## Tela 10 — Comparar candidatos
+
+`ASSISTENTE-CONVERSA.md` Modo C. **Matriz critério-a-critério** vs os critérios do
+cliente (com pesos must/nice). Colunas = candidatos; linhas = critérios.
+- Cada célula: ✅/🟡/⚠/⬜ + **clicável até à prova** (trecho/timestamp/url).
+- Mostra o **trade-off** em texto ("X mais forte em IA; Y melhor em equipa") — **nunca**
+  um vencedor cego; **a Filipa decide**. Assinala se foram medidos por **versões de
+  rubric diferentes**.
+
+## Tela 11 — Onboarding (1º uso)
+
+`ASSISTENTE-PESSOAL §4.1`. Uma **lista conversacional** que o assistente apresenta para
+ela responder (estilo/comunicação, clientes, como trabalha, **pessoal — quanto mais
+melhor**). Salta/completa depois; cada resposta **editável**; mostra o que guardou
+("anotei que assinas 'Abraço, Filipa'"). Não é formulário rígido — é conversa.
+
+## Tela 12 — Definições
+
+- **Modelo por slot** (`MODELOS-E-API`): 3 seletores (`EXTRACTOR`/`ARCHITECT`/`LIVE`)
+  com o **catálogo do OpenRouter** (nome + preço/1k) **filtrado pelo requisito do slot**
+  (no LIVE só os rápidos); aviso se um modelo não cumpre o slot.
+- **Calendário:** ligar/desligar Google Calendar (OAuth); antecedência dos lembretes.
+- **Conta & dispositivos:** biometria (re-enroll), `trusted_devices` (**revogar** um PC
+  perdido), email/senha, exportar/apagar dados (RGPD).
+
+## Login — biométrico + email (`AUTENTICACAO.md`)
+
+- **Ecrã de login:** botão grande **"Entrar com o rosto"** (biometria, caminho
+  principal) + **email/senha** por baixo. Durante o verify: a **tela colorida** do flash
+  liveness + o desafio de vivacidade. Igual na **web** e no **desktop**.
+- **1º registo:** enroll do rosto 1× (com a tela colorida a funcionar — ver bug C1).
+
+---
+
+## Tom visual & marca (direção — a confirmar a paleta)
+
+Alinhado com a casa CMTec (Linear/Stripe): **dark mode** no copiloto ao vivo (call
+longa), base mais clara e respirada na web app; **glassmorphism** subtil no overlay
+(estilo HUD "Apollo" que o Mateus referiu); uma cor de marca (azul/teal sóbrio = ponto
+de partida) + escala semáforo só para status; tipografia Inter, tamanhos generosos no
+modo ao vivo. 🟦 **Paleta/nome final = decisão do Mateus.**
 
 ---
 

@@ -16,18 +16,27 @@ Monorepo (pnpm workspaces). Cada subagente é dono de **uma pasta** → zero col
 rh-copiloto/
 ├── apps/
 │   ├── web/         # Next.js 15 (App Router): UI + route handlers (/api/*) — TODO o "resto"
-│   ├── desktop/     # App de SECRETÁRIA (Electron; Tauri = alt. mais leve): overlay ao vivo + CAPTA áudio local
+│   ├── desktop/     # App de SECRETÁRIA (Electron; Tauri = alt.): overlay ao vivo + CAPTA áudio local
 │   ├── ws/          # Servidor WebSocket (Node): empurra estado vivo → overlay desktop
 │   ├── realtime/    # Worker: LiveKit (bot entra na call) + Soniox (STT multi-idioma + diarização)
 │   └── bot/         # Ingestão: Telegram (grammy) + WhatsApp (Evolution API)
 ├── packages/
 │   ├── db/          # Drizzle schema + migrations  ← ÚNICA fonte do MODELO-DADOS.md
 │   ├── core/        # tipos + Zod schemas + CONTRATOS (importado por todos, incl. desktop)
-│   ├── ai/          # wrappers Claude: rubric, briefing, parecer, tick + prompts
-│   └── knowledge/   # Role Profile (Exa/Brave) + RAG pgvector (candidato/cliente)
-├── docker-compose.yml   # web + ws + realtime + bot + (supabase já existe na VPS)
+│   ├── ai/          # wrappers de LLM por SLOT (EXTRACTOR/ARCHITECT/LIVE via OpenRouter) + prompts
+│   └── knowledge/   # Role Profile (Exa/Brave) + RAG pgvector + ciclo de pesquisa (source_doc)
+├── services/                          # serviços Python (não pnpm) — sidecars no compose
+│   ├── agent/       # ⭐ ASSISTENTE PESSOAL: motor Hermes/Lince CLONADO (FastAPI+LangGraph+tools+auditoria) — ASSISTENTE-PESSOAL.md
+│   └── face/        # ⭐ BIOMETRIA: clone do cmtec-face (FastAPI + ONNX YuNet/SFace/liveness) — AUTENTICACAO.md
+├── docker-compose.yml   # web + ws + realtime + bot + agent + face + (supabase já na VPS)
 └── .env.enc             # sops+age (padrão CMTec) → decriptado no boot
 ```
+
+> **Adicionado 2026-06-17 (Fase 2):** `services/agent` (o assistente pessoal — motor
+> Hermes clonado, **vendorizado**, não puxa do nosso repo) e `services/face` (biometria
+> clonada). São **Python/FastAPI** → vivem em `services/` (não no pnpm), ligados por
+> contrato HTTP/WS, deployados como containers no compose e no bundle de migração
+> (`INFRA-E-MIGRACAO.md`).
 
 ### Dois clientes, um backend (decisão 2026-06-17)
 - **`apps/desktop` = SÓ o "durante"** (overlay ao vivo + captura de áudio local). É um
@@ -77,6 +86,15 @@ gerados; ninguém escreve SQL fora de `packages/db`.
 | `POST /api/interviews/:id/report` | gera parecer + destila memória | `ai` (Opus), `knowledge` (RAG candidato) |
 | `POST /api/candidatos/:id/verdict` | veredito do cliente (calibração) | `db`, `knowledge` |
 | `GET  /api/candidatos/:id/chat` | Q&A RAG sobre a pasta | `knowledge`, `ai` |
+| **`POST /api/assistant/chat`** | o assistente pessoal (geral + tools) | `services/agent` |
+| **`POST /api/assistant/action/confirm`** | confirma ação `gravar`/`enviar_fora` pendente | `services/agent`, `db` |
+| **`POST /api/assistant/onboarding`** | guarda respostas da lista → `recruiter_memory_fact` | `services/agent`, `db` |
+| **`POST /api/compare`** | comparar candidatos (matriz vs critérios) | `ai`(ARCHITECT), `db` |
+| **`POST /api/sourcing`** | sourcing Apify (lead-scraper + enricher) → cria process | `services/agent`(Apify), `db` |
+| **`POST /api/auth/face/start`** \| **`/complete`** | login biométrico → sessão Supabase | `services/face`, Supabase Auth |
+| **`GET/POST /api/settings/models`** | ler/gravar o modelo por slot (catálogo OpenRouter) | `db` |
+| **`POST /api/calendar/sync`** | Google Calendar OAuth → `agenda_event` | `services/agent` |
+| **`POST /api/interviews/join`** | "vou para uma reunião"/link → o assistente põe o bot na call | `services/agent`, `realtime` |
 
 ### 2.4 WebSocket (entre `apps/ws` e a UI do painel)
 Mensagens (tipos em `packages/core`):
@@ -99,17 +117,22 @@ agrega num tick → `packages/ai` (Sonnet) devolve `EstadoVivo` → publica em `
 # Supabase (self-hosted VPS — já existe)
 SUPABASE_URL=            SUPABASE_ANON_KEY=       SUPABASE_SERVICE_ROLE_KEY=
 DATABASE_URL=            # para Drizzle
-# Claude
-ANTHROPIC_API_KEY=
-# Conhecimento externo
-EXA_API_KEY=             BRAVE_API_KEY=
+# LLM — via OpenRouter (agnóstico; modelo por slot escolhido na app) — MODELOS-E-API.md
+OPENROUTER_API_KEY=      # MODEL_EXTRACTOR= MODEL_ARCHITECT= MODEL_LIVE= (defaults; trocáveis na UI)
+EMBEDDER_API_KEY=        # embeddings (ex. OpenAI) — fora do OpenRouter
+# Conhecimento externo + sourcing
+EXA_API_KEY=             BRAVE_API_KEY=           APIFY_TOKEN=   # (5 tokens + broker já no Hermes)
 # Tempo real
 LIVEKIT_URL=             LIVEKIT_API_KEY=         LIVEKIT_API_SECRET=
-SONIOX_API_KEY=
-# Ingestão
-TELEGRAM_BOT_TOKEN=      EVOLUTION_API_URL=       EVOLUTION_API_KEY=
+SONIOX_API_KEY=          # STT_PROVIDER= (trocável)
+# Biometria (services/face)
+FACE_SERVICE_URL=        FACE_S2S_SECRET=         FACE_ED25519_*=
+# Ingestão + comunicação
+TELEGRAM_BOT_TOKEN=      EVOLUTION_API_URL=       EVOLUTION_API_KEY=     RESEND_API_KEY=  # envio de email
+# Calendário (assistente proativo)
+GOOGLE_OAUTH_CLIENT_ID=  GOOGLE_OAUTH_CLIENT_SECRET=
 # App
-WS_URL=                  NEXT_PUBLIC_WS_URL=      REDIS_URL=   # sessões de intake
+WS_URL=                  NEXT_PUBLIC_WS_URL=      REDIS_URL=   # sessões de intake + estado do agente
 ```
 Guardar como `.env.enc` (sops+age, padrão CMTec) → decriptado no boot via systemd/compose.
 
@@ -136,17 +159,23 @@ CALIBRAÇÃO      /api/candidatos/:id/verdict ──► db.client_verdict ──
 
 **Agente 1 — Fundação (vai PRIMEIRO, todos dependem dele):**
 `packages/db` (schema+migrations) + `packages/core` (tipos+contratos+Zod) + scaffold +
-`docker-compose` + Auth + RLS multi-tenant. **Garantia:** os outros 5 importam tipos
-de `core`/`db` e arrancam.
+`docker-compose` + **Auth (Supabase + biometria)**. **v1 SINGLE-TENANT** — sem RLS por
+agência (o `agency_id` fica na costura para a v2; **não** se constrói RLS agora). Os
+outros importam tipos de `core`/`db` e arrancam.
 
 **Depois, em paralelo (cada um na sua pasta, contra os contratos de `core`):**
 | Agente | Dono de | Entrega |
 |---|---|---|
-| 2 — Conhecimento | `packages/knowledge` | Role Profile (Exa+Brave) + RAG pgvector |
-| 3 — IA | `packages/ai` | prompts + rubric/briefing/parecer/tick |
-| 4 — Web "antes" | `apps/web` | rotas + UI: vaga, candidato, match, briefing, parecer, acesso |
-| 5 — Tempo real | `apps/realtime` + `apps/ws` + `apps/desktop` | LiveKit+Soniox (multi-idioma) + WebSocket + **app desktop overlay/captura** |
+| 2 — Conhecimento | `packages/knowledge` | Role Profile (Exa+Brave) + RAG pgvector + ciclo de pesquisa |
+| 3 — IA | `packages/ai` | slots LLM (OpenRouter) + rubric/briefing/parecer/tick/comparação |
+| 4 — Web "antes" + assistente | `apps/web` | rotas + UI: vaga, candidato, briefing, parecer, **assistente, comparação, onboarding, definições, login biométrico** |
+| 5 — Tempo real | `apps/realtime` + `apps/ws` + `apps/desktop` | LiveKit+Soniox + WebSocket + **app desktop overlay/captura** |
 | 6 — Ingestão | `apps/bot` | Telegram + WhatsApp (mesmo motor de intake) |
+| **7 — Assistente (agente)** | **`services/agent`** | motor Hermes clonado: grafo+tools (docs/email/agenda/sourcing/calendar)+auditoria+memória que aprende |
+| **8 — Biometria** | **`services/face`** | clone do cmtec-face (enroll/verify → veredito → sessão Supabase) |
+
+> ⚠️ **Pré-requisito do Agente 8:** resolver o **bug de enroll/flash liveness** na
+> origem antes de clonar (`AUTENTICACAO §6 C1`, memória `project_cmtec_face_enroll_bug`).
 
 Cada carril valida-se com o seu bloco em [`TESTES-ACEITACAO.md`](./TESTES-ACEITACAO.md)
 e os passos de [`PLANO-CONSTRUCAO.md`](./PLANO-CONSTRUCAO.md).
