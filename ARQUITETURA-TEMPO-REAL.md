@@ -39,16 +39,38 @@ a peça nova e a que define a engenharia.
 ## 2. O pipeline de tempo real (4 andares)
 
 ### Andar 1 — Captura de áudio
-O bot precisa de ouvir a reunião. Esta é a **decisão em aberto** (ver §5). Seja qual
-for o caminho, o resultado é um **stream de áudio** a entrar no sistema.
+Dois caminhos (decididos — ver §5), ambos resultando num **stream de áudio** a entrar:
+- **Online:** o **bot entra na call** (LiveKit headless) como participante → recebe o
+  áudio e, da plataforma, o **falante ativo** (ver Andar 2).
+- **Presencial / misturado:** o **app desktop** (`apps/desktop`, Electron/Tauri) capta
+  o áudio local (microfone + sistema). É o mesmo app que mostra o overlay — captura e
+  HUD na mesma peça (`UI-DESIGN.md` Tela 6).
 
 ### Andar 2 — Transcrição + diarização ao vivo
-Stream de áudio → **STT em streaming com diarização** (separa Falante A / Falante B…)
-em PT-BR. Saída: frases parciais e finais, **rotuladas por falante**, com timestamp.
+Stream de áudio → **STT em streaming com diarização** (separa Falante A / Falante B…).
+Saída: frases parciais e finais, **rotuladas por falante**, com timestamp.
+
+**Multi-idioma (decisão 2026-06-17):** o STT transcreve **PT-PT, PT-BR, inglês e
+francês — e misturas** (a Filipa fala inglês; uma entrevista pode alternar idiomas).
+A interface e as sugestões saem em **PT** (Regra 4), mesmo quando a fala é noutro
+idioma → tradução pelo LLM no tick.
+
+**Como sabemos quem fala (decisão 2026-06-17):**
+- **Caminho principal — identidade fiável pela plataforma:** quando o **bot entra na
+  call** (Meet/Zoom/Teams), a plataforma diz qual é o **falante ativo** → 1 faixa = 1
+  pessoa, identidade certa. **É a razão de pôr o bot na call.**
+- **Fallback — diarização por voz** (presencial / áudio misturado): separa por
+  características de voz. Para etiquetar a Filipa de forma estável, fazemos
+  **enrollment da voz dela 1×** (grava uma amostra → `recruiter.voice_enrollment`).
+- **Suporta 3+ vozes:** o **cliente** também pode estar na call. Capturar isso ao vivo
+  permite registar **preferências reveladas do cliente** durante a entrevista (*"para
+  nós é essencial que saiba lidar com pressão"*) → alimenta a **memória do cliente**.
+- **A Filipa corrige "quem falou" num toque:** se a etiqueta sair trocada, reatribui o
+  trecho (overlay) e o estado/factos corrigem-se. Marca como `corrigido_pela_filipa`.
 
 > **Reuso CMTec:** já temos isto em produção no `cmtec-voice-platform`
 > (**Soniox** para STT streaming + diarização, **LiveKit** para o transporte de áudio).
-> Não construímos do zero — adaptamos.
+> Não construímos do zero — adaptamos (confirmar suporte multi-idioma + 3+ falantes).
 
 ### Andar 3 — "Estado vivo" da entrevista (o segredo das 2h)
 Não dá para reenviar 2 horas de transcrição ao Claude a cada poucos segundos — seria
@@ -146,11 +168,17 @@ Ordem de construção dentro do MVP (não muda o destino, só o que sai primeiro
 
 ---
 
-## 6. Consentimento — tratado, não é bloqueador
-Decisão do Mateus: **não travamos o produto nisto.** O aceite vem no onboarding —
-termo no contrato com a empresa-cliente + aviso/aceite do candidato no início da call.
-O indicador 🔴 de gravação na UI (já previsto no `UI-DESIGN.md`) serve as duas coisas:
-cumpre o aviso **e** transmite confiança. Seguimos em frente.
+## 6. Consentimento + privacidade das sugestões (decidido 2026-06-17)
+- **Consentimento é manual da Filipa, ANTES da reunião** (não in-app). Ela trata do
+  aceite do candidato/cliente fora do produto. Não travamos o produto nisto.
+- **O bot é VISÍVEL como transcritor** na call (a presença dele *é* o aviso de
+  gravação). O indicador 🔴 reforça.
+- **As SUGESTÕES e a avaliação são PRIVADAS** — vivem só no overlay desktop da Filipa.
+  **O candidato e o cliente nunca as veem.** O que é público é apenas "há um transcritor
+  na sala"; o juízo é dela.
+- Reutilização de factos do candidato entre clientes é **permitida** — a Filipa é
+  responsável por pedir autorização ao candidato e ao cliente (RGPD do lado dela). Ver
+  `INTAKE-E-JULGAMENTO.md` §RGPD e `MODELO-DADOS.md`.
 
 ---
 
@@ -262,6 +290,14 @@ levanta um aviso — *"Antes de terminar: ainda não confirmaste **inglês** nem
 > disponibilidade, risco de contraproposta) também são **alvos de captura ao vivo**
 > — entram no frame como requisitos "de colocação", não técnicos, e alimentam o
 > relatório e o ângulo de venda. Ver `INTAKE-E-JULGAMENTO.md` Parte E.
+
+---
+
+### Chat ao vivo com o bot (durante a entrevista)
+Além de empurrar sugestões, o overlay tem uma **caixa de pergunta**: a Filipa escreve
+*"ele já falou de salário?"* e o bot responde do **estado vivo + transcrição corrente**
+(Camada A/B) **sem parar a captura**. É o Q&A (Tela 8 / `CAMADA-CONHECIMENTO.md`)
+disponível *durante* a call, não só depois.
 
 ---
 
