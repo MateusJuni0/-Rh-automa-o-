@@ -133,6 +133,23 @@ Cada ferramenta é declarada como um descritor:
 > lista é conversa, não formulário (`ASSISTENTE-PESSOAL.md §4.1`). Liga a
 > `POST /api/assistant/onboarding`.
 
+### A.1.1 Segurança das ferramentas de REDE e de conteúdo não-confiável (loop segurança 2026-06-18)
+
+As ferramentas `leitura` **fluem livres** (não confirmam) — o que as torna o vetor de
+entrada de **SSRF e prompt-injection** (`SEGURANCA.md §2/§9`). Contratos **obrigatórios**:
+- **`web_search`, `query_data` (parte web), `source_candidates` (Apify), e qualquer fetch de
+  URL dada pelo candidato/cliente** (pesquisa ao vivo, `ARQUITETURA-TEMPO-REAL §9`) **TÊM de
+  passar pelo cliente HTTP guardado** (allowlist de esquema + bloqueio de IP interno antes/
+  depois de redirects). O mesmo vale para `document_tools` (`url_to_pdf`/`screenshot_url`,
+  Playwright). Tool de rede que **não** use o funil = bug de segurança. (`SEGURANCA §2`.)
+- **`join_interview {meetingUrl}`** valida o destino contra **allowlist de domínios de
+  reunião** (meet/zoom/teams) — não junta o bot a uma URL arbitrária (`SEGURANCA §2`).
+- **Conteúdo fetchado = dados, nunca instruções.** O PLANEADOR **não pode originar** ações
+  `gravar`/`enviar_fora` **a partir de texto vindo da web/CV/transcrição** — só a pedido
+  explícito da Filipa (a porta de confirmação mantém-se, mas a *origem* é vedada). (`SEGURANCA §9`.)
+- **`save_memory_fact` com origem externa** (web/CV) entra **sempre `a_confirmar`** + auditado
+  (nunca `direto` auto-persistido) — anti memory-poisoning (`SEGURANCA §9`, `MODELO-DADOS §7`).
+
 ---
 
 ## A.2 Como se regista uma ferramenta nova (sem tocar no grafo)
@@ -254,9 +271,10 @@ sugestões privadas do overlay. **Mantém-se mesmo em v1 single-tenant** (só IR
 risco cross-tenant não existe na v1, mas a posse da entrevista é a fronteira que
 protege o conteúdo ao vivo.
 
-> v1 single-tenant: sem RLS por agência (`ARQUITETURA-INTEGRACAO.md §1`,
-> `AUTENTICACAO.md §4`). O `agency_id` está na costura para a v2; a query de posse não o
-> usa ainda. Quando a v2 ligar RLS, a query ganha `AND agency_id = $agencyId`.
+> **Decisão (loop segurança 2026-06-18):** a query de posse leva **`AND agency_id = $agencyId`
+> já na v1** (derivado do JWT), como **defesa-em-profundidade** — `agency_id` é predicado
+> obrigatório em TODO o acesso a dados desde já (`AUTH-CONTRACT §7`, `SEGURANCA §1`). Redundante
+> na v1, essencial na v2; a v2 liga RLS por cima. Não se adia o filtro para a v2.
 
 ## B.4 Mensagens depois do `auth.ok` (reuso, não redefinição)
 

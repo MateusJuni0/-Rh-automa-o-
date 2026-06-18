@@ -903,13 +903,36 @@ ALTER TABLE interview_tick ADD COLUMN degraded       BOOLEAN NOT NULL DEFAULT FA
 - **Política de falha/retry/fallback/teto** (constantes, backoff, degradação) vive em
   `RESILIENCIA-E-FALHAS.md` — não se repete aqui.
 
+## 15. Implicações de SEGURANÇA & ESCALA no schema (loop segurança 2026-06-18)
+
+> O schema é onde alguns controlos de `SEGURANCA.md` e `ESCALA-E-OPERACAO.md` têm de nascer
+> certos — mudá-los depois exige migrar tabelas grandes. **Decidir na Fundação P0.1:**
+
+1. **`agency_id` predicado obrigatório (defesa-em-profundidade desde a v1):** todo o repo de
+   dados injeta `agency_id` em **todas** as queries (incl. RAG e posse do WS), mesmo sem RLS
+   na v1. RLS por `agency_id` (abaixo) é a 2ª camada. Roles Postgres **least-privilege** por
+   serviço; `service-role` **só migrações** (`SEGURANCA §1`, `AUTH-CONTRACT §7`).
+2. **Particionar `transcript_chunk` (+ embedding) por tempo** + tiering (frio/comprimido) — não
+   crescem sem teto (`ESCALA-E-OPERACAO §3`).
+3. **Índices pgvector:** decidir **HNSW** (preferido a alto volume) ou `ivfflat` com **`lists`
+   afinado** (hoje estão sem `lists`) + `REINDEX` agendado (`ESCALA-E-OPERACAO §4`).
+4. **Purga em cascata** (RGPD + anti-PII-órfã): `purge_after`/`retain_until` propagam
+   `transcript_chunk → *_embedding → source_doc → *_memory_fact`; cron no inventário de
+   migração + monitor de frescura. Testar "zero PII órfã" (`ESCALA-E-OPERACAO §3`).
+5. **Storage:** bucket **privado**, caminho `{agency_id}/...`, acesso só por **signed URL**
+   curta do backend — nunca público (`SEGURANCA §4`).
+6. **Cifra em repouso** de `transcript_chunk.text`/contactos/áudio (LUKS + bucket cifrado;
+   idealmente pgcrypto a nível de coluna) e **backups cifrados** (`SEGURANCA §6`).
+7. **Autovacuum** afinado nas tabelas quentes (`interview_tick`/`transcript_chunk`/
+   `assistant_action`/`async_job`) — `ESCALA-E-OPERACAO §10`.
+
 ## RLS — políticas chave
 
-> ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há
-> multi-tenant/RLS por agência**: o acesso interno é **total** (o recrutador vê todos
-> os clientes e candidatos). O `agency_id` **permanece no schema** como costura para o
-> futuro, mas a v1 **não** o usa para isolar. As políticas abaixo ficam como **plano
-> para a v2** (quando houver mais do que uma agência), não como requisito da v1.
+> ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há RLS por
+> agência** ativa. **MAS (correção loop segurança 2026-06-18):** o `agency_id` é **predicado
+> obrigatório nas queries da aplicação desde a v1** (defesa-em-profundidade, §15.1) — o que a
+> v1 **não** liga é a RLS no Postgres, não o filtro. As políticas abaixo ficam como plano para
+> a v2; o código já não depende delas para isolar (não se adia o filtro para a v2).
 
 ```sql
 -- (v2) Padrão futuro: cada tabela tem RLS por agency_id

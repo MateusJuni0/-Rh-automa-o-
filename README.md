@@ -17,7 +17,10 @@ em linguagem que ela entende. *(Marca pública = Vera; motor interno = Lince.)*
 
 ## Portas antes de a Fase 3 ENTREGAR (não impedem codar)
 Bug de enroll da biometria · anti-spoof ON antes de vender/>1 utilizador · cláusula RGPD
-no contrato (RGPD = responsabilidade da agência) · números de retenção · provar custo 2h.
+no contrato (RGPD = responsabilidade da agência) · números de retenção · provar custo 2h ·
+**gates de segurança** (`SEGURANCA.md §12`: isolamento por `agency_id`+roles, anti-SSRF,
+validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
+**gates de escala** (`ESCALA-E-OPERACAO §12`: limites de container, capacidade, backup do Storage).
 
 ---
 
@@ -26,7 +29,7 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (38)
+## Mapa dos documentos (40)
 
 **Visão & entrada**
 | Doc | O que é |
@@ -65,6 +68,8 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 | [`DESIGN-TOKENS.md`](./DESIGN-TOKENS.md) | Tokens de cor/tipografia/espaço/raio (fonte única do dark HUD) |
 | [`TELEGRAM-BOT-SPEC.md`](./TELEGRAM-BOT-SPEC.md) | Canal B: ingestão por Telegram (voz, multi-msg) |
 | [`INFRA-E-MIGRACAO.md`](./INFRA-E-MIGRACAO.md) | Local → nossa infra → comprador; bundle portável + runbook |
+| [`SEGURANCA.md`](./SEGURANCA.md) | **Postura técnica de segurança + modelo de ameaças (lente Cyber Neo):** isolamento de tenant, anti-SSRF, upload, cifra, ZDR, testes |
+| [`ESCALA-E-OPERACAO.md`](./ESCALA-E-OPERACAO.md) | **Escala agregada:** capacidade simultânea, crescimento de dados, backup/DR, blast-radius, frota |
 | [`ACESSO-E-CONHECIMENTO.md`](./ACESSO-E-CONHECIMENTO.md) | Acesso da Filipa, canais de ingestão |
 
 **Legal · validação · processo**

@@ -41,6 +41,13 @@
 - **Externos por API** (não se "migram", troca-se a chave): OpenRouter, Soniox/LiveKit,
   Exa/Brave, Google OAuth.
 
+> ⚠️ **Blast radius na VPS partilhada (loop segurança 2026-06-18):** a Fase 1 corre na VPS
+> 72.60.88.137, **partilhada com produção live** (Cronos vende, Madalena responde). O compose
+> da Vera **TEM** limites de recurso por container (`cpus`/`mem_limit`/`pids_limit`) desde o
+> dia 1 — um pico da Vera degrada a Vera, **não** derruba o Cronos. Capacidade agregada
+> (entrevistas simultâneas), crescimento de dados e backup/DR: **`ESCALA-E-OPERACAO.md`**.
+> Postura de segurança técnica completa: **`SEGURANCA.md`**.
+
 ---
 
 ## 2. Empacotar ("compactar") — o bundle portável
@@ -100,8 +107,11 @@ contagens (linhas por tabela) para verificar no fim.
     os hostnames** no ingress + catch-all 404; serviço systemd próprio.
 11. **DNS:** `cloudflared tunnel route dns` se o `cert.pem` cobre a zona; senão API CF
     (CNAME → `<uuid>.cfargotunnel.com`, proxied). **Preservar MX/TXT/CAA.**
-12. **Crons/timers:** recriar lembretes proativos, **backups diários** (pg_dump),
-    auto-deploy pull. (Senão morrem em silêncio — gotcha Cronos.)
+12. **Crons/timers:** recriar lembretes proativos, **backups diários** (pg_dump **+ backup do
+    Storage** — CVs/áudios/PDFs; **ambos cifrados** `age` + **off-site**), **cron de PURGA RGPD**
+    (hard-delete após `purge_after`, em cascata transcript→embedding→source_doc→facts) e
+    auto-deploy pull. Cada um com **monitor "correu nas últimas 24h senão alerta"** (senão
+    morrem em silêncio — gotcha Cronos + dor do claude-mem). Detalhe: `ESCALA-E-OPERACAO §3/§5`.
 13. **Google Calendar OAuth:** re-autorizar com a conta de destino (o token não migra).
 14. **Auto-deploy PULL** (timer systemd cada 2min; **SSH-from-CI não funciona** —
     firewall da VPS rejeita runners → por isso pull, não push).

@@ -145,6 +145,12 @@ Filipa traz o candidato  (encaminha o CV  OU  cola o link/URL do LinkedIn)
 > Recomendação: **upload na web app no MVP** (simples, fiável). Email/WhatsApp como
 > conforto numa iteração seguinte — reusam infra que a CMTec já tem.
 
+> 🔒 **Segurança do upload (loop segurança 2026-06-18):** o CV é um **vetor de ataque**
+> (parser PDF/docx, XXE, malware, zip-bomb, path traversal) e entra por **vários** canais
+> (web, Telegram, **arrastar ao vivo**). **Todos** passam por **um único validador**
+> (cap de tamanho + MIME por **conteúdo**/magic-bytes + entidades XML off + `storage_path`
+> gerado pelo servidor + scan ClamAV), fail-closed. Contrato em **`SEGURANCA.md §3`**.
+
 ---
 
 ## Parte B — De onde vem a competência do bot para julgar

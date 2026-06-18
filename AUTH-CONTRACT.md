@@ -49,8 +49,27 @@ Todo login (facial ou email) termina numa **sessão Supabase** → JWT com:
 - **Consentimento:** se `process.consent_status != 'dado'`, o copiloto ao vivo **não
   arranca a captura** (gate de produto — `LEGAL-E-RGPD`).
 
-## 6. Resumo
+## 7. Isolamento de tenant como defesa-em-profundidade DESDE A v1 (raiz — loop segurança 2026-06-18)
+
+A v1 é single-tenant **sem RLS**, mas o produto será **clonado para a VPS de cada comprador**
+(v2 multi-agência). Adiar **todo** o isolamento para a v2 cria um risco caro: na v2, **uma**
+query sem filtro de `agency_id`, ou **um** uso de `service-role` no caminho de request, vira
+**fuga de dados entre agências**. Logo, **já na v1** (custo ínfimo, single-tenant):
+
+1. **`agency_id` é predicado OBRIGATÓRIO em TODO o acesso a dados** — o repositório (Drizzle)
+   recebe `agencyId` e injeta-o em todas as queries (incl. RAG `*_embedding` **e a query de
+   posse do WS** do §2: `... AND agency_id = $3`). Redundante na v1, essencial na v2. **RLS é a
+   2ª camada, nunca a única.**
+2. **Roles Postgres least-privilege (NÃO `service-role` no request path):** um role por serviço
+   (`vera_web`/`vera_agent`/`vera_face`) com grants mínimos e RLS aplicável; o agente Python
+   liga **não-superuser** (um SSRF/RCE nele não lê a base inteira). `service-role` = **só
+   migrações**.
+3. Detalhe e restantes controlos técnicos: **`SEGURANCA.md §1`**.
+
+## 8. Resumo
 Supabase Auth = fonte de identidade (JWT com `recruiter_id`/`agency_id`). WS valida JWT +
-**posse da entrevista**. Python ↔ Next por S2S (face=Ed25519/HMAC; agent/realtime=token
-interno). service-role só backend. Permissão de tool = pelo `efeito` (confirmação +
-auditoria). v1 sem RLS; v2 liga RLS por agência (costura já nos claims).
+**posse da entrevista** (+ `agency_id` no predicado, §7). Python ↔ Next por S2S (face=Ed25519/
+HMAC; agent/realtime=token interno). **service-role só em migrações**, nunca no request path
+(§7); roles least-privilege por serviço. Permissão de tool = pelo `efeito` (confirmação +
+auditoria). `agency_id` filtra em **todo** o acesso desde a v1; v2 liga RLS por cima.
+Segurança técnica completa: `SEGURANCA.md`.

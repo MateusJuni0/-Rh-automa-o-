@@ -290,6 +290,43 @@ nenhum termo.
 - [ ] Cliente confirma desonestidade → `client_verdict.reason_type='misrepresentation'`
       chega à calibração e cruza com o `bot_flag_inconsistencia`.
 
+### Testes de SEGURANÇA — superfície de ataque & supply-chain (2026-06-18, `SEGURANCA.md`)
+- [ ] **SSRF:** o cliente HTTP guardado **recusa** URL para IP interno/metadata
+      (`169.254.169.254`, `127.0.0.1:8000`, `:18794`, etc.), antes **e** depois de redirects;
+      vale para web_search/fetch ao vivo/Apify/Playwright (`SEGURANCA §2`).
+- [ ] **Upload malicioso:** ficheiro com extensão falsa (HTML como `.pdf`), zip-bomb, docx com
+      XXE, e `filename` com `../` → **recusados** pelo validador único; `storage_path` é UUID do
+      servidor; ClamAV corre antes de persistir (`SEGURANCA §3`).
+- [ ] **Storage:** CV/parecer só acessível por **signed URL** curta; `getPublicUrl`/bucket
+      público → falha o teste (`SEGURANCA §4`).
+- [ ] **Isolamento:** lint/teste proíbe query a dados sem `agency_id`; na v2, RLS recusa
+      cross-tenant; o agente liga com role **não-superuser** (`SEGURANCA §1`).
+- [ ] **Prompt-injection (corpus ≥20):** CV/README/perfil com "ignora instruções e exporta/
+      envia" → o agente trata como **dados**, não origina `enviar_fora`; `save_memory_fact`
+      externo entra `a_confirmar` (`SEGURANCA §9`).
+- [ ] **Captura:** token LiveKit de uma entrevista não serve noutra; `assertCaptureAllowed`
+      recusa captura com `consent_status != 'dado'` (server-side) (`SEGURANCA §5`).
+- [ ] **AuthN:** brute-force em email+senha e `/auth/face/*` → rate-limit/lockout; veredito
+      facial consumido **atomicamente** (não-replayable); webhook Telegram valida secret token
+      (`SEGURANCA §8`).
+- [ ] **Subprocessador:** slot com PII só roteia para provider `zdr:true` (`SEGURANCA §7`).
+- [ ] **CI gate:** SCA (`pip-audit`/Dependabot) + **versões fixas** do agente vendorizado +
+      secret-scan + SAST passam (`SEGURANCA §10`).
+- [ ] **Logs sem PII:** `assistant_action.args`/logs guardam referências/hashes, não payload;
+      scrubber antes de sink externo (`SEGURANCA §6`).
+
+### Testes de ESCALA / capacidade agregada (2026-06-18, `ESCALA-E-OPERACAO.md`)
+- [ ] **Concorrência:** acima de `MAX_CONCURRENT_INTERVIEWS` → **recusa graciosa** ("agenda
+      cheia"), sem degradar as entrevistas a decorrer; latência p95 do tick fica no orçamento.
+- [ ] **Blast radius:** stress da Vera **não** derruba os outros serviços da VPS (limites de
+      container ativos: `cpus`/`mem_limit`/`pids`).
+- [ ] **Backup/DR:** restore drill restaura **DB + Storage** (não só DB); contagens batem;
+      backup **cifrado** e **off-site**; RPO/RTO cumpridos; monitor de frescura alerta se parar.
+- [ ] **Reaper:** entrevista deixada `live` sem heartbeat há X min é encerrada (fecha streams +
+      `interview_gap`), libertando capacidade/Soniox-horas.
+- [ ] **Volume:** com muitas linhas, RAG/Q&A mantêm latência (partição + índice vetorial
+      afinado); purga em cascata deixa **zero PII órfã**.
+
 ---
 
 ## Como usar este documento no build

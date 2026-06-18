@@ -93,10 +93,17 @@ Para o sistema escolher/validar um modelo num slot, cada entrada do registry tem
 ```jsonc
 { "id": "anthropic/claude-sonnet-4-6", "slots": ["LIVE","EXTRACTOR"],
   "supports_json": true, "supports_tools": true, "supports_streaming": true,
-  "supports_prompt_cache": true, "max_context": 200000, "cost_in": .., "cost_out": .. }
+  "supports_prompt_cache": true, "max_context": 200000, "cost_in": .., "cost_out": ..,
+  "zdr": true }   // zero-data-retention / no-logging do provider — obrigatório p/ slots com PII
 ```
 - O seletor da app (Definições) **filtra por slot** usando estas flags (no `LIVE` só
   modelos com `streaming`+`tools`+baixa latência; no `ARCHITECT` `json`+contexto longo).
+- 🔒 **Privacidade de dados de terceiros (loop segurança 2026-06-18):** **todo** o conteúdo
+  sensível (transcrição, CV, parecer, saúde) passa por OpenRouter → para slots que veem PII
+  (`LIVE`/`ARCHITECT`/`EXTRACTOR`) o roteamento é **restrito a providers com `zdr:true`**
+  (retenção zero / no-training); provider sem essa garantia **não é elegível** (fail-closed).
+  É segurança técnica (= nossa). Contrato: `SEGURANCA.md §7`. 🟦 Mateus valida a data-policy
+  do OpenRouter/providers por deployment.
 - **Embedder TRAVADO na v1:** `EMBEDDER = text-embedding-3-small`, **dimensão 1536 fixa**
   (a coluna `pgvector` é 1536). **Trocar o embedder = v2** (obriga re-index de todos os
   vetores — `§3` amarra 1). Não é configurável "ao vivo" na v1.
