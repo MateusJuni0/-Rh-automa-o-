@@ -450,6 +450,13 @@ silêncio; **marcar incerteza** quando a fonte é fraca (regra anti-achismo "inc
 dita"); o que vier da web é **indício**, não veredito — a prova final é o que o
 candidato explica. Ver `CAMADA-CONHECIMENTO.md` (web search / Role Profile).
 
+> ⚠️ **A pesquisa ao vivo é um BÓNUS condicional, não o core do fosso (gap simulação
+> 2026-06-18):** depende de o candidato ter um **artefacto digital** (repo/portfólio/site).
+> Um dev tem; um **enfermeiro, comercial, advogado NÃO têm**. Em nichos não-digitais o
+> fosso assenta **100% no aprofundamento verbal** (a escada acima) — que é nicho-agnóstico.
+> Não inflar a perceção da pesquisa ao vivo: ela otimiza o caso tech, o aprofundamento
+> verbal é que serve todos.
+
 ### ⭐ Veredito de resposta ao vivo (boa / fraca, para a Filipa)
 
 > **Decisão 2026-06-17:** quando o candidato **responde** a uma pergunta relevante, o

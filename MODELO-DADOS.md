@@ -506,6 +506,15 @@ gravidez, religião, etnia, orientação, filiação) com **dúvida**, o default
 falso-negativo aqui é um dado sensível a pesar num juízo). Mede-se o **falso-negativo da
 classificação** num teste (`TESTES-ACEITACAO`), não só que `personal` não entra.
 
+> ⚠️ **Distinção CRÍTICA p/ nichos clínicos (gap simulação enfermagem 2026-06-18):**
+> "saúde" tem de separar **saúde DO TITULAR** (do candidato — sensível → `personal`, fora
+> do score) de **saúde OCUPACIONAL / clínica de TERCEIROS** que o candidato *trata* (ex.:
+> enfermeiro: "geri um doente em choque séptico, ajustei a sedação no desmame"). Esta
+> última **é a própria evidência profissional** → `professional`, **dentro** do score. Um
+> classificador que mande tudo o que cheira a "saúde/doente/fármaco" para `personal`
+> **esvazia a avaliação** de enfermagem/medicina. Campo: `classificacao` ganha o valor
+> `personal_saude_titular` vs `professional_clinico` quando o contexto é clínico.
+
 ### 6. Ronda 2 (2026-06-17) — agenda, voz, pesos, apagamento recuperável, override
 
 ```sql
@@ -708,8 +717,39 @@ ALTER TABLE transcript_chunk ADD COLUMN provider_segment_id TEXT;       -- id do
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
 (+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
 **`agenda_event`**, **`source_doc`** (+ embedding), **`recruiter_memory_fact`**
-(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7, §9, §10) aplicam-se às tabelas
-já existentes.
+(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7, §9, §10, §11) aplicam-se às
+tabelas já existentes.
+
+### 11. Gaps da simulação "Enfermeiro UCI" (nicho regulado/não-técnico) — 2026-06-18
+
+```sql
+-- (BLOQ 1+2) Role Profile: porta de confirmação + confiança da FONTE (web pode trazer lixo)
+ALTER TABLE role_profile ADD COLUMN confirmed_by  UUID REFERENCES recruiter(id); -- NULL = não confirmado pela Filipa
+ALTER TABLE role_profile ADD COLUMN confirmed_at  TIMESTAMPTZ;
+ALTER TABLE role_profile ADD COLUMN source_confidence TEXT NOT NULL DEFAULT 'media'; -- 'alta'|'media'|'baixa'
+ALTER TABLE role_profile ADD COLUMN n_sources     INT NOT NULL DEFAULT 0;
+-- Regra: n_sources < mínimo OU confiança baixa → role_profile 'não confirmado'; rubric/parecer
+-- herdam confiança baixa VISÍVEL até um veredito de cliente calibrar. Nichos que a Filipa não
+-- valida → confirmação não-bloqueia mas marca-se baixa (não fingir autoridade).
+
+-- (BLOQ 3) Critério de CREDENCIAL/FACTO (binário, verificado por DOCUMENTO — não por narrativa)
+-- rubric.criteria[].tipo: 'competencia' (prova-se pela profundidade) | 'credencial' (por documento)
+ALTER TABLE candidate_memory_fact ADD COLUMN tipo_criterio TEXT NOT NULL DEFAULT 'competencia';
+ALTER TABLE candidate_memory_fact ADD COLUMN credencial_estado TEXT; -- 'por_verificar'|'verificado'|'invalido'|'expirado'
+ALTER TABLE candidate_memory_fact ADD COLUMN credencial_doc_ref TEXT; -- documento que prova (ex.: cédula Ordem)
+-- Ex.: "inscrição na Ordem dos Enfermeiros (cédula ativa)", "SAV válido", "X anos UCI" → tipo='credencial';
+-- só 'verificado' por DOCUMENTO; uma explicação brilhante NÃO o risca.
+
+-- (MÉDIO 8) Contratação em VOLUME (ex.: hospital precisa de 6 enfermeiros)
+ALTER TABLE job ADD COLUMN n_vagas INT NOT NULL DEFAULT 1; -- nº de colocações desta vaga
+-- placement_outcome é por process → N colocações por job; garantia/follow-up iteram por COLOCAÇÃO.
+```
+- **Role Profile** deixa de ser verdade cega: confiança de **fonte** + porta de confirmação;
+  num nicho que a Filipa não domina, o sistema **diz que não pôde validar** em vez de fingir
+  autoridade. Ver `CAMADA-CONHECIMENTO`.
+- **Credenciais** (reguladas/legais) = **tipo à parte**, verificado por documento — a
+  "profundidade > checklist" **NÃO se aplica a factos binários** (exceção em
+  `FILOSOFIA-DAS-PERGUNTAS`). Parecer tem secção "Credenciais a verificar" (`RELATORIO-CLIENTE`).
 
 ---
 

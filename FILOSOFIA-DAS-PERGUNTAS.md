@@ -38,6 +38,18 @@
   o que a nossa validação já tinha apanhado (a pergunta C3 do `validacao-caso-01`:
   *"leste o código ou só aprovaste o que a IA gerou?"*). Profundidade > stack.
 
+## De onde vem a profundidade: a Vera ESTUDA a vaga em tempo real (Mateus 2026-06-18)
+
+A Vera **não precisa de ser especialista da área à partida.** Para cada vaga, ela
+**estuda o role** (Role Profile via pesquisa — `CAMADA-CONHECIMENTO`) + **pesquisa ao
+vivo** o que aparecer → fica **"dentro" da função, como um insider**. É isso que lhe
+permite gerar perguntas de *profundidade* (o como/porquê certo) em **qualquer nicho** —
+dev, enfermeiro de UCI, comercial B2B, advogado — sem perguntas genéricas.
+- Nova vaga de uma área que nunca viu → estuda → sabe o que é uma resposta forte ali →
+  gera o como/porquê adequado **àquele** ofício (não um template genérico).
+- É o mesmo princípio do nicho-agnóstico: **o cérebro é o mesmo; o que muda é o que ela
+  estudou.** A profundidade escala a qualquer função porque o estudo escala.
+
 ## Onde isto entra no produto
 - **Role Profile / `o_que_e_bom`** (`CAMADA-CONHECIMENTO`): os critérios encodam
   **sinais de profundidade** ("explica quando NÃO usaria X", "dá um caso com número"),
@@ -51,3 +63,11 @@
 > no rubric como must). O princípio não é "nunca falar de tecnologia" — é **nunca ficar
 > pelo checklist**: a tecnologia prova-se pela profundidade do como/porquê, que é o que a
 > Filipa consegue conduzir e julgar.
+
+> ⚠️ **EXCEÇÃO — factos/credenciais binários (gap simulação enfermagem):** requisitos
+> **regulados ou factuais** (cédula da Ordem dos Enfermeiros, certificação SAV, licença,
+> nº de anos legal, nacionalidade/visto) **NÃO** se provam pela profundidade — provam-se
+> por **documento**. A profundidade é para **competência/julgamento**; credenciais são um
+> **tipo de critério à parte** (`tipo='credencial'`, `MODELO-DADOS §11`), verificadas por
+> documento, com secção própria no parecer (`RELATORIO-CLIENTE`). Uma resposta brilhante
+> **nunca** risca uma credencial obrigatória.

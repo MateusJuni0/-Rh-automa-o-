@@ -67,6 +67,16 @@ esconde nem inventa**. Escreve, no próprio sítio do critério:
 Isto mantém a confiança: o cliente sabe exatamente o que está provado e o que não está.
 (É a **Regra 3 anti-achismo** — incerteza dita, não escondida — aplicada ao relatório.)
 
+### Secção "Credenciais a verificar" (gap simulação enfermagem, 2026-06-18)
+Requisitos **regulados/binários** (cédula da Ordem, certificação SAV/ACLS, licença, nº de
+anos legal) **NÃO** se riscam pela profundidade da resposta — uma explicação brilhante de
+ventilação **não** prova uma cédula válida. O parecer tem uma secção própria
+**"Credenciais a verificar"** com o estado de cada (`por_verificar`/`verificado`/`expirado`/
+`inválido`) + o documento que prova (`MODELO-DADOS §11`). **Nunca** se recomenda "avançar"
+com uma credencial obrigatória por verificar — num nicho regulado isso é risco legal/clínico,
+não um falso-negativo técnico. (É a **exceção** à filosofia "profundidade > checklist" —
+ver `FILOSOFIA-DAS-PERGUNTAS`.)
+
 ---
 
 ## 4. Duas versões, uma fonte

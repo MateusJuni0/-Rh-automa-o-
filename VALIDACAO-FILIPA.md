@@ -158,6 +158,14 @@ Sobre as sugestões da **lente do cliente** num caso real:
 > Fazer com **2–3 casos**, não 1 — um acerto pode ser sorte. Idealmente vagas de
 > **clientes diferentes** (a lente do cliente tem de funcionar para vários).
 
+> ⚠️ **Exigir ≥1 caso NÃO-técnico antes do PASS (gap simulação 2026-06-18):** o único
+> caso real até agora (`validacao-caso-01`, Mateus → Software Engineer) é **tech** e com o
+> **candidato como juiz** (enviesado, como o doc admite). O produto promete servir nichos
+> onde a Filipa é **mesmo leiga** (enfermagem, etc.) — é aí que está o teste difícil. **O
+> gate só passa com pelo menos um caso de nicho não-técnico** (idealmente uma vaga real da
+> IRIS em saúde/staffing), para provar que a Vera estuda o role e gera profundidade onde
+> ninguém na agência sabe julgar à partida.
+
 ---
 
 ## 7. O que eu preciso de ti (Mateus) para arrancar o T0/T1

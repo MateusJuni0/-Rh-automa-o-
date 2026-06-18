@@ -61,6 +61,12 @@ O relatório deve mostrar React como `⬜ não abordado`, não inferir que "pare
   `useState`, `useEffect`, `TypeScript strict`, `bundle size`, `treeshaking`, etc.
 - Cada um destes deve aparecer **só** se seguido de tradução em parênteses.
 
+> ⚠️ **A lista de jargão é POR-ROLE, não hardcoded de software (gap simulação 2026-06-18):**
+> deriva do `linguagem_filipa` do Role Profile **daquela** vaga. Para enfermagem os termos
+> seriam `desmame ventilatório`, `vasoativos`, `SAV`, etc. **Os fixtures/few-shots de teste
+> TÊM de incluir ≥1 nicho NÃO-técnico** — senão a "linguagem simples" passa para React e
+> falha calado para enfermagem (a Filipa recebe "desmame" sem tradução).
+
 **Critério de aceitação para P1.5 e P3.1:**
 - O role profile tem a tabela `linguagem_filipa` com tradução de pelo menos 5 termos técnicos.
 - O briefing usa a tradução, não o jargão.

@@ -47,6 +47,13 @@ recolhesse. Resolução: **o assistente proativo** (`ASSISTENTE-PROATIVO`) agend
 > Sem isto, `placement_outcome` era tabela morta e o diferencial "medimo-nos, não é fé"
 > ficava sem o seu melhor sinal. Agora fecha o loop.
 
+> ⚠️ **Contratação em VOLUME (gap simulação enfermagem 2026-06-18):** fora de tech há
+> vagas com **N colocações** (um hospital precisa de **6 enfermeiros**). A vaga tem
+> `job.n_vagas` (`MODELO-DADOS §11`); a régua passa a ser "chega/não chega" (vs "o melhor"
+> do headhunting de 1). A **garantia e o follow-up iteram POR COLOCAÇÃO** (`placement_outcome`
+> é por `process`), não por vaga — senão o funil e a calibração misturam sinais quando há
+> várias contratações na mesma vaga.
+
 ---
 
 ## 3. Oferta / negociação (etapa `offer`)

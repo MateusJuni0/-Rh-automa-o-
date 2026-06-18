@@ -107,6 +107,20 @@ Estrutura JSON guardada por role-type (não por vaga — reutilizável):
 - Primeira vaga de um role-type: busca web. Seguintes: reusa o Role Profile existente.
 - Filipa pode editar manualmente o Role Profile (campo "notas da Filipa") — a opinião dela tem prioridade sobre o mercado.
 
+### ⚠️ Porta de confirmação + gate de qualidade (gap simulação enfermagem, 2026-06-18)
+O Role Profile é o **chão de tudo** (alimenta o rubric e o "o que é forte"). Por isso
+**não pode entrar cego**:
+- **Gate de QUALIDADE da fonte:** a pesquisa exige **nº mínimo de fontes fiáveis** +
+  `source_confidence`. Se a web devolver pouco/lixo (nicho obscuro) → o Role Profile fica
+  **`não confirmado`/confiança baixa** e o sistema **degrada para "só os requisitos
+  declarados pelo cliente"** + di-lo à Filipa — **nunca fabrica um perfil oco com cara de
+  autoridade**. (`MODELO-DADOS §11`)
+- **Porta de CONFIRMAÇÃO:** mostra o Role Profile à Filipa em `linguagem_filipa` ("é isto
+  que define um bom X? confere?"). Mas **atenção:** num nicho que ela **não domina**
+  (enfermagem, direito…) ela **não consegue validar** — então a confirmação **não
+  bloqueia**, mas a confiança fica **baixa e VISÍVEL** no rubric e no parecer **até um
+  veredito de cliente calibrar**. O sistema é honesto sobre não ter podido validar.
+
 ---
 
 ## Sub-camada ② — Acumulado do cliente (a prazo)
