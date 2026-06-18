@@ -169,6 +169,14 @@ capacidade nova ao assistente:
    intercepta **antes** de executar, cria a `assistant_action` `pending_confirm`, e
    devolve à UI uma proposta. Não há confirmação "à mão" por ferramenta — é derivada do
    `efeito`. (Não chatear: `leitura/rascunho/geração` saltam isto.)
+   - 🔒 **(família I) Idempotência de `enviar_fora` (anti duplo-envio):** ao criar a
+     `assistant_action` (antes de executar), o runtime gera um **`idempotency_key`**
+     (`MODELO §16.I`) e propaga-o ao provider (Resend `Idempotency-Key`, Calendar
+     `requestId`, dedup por Message-ID); guarda o `provider_message_id`. Se um retry (A.4)
+     ocorrer depois de o efeito **poder já ter acontecido** (resposta perdida), o estado é
+     **`unknown`** → **não re-envia automaticamente**; verifica pelo idempotency-key/
+     Message-ID ou pergunta à Filipa. (Distingue "falhou ANTES de executar" = re-tentar é
+     seguro, de "efeito ambíguo".)
 5. **Auditoria automática:** o wrapper escreve sempre em `assistant_action`. O handler
    não precisa de se lembrar.
 

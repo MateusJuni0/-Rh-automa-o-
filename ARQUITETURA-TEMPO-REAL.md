@@ -708,8 +708,12 @@ Durante a entrevista correm **duas coisas ao mesmo tempo**: o **copiloto ao vivo
    escritos como "geral" por dois workers ao vivo. Atualizações a `candidate.profile`/
    `revalidate_after` passam por advisory lock por `candidate_id` (fila por entidade) → sem
    last-write-wins quando o mesmo candidato está em 2 calls simultâneas (Filipa + Inês).
-5. **Pós-call:** destilação-final × re-atribuição × edição manual serializam por **advisory lock
-   pg por `interview_id`** (ou `SELECT … FOR UPDATE` no `process`/`interview`).
+5. **Pós-call:** a **destilação-final** é um **job DURÁVEL** `async_job kind='distill_final'`
+   (`MODELO-DADOS §16.H`) — generating→done/failed, retry, **idempotente por `interview_id`**, igual
+   ao `gen_parecer` — **não** um mero advisory-lock (um crash a meio perderia factos em silêncio). A
+   re-atribuição e a edição manual pós-call serializam-se com este job (lock por `interview_id`). Ao
+   terminar, seta `interview.distilled_at` — o **gate** que destrava a purga do áudio
+   (`DATA-RETENTION §1.1`): a fonte nunca se purga sem destilação completa.
 
 > É implementação por **locks/CAS/fila-de-comandos** (não tabela nova) — o invariante fica aqui;
 > o handshake de encerramento em `JORNADA §1.1`, o lease do reaper em `ESCALA §7`, o dono de

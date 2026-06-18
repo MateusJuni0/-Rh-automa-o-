@@ -254,7 +254,10 @@ O claude-mem do Mateus **parou de destilar em silêncio (abr→jun/2026)** e nin
 soube. Este assistente **não pode** repetir isso. Regras duras:
 - **Health check da memória:** a consolidação corre em schedule **e é monitorizada** —
   se **parar**, **alerta** (não falha calado). É a regra nº1 que aprendemos com a saga
-  do claude-mem. **Destino do alerta = configurável por deployment** (o Telegram/email
+  do claude-mem. ⚠️ **(família H) Vigia também a destilação POR ENTREVISTA**, não só a
+  consolidação periódica: o `async_job kind='distill_final'` (`MODELO §16.H`) `failed` ou
+  pendente há > N → alerta. Um crash a meio dos INSERTs de factos **não** pode ficar
+  silencioso (senão perdem-se factos de uma entrevista e o áudio é purgado sem fonte). **Destino do alerta = configurável por deployment** (o Telegram/email
   **do comprador**, não o nosso — senão na VPS independente dele o alerta não chega a
   ninguém e repete-se a saga). A instância traz um **painel de saúde mínimo** (memória,
   backups, custo, STT) — vale para todos os falhos silenciosos em produção.

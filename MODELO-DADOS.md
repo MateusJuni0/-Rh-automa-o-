@@ -1052,7 +1052,36 @@ ALTER TABLE candidate_memory_fact ADD COLUMN requisito_id UUID;  -- liga o facto
 > canal **facto-de-pesquisa→tick** é `candidate_memory_fact source_type='research'`/
 > `estado_prova='a_confirmar'` (não entra no score até confirmado ao vivo).
 
-> **Contagem: 34 tabelas** (+`proactive_task`). As restantes adições são colunas à base canónica.
+### G — Serialização do estado vivo (sem schema novo)
+Família G = **prosa** em `ARQUITETURA-TEMPO-REAL §11.1` (escritor único estendido + encerramento
+compare-and-set + entidade global por advisory lock). Sem tabela/coluna nova — é invariante de runtime.
+
+### H — Destilação-final como JOB DURÁVEL (não só advisory-lock) — sim cascata-erro 2026-06-18
+```sql
+ALTER TABLE interview ADD COLUMN distilled_at TIMESTAMPTZ;  -- set quando o async_job 'distill_final' termina (done)
+```
+- A destilação-final pós-call (que escreve `candidate_memory_fact` a partir da Camada A) passa a
+  **`async_job kind='distill_final'`** (durável: `generating→done/failed`, retry com backoff,
+  **idempotente por `interview_id`**), espelhando o `gen_parecer` (`JORNADA §1.1.b`). Substitui o
+  mero advisory-lock de `ARQUITETURA-TEMPO-REAL §11.1(5)`.
+- O flag "factos destilados" = **`interview.distilled_at IS NOT NULL`** (produtor explícito =
+  `distill_final=done`). **`cron_purge_raw_audio`** (`DATA-RETENTION §1.1`) **exige** `distilled_at`
+  → o áudio (a FONTE) **nunca** se purga sem destilação completa. Crash a meio dos INSERTs = job
+  `failed`+alerta (não factos parciais sem deteção). Health-check vigia a destilação **POR
+  ENTREVISTA** (`ASSISTENTE-PESSOAL §4`), não só a consolidação periódica (anti-saga-claude-mem).
+
+### I — Idempotência das ações `enviar_fora` (anti duplo-envio em retry) — sim cascata-erro 2026-06-18
+```sql
+ALTER TABLE assistant_action ADD COLUMN idempotency_key     TEXT;  -- gerado na criação (pending_confirm), ANTES de executar
+ALTER TABLE assistant_action ADD COLUMN provider_message_id TEXT;  -- id do provider (Resend Message-ID, Calendar event) — dedup+auditoria
+```
+- As tools `enviar_fora` (`send_email`/`send_message`/`calendar_create`/`export_data`) levam o
+  `idempotency_key` propagado ao provider (Resend `Idempotency-Key`, Calendar `requestId`, dedup por
+  Message-ID). O **VERIFICADOR** separa "falhou ANTES de executar" (re-tentar é seguro) de "o efeito
+  pode JÁ ter ocorrido" (resposta perdida) → estado **`unknown`**: **NÃO re-envia auto**; verifica
+  pelo idempotency-key/Message-ID ou pergunta à Filipa. (`AGENTE-TOOLS-E-WS A.1/A.2`.)
+
+> **Contagem: 34 tabelas** (+`proactive_task`). As restantes adições (incl. H/I) são colunas à base canónica.
 
 ## RLS — políticas chave
 

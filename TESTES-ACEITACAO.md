@@ -389,6 +389,11 @@ nenhum termo.
       ficam last-write-wins (advisory lock por `candidate_id`); precedência determinística.
 - [ ] **Escritor único cobre TUDO:** durante `live`, só o worker da entrevista escreve
       `candidate_memory_fact`/`contradiction`/frame/cobertura — o agente só lê (sem corrida).
+- [ ] **(H) Destilação durável + gate de purga:** crash a meio da destilação-final → `async_job
+      kind='distill_final'` fica `failed` + alerta (não factos parciais silenciosos); `cron_purge_raw_audio`
+      **não** corre sem `interview.distilled_at` (áudio nunca purgado sem destilação completa).
+- [ ] **(I) Idempotência de enviar_fora:** retry de `send_email` após resposta perdida **não**
+      duplica (idempotency_key/Message-ID); estado ambíguo fica `unknown` → não re-envia auto.
 
 ---
 
