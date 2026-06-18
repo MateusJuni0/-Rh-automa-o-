@@ -24,7 +24,9 @@
 9. **v1 single-tenant:** `agency_id` fica em todas as tabelas (costura p/ v2) mas **SEM RLS** na v1.
 10. **pgvector** em todos os `*_embedding` (dimensão = a do EMBEDDER escolhido; default 1536 — `MODELOS-E-API §3`).
 
-> **Total: 29 tabelas** (+ os campos `consent_*` em `process`; inclui `interview_gap` — §14).
+> **Total: 33 tabelas** (+ os campos `consent_*` em `process`). Inclui as 4 de embedding
+> (candidate/transcript/source/recruiter), o runtime do agente (`assistant_thread`/
+> `assistant_message`/`async_job` — §12), `contradiction` (§13) e `interview_gap` (§14).
 > O DDL detalhado de cada uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
 
 ## Diagrama de relações
@@ -959,13 +961,19 @@ ALTER TABLE interview_tick ADD COLUMN degraded       BOOLEAN NOT NULL DEFAULT FA
 
 ```sql
 -- (v2) Padrão futuro: cada tabela tem RLS por agency_id
--- Exemplo para 'job':
+-- Exemplo para 'job' (caminho Next/Supabase — usa auth.uid()):
 ALTER TABLE job ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "agency isolation" ON job
   USING (agency_id = (
     SELECT agency_id FROM recruiter WHERE user_id = auth.uid()
   ));
 -- Replicar para todas as tabelas com agency_id
+
+-- ⚠️ (§15.9) O AGENTE Python (Lince Brain) liga com role de serviço → auth.uid() é NULL.
+-- A política para a conexão do agente usa o GUC de tenant (SET LOCAL app.agency_id por pedido):
+CREATE POLICY "agency isolation (agent)" ON job
+  USING (agency_id = current_setting('app.agency_id', true)::uuid);
+-- Sem isto, a RLS por auth.uid() é INERTE para o agente (SEGURANCA §1).
 ```
 
 ---
@@ -988,11 +996,12 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 ---
 
-## Migração de arranque (29 tabelas) — ordem de criação
+## Migração de arranque (33 tabelas) — ordem de criação
 
 > ⚠️ **Aplica o "🧭 Guia de consolidação" do topo** (forma FINAL canónica). Esta é a
-> ordem por FKs das **29 tabelas** (a lista antiga de 16 estava stale — corrigida 2026-06-18;
-> +`interview_gap` em 2026-06-18, §14).
+> ordem por FKs das **33 tabelas** (a lista antiga de 16/28/29 estava stale — corrigida
+> 2026-06-18: faltavam `assistant_thread`/`assistant_message`/`async_job` (§12) e
+> `contradiction` (§13) na ordem; + `interview_gap` §14).
 
 1. `agency` · 2. `recruiter` (+`telegram_chat_id`, +`voice_enrollment_path`) · 3. `client`
 (+`purge_after`) · 4. `job` · 5. `role_profile` · 6. `candidate` (+`anonymized_at`,
@@ -1006,9 +1015,14 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 (`process_id`) · 16. **`placement_outcome`** · 17. `client_memory_fact` (+ embedding,
 +`source_doc_id`) · 18. `candidate_memory_fact` (+ embedding, +`source_type`/`source_doc_id`/`estado_prova`)
 · 19. `agenda_event` · 20. **`source_doc`** (+ embedding) · 21. **`recruiter_memory_fact`**
-(+ embedding) · 22. **`assistant_action`** (+`efeito`) · 23. `intake_session` · 24.
+(+ embedding) · 22. **`assistant_action`** (+`efeito`/`thread_id`) · 22b. **`assistant_thread`**
+(§12) · 22c. **`assistant_message`** (§12; FK→`assistant_thread`) · 22d. **`async_job`** (§12) ·
+22e. **`contradiction`** (§13; FK→`process`+`transcript_chunk`) · 23. `intake_session` · 24.
 `intake_message`.
-*(As tabelas de embedding contam à parte: candidate/transcript/source/recruiter; +`interview_gap` = 29 no total.)*
+*(Contagem: 24 numeradas + 4 embeddings (candidate/transcript/source/recruiter) +
+`interview_gap` + `assistant_thread`/`assistant_message`/`async_job` + `contradiction` =
+**33 tabelas**. Nota de FK: `assistant_action.thread_id`→`assistant_thread`, por isso criar
+`assistant_thread` no mesmo bloco; `contradiction` depois de `process`+`transcript_chunk`.)*
 
 Extensões: **`pgvector`** (Supabase self-hosted). **v1 single-tenant: sem RLS** (agency_id
 fica como costura p/ v2).

@@ -68,7 +68,8 @@ que entregamos, não compliance legal):
   (sops+age estendido) — boa engenharia, não obrigação legal.
 - **Anti-spoof da biometria:** GATE — ON antes de venda/>1 utilizador (`AUTENTICACAO §6
   C2`). Senão uma foto destrava o login (falha técnica, não RGPD).
-- **Auth do WS, service-role só backend, cliente fino, segredos sops+age** — já tratados.
+- **Auth do WS, service-role só em migrações (não no request path), isolamento por `agency_id`,
+  cliente fino, segredos sops+age** — já tratados (`SEGURANCA.md`, `AUTH-CONTRACT §7/§8`).
 - **Confirmação mostra payload+destinatário, anti prompt-injection** (`ASSISTENTE-PESSOAL §2.1`).
 
 ---

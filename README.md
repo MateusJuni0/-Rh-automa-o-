@@ -22,6 +22,17 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 **gates de escala** (`ESCALA-E-OPERACAO §12`: limites de container, capacidade, backup do Storage).
 
+## Decisões 🟦 à espera do Mateus (do loop de segurança)
+Não bloqueiam codar; **bloqueiam vender/pôr PII real** — e algumas mudam a raiz, decidir cedo:
+1. **v2 = instância-por-agência** (fecha o risco pgvector cross-agency na raiz) **vs** multi-tenant partilhado? (`SEGURANCA §13.l`)
+2. **Admin-comprador vê PII** de candidatos? → audit de leitura + role admin separado? (`SEGURANCA §13.k`, `INFRA-E-MIGRACAO §7`)
+3. **Identidade do candidato** — verificar no início (anti proxy-interview) ou marcar "não verificada" no parecer? (`SEGURANCA §13.j`)
+4. **Chave de cifra do backup:** onde vive / quem detém (tem de ser **off-VPS**). (`SEGURANCA §6`)
+5. **Data-policy de Soniox (STT) + embedder OpenAI** — retenção-zero contratual ou trocar provider? (`SEGURANCA §7`)
+6. **2FA na via email+senha** no piloto? (`SEGURANCA §8`)
+7. **Custódia da chave age do comprador** (gerada na VPS dele) + **VPS dedicada** à Vera a médio prazo. (`INFRA §5`, `ESCALA §2`)
+8. (negócio) IP/licença + code-signing em nome do comprador. (`LEGAL-E-RGPD §5`)
+
 ---
 
 ## 👉 Por onde começar
@@ -30,6 +41,9 @@ validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
 ## Mapa dos documentos (40)
+
+> Além dos 40 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
+> (gate do Cyber Neo `--redteam`) e `PROMPT-CHATGPT-REVIEW.md` (prompt p/ revisão externa).
 
 **Visão & entrada**
 | Doc | O que é |
@@ -52,7 +66,7 @@ validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 | [`ASSISTENTE-PESSOAL.md`](./ASSISTENTE-PESSOAL.md) | O "ChatGPT dela": agente (motor Hermes), ferramentas, memória que aprende |
 | [`ASSISTENTE-PROATIVO.md`](./ASSISTENTE-PROATIVO.md) | Agenda + deteção de lacunas + follow-up |
 | [`JORNADA-POS-PARECER.md`](./JORNADA-POS-PARECER.md) | A cauda: oferta → colocado → garantia (calibração) |
-| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (29 tabelas) + DDL + RGPD |
+| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (33 tabelas) + DDL + RGPD |
 | [`MODELOS-E-API.md`](./MODELOS-E-API.md) | Modelos por slot, agnósticos, via OpenRouter |
 
 **Fase 2 — embalagem & design**
