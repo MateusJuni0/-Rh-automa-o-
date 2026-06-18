@@ -1029,6 +1029,29 @@ ALTER TABLE placement_outcome ADD COLUMN rubric_version INT;
   agrega pares da **mesma `rubric_version`**; **piso `CALIBRATION_MIN_N`** + **IC de Wilson** antes
   de exibir "%". Regras em `INTAKE-E-JULGAMENTO §D.1`.
 
+### F — Requisito com ID CANÓNICO (recuperado da sim tempo-real, 2026-06-18)
+A rubric não dava **identidade estável** a cada requisito — `origin_criteria_id` é proveniência
+(de onde a linha veio), não identidade. Toda a cadeia a jusante usava **texto livre** como chave
+(`rubric.criteria[].requisito`, frame/`live_state`, `interview_tick.suggestion.requisito`, WS
+`coverage.update`, `contradiction.requisito`, `candidate_memory_fact.competencia`) → reformular
+um requisito ou **recompilar a rubric** (que tem `version` — §8) **parte** as referências.
+```sql
+-- rubric.criteria[] ganha um requisito_id ESTÁVEL (UUID) — persiste através de rubric.version:
+--   um requisito que transita para a nova versão mantém o MESMO requisito_id.
+ALTER TABLE contradiction         ADD COLUMN requisito_id UUID;  -- além do texto (display)
+ALTER TABLE candidate_memory_fact ADD COLUMN requisito_id UUID;  -- liga o facto ao REQUISITO, não só competencia TEXT
+```
+- O **frame** (`interview_tick.live_state`), a `suggestion.requisito`, o WS `coverage.update`, o
+  parecer e a comparação referenciam o **`requisito_id`**, não texto. O texto fica só para
+  **display** / linguagem da Filipa. (`CAMADA-CONHECIMENTO` atribui o id na compilação da rubric;
+  `ARQUITETURA-TEMPO-REAL §9` keia o frame por id.)
+- A Família A (`source_chunk_id`) é proveniência **chunk→facto** (a jusante) — **não** resolve a
+  identidade do requisito (a montante). São ortogonais.
+
+> **Nota (sim):** `source_doc` (§7) JÁ está no schema canónico (#20 da ordem de criação); o
+> canal **facto-de-pesquisa→tick** é `candidate_memory_fact source_type='research'`/
+> `estado_prova='a_confirmar'` (não entra no score até confirmado ao vivo).
+
 > **Contagem: 34 tabelas** (+`proactive_task`). As restantes adições são colunas à base canónica.
 
 ## RLS — políticas chave
