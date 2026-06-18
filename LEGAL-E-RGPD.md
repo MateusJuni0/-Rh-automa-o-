@@ -1,155 +1,111 @@
-# Legal & RGPD — o que falta decidir antes de gravar/vender pessoas reais
+# Legal & RGPD — responsabilidade da AGÊNCIA; nós damos a ferramenta
 
-> **Gap encontrado na auditoria (2026-06-18):** toda a spec técnica é forte, mas a
-> camada **legal/RGPD estava AUSENTE** (zero menção a consentimento do candidato,
-> controlador/subcontratante, DPA, retenção concreta, IP do produto vendido). Isto
-> **não é "depois"** — parte é **pré-requisito do próprio piloto** com dados reais da
-> Filipa. Este doc nomeia as decisões; várias são do **Mateus/jurídico**, não minhas.
+> **Postura LOCKED (Mateus, 2026-06-18):** **o RGPD é 100% responsabilidade da agência
+> (a Filipa), NADA nosso.** A CMTec **fornece a ferramenta**; os dados são da agência;
+> as decisões legais (base legal, consentimento, retenção, apagamento) são **dela**.
+> Este doc NÃO nos põe obrigações de compliance — só (a) garante **uma cláusula
+> contratual** que deixa isso claro, e (b) lista o que o **produto oferece** para que
+> ela consiga cumprir se quiser.
 
-> ⚠️ **Não sou advogado.** O que segue é o enquadramento de engenharia + propostas de
-> default. As decisões marcadas 🟦 precisam de validação humana/jurídica.
-
----
-
-## 1. 🔴 Quem é o Controlador vs Subcontratante (por fase) + DPA
-
-O produto processa **dados pessoais sensíveis** (gravações de voz, entrevistas que
-revelam saúde/família/etc.; a Camada A guarda *tudo*). Falta definir o papel RGPD:
-
-| Fase | Quem hospeda | Controlador | Subcontratante | Precisa |
-|---|---|---|---|---|
-| 1 — connosco | CMTec | **a agência (IRIS)** | **CMTec** | **Contrato de Subcontratação (Art. 28)** entre CMTec e IRIS |
-| 2 — VPS do comprador | comprador | comprador | (CMTec sai) | DPA dissolve-se; comprador assume tudo |
-
-- 🔴 **Bloqueador do piloto:** sem o **DPA Art. 28** (CMTec = subcontratante da IRIS) não
-  há base legal para a CMTec sequer correr o piloto com dados reais. **Criar antes de
-  ligar a Filipa a dados reais.** 🟦 Mateus/jurídico.
+> ⚠️ Não sou advogado. O abaixo é enquadramento de produto, não aconselhamento jurídico.
 
 ---
 
-## 2. 🔴 Consentimento do candidato (ele nunca entra na app)
+## 1. Quem é responsável — a AGÊNCIA, ponto final
 
-A decisão "consentimento é manual da Filipa, fora da app" + "o bot é visível como
-transcritor" **não basta** sozinha:
-- "Bot visível" prova **gravação**, não prova **avaliação automatizada por IA** (RGPD
-  Art. 22 — decisão individual automatizada).
-- Falta: **base legal** (interesse legítimo vs consentimento), **prova** (quando/como
-  consentiu), e o **caminho do "recusou"**.
-
-**Proposta (🟦 a validar):**
-- **Texto-modelo** de aviso que a Filipa envia ao candidato antes da call (gravação +
-  IA assistiva + direitos).
-- **Registo no sistema:** `process.consent_status` (`pendente|dado|recusado`) +
-  `consent_evidence_ref` (link/print/data) + `consent_at`. (Schema novo — ver §6.)
-- **Caminho "recusou":** o produto **tem de suportar entrevista SEM o bot/captura** (a
-  Filipa entrevista normal; sem copiloto ao vivo). Não pode ser um beco.
-- **Escapar ao Art. 22:** deixar **escrito e no produto** que o juízo é **assistivo — a
-  Filipa decide sempre** (já é a filosofia; aqui vira também salvaguarda legal).
+- **A agência (Filipa) é a Controladora dos dados** e **assume toda a responsabilidade
+  RGPD**: base legal, consentimento dos candidatos, retenção, apagamento, direitos dos
+  titulares. **A CMTec é só o fornecedor da ferramenta.**
+- **Única coisa do nosso lado:** **uma cláusula** no contrato de uso/venda a dizer
+  exatamente isto — *"a agência é a Controladora e a única responsável pelo cumprimento
+  do RGPD; a CMTec fornece o software e não responde pelo uso que a agência faz dos
+  dados."* 🟦 Mateus mete isto no contrato. **Não criamos DPA pesado nem obrigações de
+  subcontratante para nós** — a responsabilidade é dela.
+- Vale em todas as fases: connosco a hospedar (piloto) ou na VPS dela/do comprador.
 
 ---
 
-## 3. 🔴 Reutilização de factos entre clientes — precisa de cláusula
+## 2. O que o PRODUTO oferece para ela cumprir (features, não obrigações nossas)
 
-Tecnicamente decidido (candidato global, sem `visibility_scope`). Mas RGPD: a
-**finalidade** com que se recolheu para o Cliente X não cobre o Cliente Y (Art. 5,
-limitação de finalidade). Dizer "é responsabilidade da Filipa" só protege a CMTec se
-estiver **no contrato**: **a agência é a Controladora e assume a reutilização
-cross-cliente.** 🟦 cláusula no contrato de venda/piloto.
+O produto **dá-lhe as ferramentas** para ela ser responsável — usá-las é decisão dela:
+- **Marca de consentimento por candidato:** `process.consent_status`
+  (`pendente|dado|recusado`) + `consent_evidence_ref` + `consent_at`. Ela regista como
+  obteve o consentimento. *(O produto não obriga; oferece o sítio para guardar a prova.)*
+- **Caminho "candidato recusou":** o produto **suporta entrevista SEM o bot/captura**
+  (`interview.capture_type = 'none'`) — ela entrevista normal, sem copiloto ao vivo.
+- **Retenção configurável + apagamento:** soft-delete recuperável (`purge_after`) + cron
+  de hard-delete; os **prazos são configuráveis por ela** (não impomos números — só
+  defaults sugeridos, §3).
+- **Factos pessoais fora do score** (`usar_no_score=FALSE`) + auditável — ajuda-a a
+  mostrar que o juízo não pesou dados sensíveis, se ela precisar.
+- **O juízo é assistivo — a Filipa decide sempre** (não é decisão automatizada). É a
+  filosofia do produto e, de borda, ajuda-a com o Art. 22.
 
----
-
-## 4. 🔴 Segurança da transferência de dados na migração (entre hosts)
-
-O runbook (`INFRA-E-MIGRACAO`) é forte em determinismo, mas **não protege o transporte**
-dos dados pessoais (`rh_dump.sql.gz`, `storage.tar.gz` com CVs/áudios, `face_templates`
-= dado biométrico). Fixar:
-- **Cifrar o bundle** (estender o sops+age, já usado no `.env`, ao dump+storage) —
-  cifrado em trânsito **e** em repouso durante o salto.
-- **Prazo de purga da origem:** o §4 do runbook diz "não apagar a origem antes da janela
-  de fallback" → mas falta **um prazo** (ex.: purga da nossa cópia **N dias** após
-  cutover confirmado). Dados pessoais da agência **não podem ficar indefinidamente** na
-  nossa infra após a venda. 🟦 definir N.
-- **Cadeia de custódia:** quem transporta e quem assina a entrega.
+> Tudo isto **serve a Filipa**; a responsabilidade de usar é dela. Nós não validamos o
+> consentimento dela nem auditamos o uso — só damos as alavancas.
 
 ---
 
-## 5. 🟠 Tabela de retenção (números concretos — falta)
+## 3. Retenção — defaults SUGERIDOS (ela ajusta)
 
-"Curta para pessoal, durável para profissional" é intenção, não política. O cron de
-hard-delete depende de `retain_until`/`purge_after` que **ninguém preencheu com dias**.
-**Proposta (🟦 a validar com jurídico):**
+Não impomos política; o produto vem com defaults editáveis por ela:
 
-| Dado | Retenção proposta |
+| Dado | Default sugerido (editável pela agência) |
 |---|---|
-| Áudio cru / transcrição crua (`transcript_chunk`) | **30 dias** após a entrevista |
-| Factos `personal` (`usar_no_score=FALSE`) | **90 dias** |
-| Factos `professional` (perfil do candidato) | enquanto candidato ativo no pool + **N anos** |
-| `face_templates` (biometria) | enquanto a utilizadora estiver **ativa** + 30 dias |
-| Soft-delete → hard-delete (`purge_after`) | **30 dias** de janela de recuperação |
+| Áudio/transcrição crua (`transcript_chunk`) | 30 dias |
+| Factos `personal` | 90 dias |
+| Factos `professional` | enquanto candidato ativo |
+| `face_templates` (biometria) | enquanto utilizadora ativa |
+| Janela soft→hard delete (`purge_after`) | 30 dias |
 
 ---
 
-## 6. Schema/produto a acrescentar (suporta o acima)
+## 4. Segurança TÉCNICA — isso sim é nosso (qualidade do produto)
+
+Separar bem: **RGPD/responsabilidade = dela; segurança técnica = nossa** (é qualidade do
+que entregamos, não compliance legal):
+- **Migração entre hosts:** o bundle (dump + storage + biometria) vai **cifrado**
+  (sops+age estendido) — boa engenharia, não obrigação legal.
+- **Anti-spoof da biometria:** GATE — ON antes de venda/>1 utilizador (`AUTENTICACAO §6
+  C2`). Senão uma foto destrava o login (falha técnica, não RGPD).
+- **Auth do WS, service-role só backend, cliente fino, segredos sops+age** — já tratados.
+- **Confirmação mostra payload+destinatário, anti prompt-injection** (`ASSISTENTE-PESSOAL §2.1`).
+
+---
+
+## 5. Produto vendido — IP & responsabilidade (negócio, 🟦 Mateus)
+
+- **IP/licença:** a CMTec retém o IP e licencia, ou vende outright? 🟦 decisão de negócio.
+- **Code-signing** do app desktop: assinado em nome do **comprador** (não nosso — não
+  queremos aparecer como autores de software que já não controlamos). `APP-DESKTOP D6`.
+- **Responsabilidade pelo output:** cláusula de limitação — o parecer é **assistivo**, a
+  agência decide; a CMTec não responde por uma má contratação. 🟦 contrato.
+- **Apify/sourcing:** o comprador traz a **sua conta/tokens**; o ToS do LinkedIn é
+  responsabilidade dele. (Coerente com "instância independente, sem cordão umbilical".)
+
+---
+
+## 6. Schema/produto que suporta o acima
 ```sql
 ALTER TABLE process ADD COLUMN consent_status TEXT NOT NULL DEFAULT 'pendente'; -- pendente|dado|recusado
 ALTER TABLE process ADD COLUMN consent_evidence_ref TEXT;
 ALTER TABLE process ADD COLUMN consent_at TIMESTAMPTZ;
--- caminho "sem captura": interview.capture_type ganha 'none' (entrevista sem bot, candidato recusou)
+-- interview.capture_type ganha 'none' (entrevista sem bot — candidato recusou captura)
 ```
-> ⚠️ Regra de produto: **se `consent_status != 'dado'`, o copiloto ao vivo NÃO arranca a
-> captura** — a Filipa entrevista sem o bot. Vira critério de aceitação (`TESTES`).
+> Regra de produto: se `consent_status != 'dado'`, o copiloto ao vivo **não arranca a
+> captura** — ela entrevista sem o bot. (Vira critério de aceitação.) Isto **protege-a a
+> ela**; a responsabilidade de obter o consentimento continua a ser dela.
 
 ---
 
-## 7. 🟠 IP, licenciamento, code-signing e responsabilidade do produto vendido
-
-Decidimos "instância independente, vendorizada, sem cordão umbilical" (técnico ✅). Falta
-o legal (🟦 Mateus/jurídico):
-- **IP/licença:** a CMTec **retém o IP e licencia**, ou **vende outright**? (muda tudo).
-- **Code-signing (`APP-DESKTOP D6`):** o instalador assina em nome de **quem**? Assinar
-  com cert CMTec faz-nos aparecer como autores de software que já não controlamos →
-  risco se o comprador o adulterar. Provável: comprador assina com o cert dele.
-- **Responsabilidade pelo output:** um parecer errado leva a agência a recomendar mal →
-  **cláusula de limitação de responsabilidade** (o juízo é assistivo, a recrutadora
-  decide). Liga ao Art. 22 (§2).
-
----
-
-## 8. 🟠 Apify / sourcing — ToS e tokens
-
-Trocar browser-automation por Apify tirou-nos do território cinzento, **mas** o Apify a
-fazer scraping do LinkedIn **continua a violar o ToS do LinkedIn** (só muda quem o faz).
-E os "5 tokens Apify" são **nossos** → vender uma instância que depende deles **contradiz
-o "sem cordão umbilical"** e expõe a nossa conta.
-- **Fix:** ao vender, o comprador traz a **sua própria conta/tokens Apify**; e fica
-  escrito que o sourcing (e o seu ToS) é **responsabilidade dele**. Na fase piloto
-  (connosco) usamos os nossos com parcimónia. 🟦 nota no contrato.
-
----
-
-## 9. 🟠 Anti-spoof da biometria — gate antes de vender
-
-O anti-spoof passivo está **DESLIGADO** (`AUTENTICACAO §6 C2`), aceitável "para 1
-utilizadora de confiança na v1". **Mas isto é um produto para vender** — o 1º comprador
-pode ter **>1 recrutador** ou um não-confiável, e aí uma **foto/vídeo destrava o login**.
-- 🔴→🟠 **Gate explícito:** o anti-spoof tem de estar **ON antes de qualquer deployment
-  com >1 utilizador OU venda externa** — não só "antes da v2". (Atualizar `AUTENTICACAO`.)
-
----
-
-## 10. Resumo — o que é decisão do Mateus/jurídico vs engenharia
-
-| # | Item | Tipo | Quando |
-|---|---|---|---|
-| 1 | DPA Art. 28 (CMTec=subcontratante IRIS) | 🟦 jurídico | **antes do piloto com dados reais** |
-| 2 | Consentimento candidato (texto+prova+recusa+Art.22) | 🟦 jurídico + 🛠️ schema | antes de gravar alguém |
-| 3 | Cláusula reutilização cross-cliente | 🟦 contrato | antes da venda |
-| 4 | Cifra+purga na migração | 🛠️ engenharia + 🟦 prazo | antes da 1ª migração |
-| 5 | Tabela de retenção (dias) | 🟦 jurídico | antes do cron de purga |
-| 7 | IP/licença/code-signing/responsabilidade | 🟦 jurídico | antes da venda |
-| 8 | Apify: tokens do comprador + ToS | 🟦 contrato | antes da venda |
-| 9 | Anti-spoof ON antes de venda/>1 user | 🛠️ engenharia | antes de vender |
-
-> **Nada disto bloqueia continuar a SPEC.** Mas os 🔴 (#1–#4) **bloqueiam pôr dados reais
-> de uma pessoa** (o teste com a Filipa) e **bloqueiam vender**. São decisões a tomar
-> antes da Fase 3 entregar, não antes de a planear.
+## 7. Resumo
+- **RGPD = responsabilidade da agência (Filipa). Nada nosso.** Só precisamos de **1
+  cláusula** no contrato a dizê-lo. 🟦 Mateus.
+- O **produto oferece** as alavancas (consentimento, retenção, apagamento, pessoal fora
+  do score) para ela cumprir — usar é decisão dela.
+- O que é **nosso de facto** = **segurança técnica** (cifra na migração, anti-spoof,
+  auth) — qualidade, não compliance.
+- **Negócio (🟦 Mateus):** IP/licença, code-signing no nome do comprador, limitação de
+  responsabilidade, Apify com tokens do comprador.
+- **Nada disto bloqueia a spec.** A cláusula contratual resolve o lado legal do nosso
+  lado; o resto é da Filipa.
