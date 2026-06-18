@@ -197,8 +197,10 @@ O overlay **não é um ecrã só** — tem um ciclo de estados. Estado de cada u
 - [x] **Áudio caiu / a reconectar** (vermelho, distinto do silêncio; trecho guardado). ✅ mockup
 - [x] **Correção de diarização** (1 toque para reatribuir quem falou). ✅ mockup
 
-> ✅ **Todos os estados do overlay ao vivo desenhados (2026-06-18).** Falta: os **3 estados
-> UX** (a carregar / vazio / erro) de cada ecrã web (dashboard, assistente, etc.).
+> ✅ **Todos os estados do overlay ao vivo desenhados (2026-06-18).**
+> ✅ **3 estados UX web desenhados (vazio com CTA / a carregar com esqueleto / erro com
+> retry) — 2026-06-18.** Padrão aplica-se a todos os ecrãs web (dashboard, assistente,
+> comparar, parecer, etc.). **DESIGN DA FASE 2 COMPLETO.**
 
 ### Anti-padrões a evitar
 - ❌ Parede de texto rolando (a transcrição inteira na cara).
