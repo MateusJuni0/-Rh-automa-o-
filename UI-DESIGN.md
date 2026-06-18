@@ -176,6 +176,20 @@ presencial). Não cobre o rosto do candidato.
   transcrição corrente**, **sem parar a captura**. (É o Q&A da Tela 8, embutido no
   overlay para uso durante a call.)
 
+### Estados de vida do overlay (mockups — 2026-06-18)
+O overlay **não é um ecrã só** — tem um ciclo de estados. Estado de cada um:
+- [x] **A ouvir** (calmo, sem sugestão — o normal): barras de áudio + "segue a conversa" + checklist. ✅ mockup
+- [x] **A pensar** (1–3s a processar um trecho): indicador subtil + requisito a "carregar". ✅ mockup
+- [x] **Sugestão** (pergunta em destaque + porquê + Usei/Pular). ✅ mockup
+- [ ] **Veredito ao vivo** (após a resposta: ✅ forte / 🟡 rasa / ⚠ atenção) — *a desenhar*
+- [ ] **Rede de segurança no fim** ("antes de terminar: falta confirmar Inglês e Liderança") — *a desenhar*
+- [ ] **Chat ao vivo aberto** (ela escreveu "falta algo?" → resposta da checklist) — *a desenhar*
+- [ ] **Pesquisa ao vivo a correr** (candidato deu um link → "a ver o repo…") — *a desenhar*
+- [ ] **Áudio caiu / a reconectar** (distinguir de silêncio) — *a desenhar*
+- [ ] **Correção de diarização** (toque para reatribuir "quem falou") — *a desenhar*
+
+> Além do overlay, cada ecrã web tem os **3 estados UX** (loading / vazio / erro) por desenhar.
+
 ### Anti-padrões a evitar
 - ❌ Parede de texto rolando (a transcrição inteira na cara).
 - ❌ Pop-ups que piscam no meio da fala.

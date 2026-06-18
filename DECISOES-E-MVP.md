@@ -323,6 +323,13 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - **Fase 1 = o cérebro** (specs) ✅ · **Fase 2 = embalagem & design** (specs/mockups) — ATUAL · **Fase 3 = codar tudo** (build). **Só na Fase 3 se escreve código.** Até lá, tudo é spec.
 - [x] **Mockups dark (Vera):** overlay ao vivo ✅, assistente pessoal ✅, dashboard/pipeline ✅, comparar candidatos ✅. Validaram o HUD escuro p/ ao-vivo E telas de gestão.
 - [x] **Mockups COMPLETOS (6/6):** overlay ✅, assistente ✅, dashboard ✅, comparar ✅, briefing ✅, parecer ✅ — todos dark HUD / Vera.
+### Config & scope (2026-06-18, pré-código)
+- [x] **OpenRouter = chave NOSSA por agora** (Mateus paga depois — ainda não recebeu). Build arranca com a nossa chave.
+- [x] **Brave:** usar o free tier (fallback de D1). ⚠️ **NÃO localizei a chave guardada** (nem memória nem `workspace/.env`) → ao codar, localizar (token-broker Hermes?) ou tirar uma free nova.
+- [x] **LiveKit:** reusar o do `cmtec-voice-platform` **se funcionar** (confirmar no arranque do tempo-real).
+- [x] **Telegram DEFERIDO** (Mateus: "não sei se é interessante eles terem Telegram"). **A secretária/Vera vive no APP (desktop) + WEBSITE** — é aí que ela interage. Canal B (Telegram intake) passa a **opcional/depois**; intake principal = web app (e WhatsApp/Evolution se preciso, mais tarde). Reavaliar com a Filipa.
+- ⏳ **NÃO começar a codar ainda** — faltam estados de design do overlay (ex.: estado "a ouvir/transcrever/pensar" sem sugestão) + mais ecrãs. "Temos muitas coisas ainda" (Mateus).
+
 - ✅✅ **FASE 2 (EMBALAGEM & DESIGN) — essencialmente COMPLETA em spec.** Resta só o que é **implementação** (Fase 3): abertos D1-D8 do `APP-DESKTOP` (áudio macOS, code-signing, canal de updates…), frames de controlo WS → `packages/core`, e o bug de enroll da biometria a resolver na origem antes de clonar.
 
 ### AUDITORIA 360° (3 subagentes paralelos, 2026-06-18) — Mateus: "tenho certeza que falta algo"
