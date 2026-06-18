@@ -205,7 +205,14 @@ Copiar **todo** `services/cmtec-face/` → `services/face/`. Módulos (em `app/`
 | `agents/pyproject.toml` | Deps (secção abaixo) | Base do `apps/realtime/pyproject.toml` |
 | `agents/Dockerfile` + `docker-compose.yml` | Build + stack (livekit + agent + postgres pgvector + redis) | Adaptar nomes/labels p/ Vera |
 
-> **`src/main.py`** é o orquestrador legado (Wave 1, manual). **Usar `main_v2.py`** (framework nativo 1.x — VAD Silero, turn-detector, barge-in). `src/core/orchestrator.py` legado: aproveitar só os **circuit breakers** (`MAX_TURNS_PER_SESSION=200`, `MAX_TOOL_ITERATIONS_PER_TURN=6`, `STT_FAILURE_THRESHOLD=2`).
+> **`src/main.py`** é o orquestrador legado (Wave 1, manual). **Usar `main_v2.py`** (framework nativo 1.x — VAD Silero, turn-detector, barge-in).
+>
+> ⚠️ **NÃO copiar os circuit-breakers do `src/core/orchestrator.py` legado tal-qual (correção 2026-06-18).** Eles são de um **bot de voz conversacional de turnos** (a Inês) e, aplicados a uma **transcrição passiva de 2h**, introduzem uma falha grave:
+> - `STT_FAILURE_THRESHOLD=2` → **encerraria a entrevista ao 2.º soluço transitório de Soniox.** Na Vera, falha de STT **nunca** encerra: reconecta + marca `interview_gap` (`RESILIENCIA-E-FALHAS §1`, `§6`).
+> - `MAX_TURNS_PER_SESSION=200` → **não se aplica** (a Vera não tem "turnos" do bot; é passiva) → remover.
+> - `MAX_TOOL_ITERATIONS_PER_TURN=6` → vale **só para o motor do agente** (`services/agent`, que faz tool-loop), **não** para o copiloto ao vivo (que não faz tool-loop por tick).
+>
+> A política de falha/retry/fallback/teto do copiloto está em **`RESILIENCIA-E-FALHAS.md`** — reimplementar a partir daí, não copiar as constantes da Inês. O copiloto ao vivo só tem **um** corte total: o **kill-switch explícito** da Filipa.
 
 ### Soniox — como integra (o que a Vera precisa)
 - Plugin `livekit-plugins-soniox` (wrap do WS Soniox). Config em `main_v2.py`: `soniox.STT(params=STTOptions(model="stt-rt-v3", language_hints=["pt","en"]))`, endpoint-detection ON, 16kHz mono.
@@ -245,8 +252,9 @@ ELEVENLABS_API_KEY=... / ELEVENLABS_VOICE_ID_* / AZURE_SPEECH_KEY+REGION
 ### Smoke-test de aceitação
 - [ ] Servidor LiveKit sobe (7880) e o `agent` liga (`LIVEKIT_URL=ws://livekit:7880`).
 - [ ] Uma sessão de teste: áudio → Soniox devolve transcrição **com `is_final`** e **com `speaker_id`** distinto para 2 falantes (prova de diarização nova).
-- [ ] Sessão **longa simulada (~1–2h)** mantém a stream Soniox viva (confirmar limites) — alinha com "validar custo" do `INFRA-E-MIGRACAO.md`.
-- [ ] Circuit breakers ativos (corta após N turns / falhas STT).
+- [ ] Sessão **longa simulada (~1–2h)** mantém a stream Soniox viva via **reabertura proativa com overlap** (confirmar limite real do Soniox) — gap=0 na troca; alinha com "validar custo" do `INFRA-E-MIGRACAO.md` (B6/B7).
+- [ ] **Resiliência passiva (NÃO os breakers da Inês):** matar o Soniox a meio → a sessão **NÃO encerra**, reconecta e grava 1 `interview_gap`; matar o LLM do tick → cai para fallback/“só transcrição”, Camada A intacta (`RESILIENCIA-E-FALHAS §1/§3/§6`).
+- [ ] Teto de custo por entrevista dispara alerta (70/90%) e degrada cadência no soft-cap, sem cortar a transcrição (`RESILIENCIA §4`).
 - [ ] **Independência:** nenhuma chamada à infra de voz CMTec/Telecof em runtime — só LiveKit+Soniox da Vera.
 
 ---
@@ -289,5 +297,7 @@ ELEVENLABS_API_KEY=... / ELEVENLABS_VOICE_ID_* / AZURE_SPEECH_KEY+REGION
 - **Biometria flash liveness (C1):** corrigir na **origem** antes de clonar (senão o clone herda).
 - **Anti-spoof:** clonar em modo SOMBRA; **ligar `ANTISPOOF_ENFORCE=true` antes de vender / >1 utilizador**.
 - **Diarização (peça 3):** é **código NOVO** sobre o adapter Soniox (não vem de borla) — é o maior trabalho não-trivial do reuse de tempo-real.
+- **Circuit-breakers (peça 3):** os do orquestrador legado da Inês são de **bot de voz** — **não copiar** para o copiloto passivo (matariam a entrevista de 2h). Reimplementar via `RESILIENCIA-E-FALHAS.md`. Os de tool-loop migram para o motor do agente (peça 2).
+- **Teto de custo (peça 2):** `LINCE_DAILY_BUDGET_USD` herdado **não é imposto no código** e é diário/global — a Vera precisa de **teto POR ENTREVISTA** (`INTERVIEW_COST_CAP_USD`, `RESILIENCIA §4`), alimentado por `interview_tick.cost_usd` (`MODELO-DADOS §14`).
 - **Deps do agente:** o clone `lince-brain-local` não traz `requirements.txt` — fixar versões (idealmente as da VPS) antes da Fase 3.
 - **Princípio transversal:** depois de clonar, **trocar todas as chaves/segredos/DSN/endpoints** e provar **independência** (cortar a infra CMTec e ver cada peça a funcionar).

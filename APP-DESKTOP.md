@@ -136,9 +136,14 @@ Caminhos, por ordem de preferência:
   confiança visível — *"está a ouvir-me?"* respondido sem perguntar. Sem persistir áudio.
 - **Queda de áudio:** se a faixa cai (microfone desligado, device trocado, loopback
   perdido), LiveKit tenta **reconectar** a faixa; o HUD mostra **"a religar áudio…"**
-  (não silêncio enganador). Se não recupera em ~Ns, alerta visível e oferece "escolher
-  microfone". O **estado vivo na VPS persiste** — quando o áudio volta, retoma sem perder
-  a entrevista (`ARQUITETURA-TEMPO-REAL §11`: o escritor do estado é o `realtime`).
+  (não silêncio enganador). Se não recupera em **`RECONNECT_AUDIO_MS` = 3000ms**, marca um
+  **`interview_gap`** (cause=`app_crash`/`pc_sleep`, `MODELO-DADOS §14`), alerta visível e
+  oferece "escolher microfone". O **estado vivo na VPS persiste** — quando o áudio volta,
+  retoma sem perder a entrevista (`ARQUITETURA-TEMPO-REAL §11`: o escritor do estado é o
+  `realtime`). Política completa: `RESILIENCIA-E-FALHAS.md §5`.
+- **Stream Soniox órfão (PC dormiu/app crashou):** se o heartbeat de captura (acima) deixa
+  de chegar, o `realtime` **fecha o stream Soniox** desse desktop (senão fica a "ouvir"
+  silêncio e a gastar STT-horas — liga ao teto de custo, `RESILIENCIA §4`) e abre o gap.
 - **Troca de dispositivo a quente:** se a Filipa muda de auscultadores a meio, o app
   deteta (`navigator.mediaDevices.ondevicechange`) e re-liga a faixa ao novo device sem
   reiniciar a entrevista.

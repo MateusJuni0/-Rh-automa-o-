@@ -175,6 +175,13 @@ Para o construtor não ficar à espera de decisão. **São defaults a afinar**, 
   concreta; abaixo disso fica `raso` e re-sonda.
 > Tudo isto vai para `packages/core/realtime-config.ts` (constantes v1) **na Fase 3** — é
 > o primeiro a calibrar na simulação de 2h. Meta de custo: dominado por Soniox/h + ticks `LIVE`.
+>
+> ⚠️ **Quando a infra parte a meio** (Soniox/LiveKit/rede caem, LLM do tick dá 429/timeout,
+> custo dispara): a política concreta de reconexão, fallback de modelo, **teto de custo POR
+> entrevista** e registo dos intervalos não-capturados está em **`RESILIENCIA-E-FALHAS.md`**
+> (constantes irmãs destas, mesmo `realtime-config`). Regra-mãe: degrada para "só
+> transcrição", **nunca** encerra a entrevista; o que não se ouviu vira `interview_gap`
+> (`MODELO-DADOS §14`) e o parecer **assinala-o** (não finge silêncio).
 
 ---
 

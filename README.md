@@ -26,7 +26,7 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (37)
+## Mapa dos documentos (38)
 
 **Visão & entrada**
 | Doc | O que é |
@@ -43,12 +43,13 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 | [`INTAKE-E-JULGAMENTO.md`](./INTAKE-E-JULGAMENTO.md) | Input tipado + rubric + 4 regras anti-achismo + calibração + entrada de candidato |
 | [`FILOSOFIA-DAS-PERGUNTAS.md`](./FILOSOFIA-DAS-PERGUNTAS.md) | Como a Vera gera perguntas: **profundidade (como/porquê/caso real), não checklist de tecnologias** |
 | [`ARQUITETURA-TEMPO-REAL.md`](./ARQUITETURA-TEMPO-REAL.md) | Copiloto ao vivo: 2 camadas, frame, **o fosso (aprofundamento)**, concorrência, tokens |
+| [`RESILIENCIA-E-FALHAS.md`](./RESILIENCIA-E-FALHAS.md) | **Falha de infra a meio de 2h:** reconexão STT, fallback de modelo, teto de custo, gaps não-capturados |
 | [`RELATORIO-CLIENTE.md`](./RELATORIO-CLIENTE.md) | Parecer critério-a-critério (anti-ping-pong), selo de origem, 2 versões |
 | [`ASSISTENTE-CONVERSA.md`](./ASSISTENTE-CONVERSA.md) | Cérebro do chatbot: Q&A ancorado + comparar candidatos |
 | [`ASSISTENTE-PESSOAL.md`](./ASSISTENTE-PESSOAL.md) | O "ChatGPT dela": agente (motor Hermes), ferramentas, memória que aprende |
 | [`ASSISTENTE-PROATIVO.md`](./ASSISTENTE-PROATIVO.md) | Agenda + deteção de lacunas + follow-up |
 | [`JORNADA-POS-PARECER.md`](./JORNADA-POS-PARECER.md) | A cauda: oferta → colocado → garantia (calibração) |
-| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (28 tabelas) + DDL + RGPD |
+| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (29 tabelas) + DDL + RGPD |
 | [`MODELOS-E-API.md`](./MODELOS-E-API.md) | Modelos por slot, agnósticos, via OpenRouter |
 
 **Fase 2 — embalagem & design**

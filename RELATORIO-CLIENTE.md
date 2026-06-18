@@ -85,6 +85,16 @@ Quando há `contradito` ou `nao_sustentado` (`MODELO-DADOS §13`), o parecer mos
 propósito"*) — 5ª regra anti-achismo (`INTAKE Parte C`). A Filipa/cliente interpretam; a
 Vera só assinala. É o que torna o parecer **defensável** (e não difamatório).
 
+### Intervalos não-capturados (falha de infra) — assinalar, nunca tapar (gap simulação "falha de infra" 2026-06-18)
+Se a infra partiu a meio (Soniox/rede/app caíram), houve minutos **sem captura**. O parecer
+**não trata um buraco como silêncio**: lê cada `interview_gap` (`MODELO-DADOS §14`) e mostra,
+na secção de fiabilidade, **"⬜ não-capturado HH:MM–HH:MM (causa)"**. Consequências:
+- Um `client_criteria` que só seria coberto **dentro** de um gap fica `não-confirmado` — não
+  se finge cobertura (Regra 3 anti-achismo aplicada à falha técnica).
+- O parecer **distingue** "não perguntado" de "perguntado mas não-capturado" (o gap prova a
+  diferença) — em vez de uma ausência ambígua.
+- Política completa de falha/recuperação ao vivo: `RESILIENCIA-E-FALHAS.md`.
+
 ---
 
 ## 4. Duas versões, uma fonte

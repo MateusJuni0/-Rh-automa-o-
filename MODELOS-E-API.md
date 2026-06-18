@@ -121,3 +121,36 @@ Para o sistema escolher/validar um modelo num slot, cada entrada do registry tem
 > (`LIVE`: tudo ao vivo) · barato no trivial (`EXTRACTOR`). Reavaliar com **custo real**.
 > Reclassificámos o **parecer** para o slot `ARCHITECT` (era Sonnet no `§5`): é o
 > entregável, sem pressão de tempo.
+
+---
+
+## 5. Falha de modelo a meio + fallback por slot (gap simulação "falha de infra" 2026-06-18)
+
+Faltava o que acontece quando o modelo de um slot **falha a meio** (429/timeout/5xx/
+indisponível). Há **dois níveis** de fallback, complementares:
+
+1. **Fallback de PROVIDER (transparente, do OpenRouter):** o OpenRouter já reencaminha
+   entre fornecedores do **mesmo** modelo por baixo. Não precisamos de o gerir.
+2. **Fallback de MODELO (nosso, explícito):** cada slot tem uma **lista ordenada**, não um
+   único `model_id`. Se o primário falha de forma sustentada, desce-se na lista:
+   ```env
+   MODEL_LIVE=anthropic/claude-sonnet-4-6, anthropic/claude-haiku-4-5   # primário, secundário
+   MODEL_ARCHITECT=anthropic/claude-opus-4-8, anthropic/claude-sonnet-4-6
+   MODEL_EXTRACTOR=anthropic/claude-haiku-4-5
+   ```
+   - A **Filipa edita esta lista** no ecrã de Definições (mesmo seletor filtrado por slot do
+     §2; o 2.º+ modelo é o "plano B"). O secundário **tem de cumprir as mesmas amarras** do
+     slot (§3) — no `LIVE`, baixa latência + streaming + tools.
+
+**Comportamento ao vivo (slot `LIVE`)** — a escada concreta (timeouts, nº de falhas,
+degradação para "só transcrição") **vive em `RESILIENCIA-E-FALHAS.md §3`**: tick com
+`TICK_TIMEOUT_MS`; falha pontual → tick saltado (Camada A continua); `TICK_FAIL_FALLBACK`
+falhas → desce para o secundário e avisa "modo reduzido"; `TICK_DEGRADE_MS` sem sucesso →
+"só transcrição" e re-sobe quando recupera. **A entrevista nunca cai por falha de modelo.**
+
+**Comportamento offline (`ARCHITECT`/`EXTRACTOR`):** sem pressão de tempo → retry com
+backoff e, se persistir, desce na lista; o parecer/rubric podem esperar (não são
+latência-críticos). Um parecer só se marca "gerado" quando um modelo do slot respondeu.
+
+> Registo: cada tick grava `interview_tick.model_used` (`MODELO-DADOS §14`) → dá para ver
+> **quanto tempo se correu em fallback** (e o impacto no custo/qualidade) no dashboard.

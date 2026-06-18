@@ -246,6 +246,26 @@ nenhum termo.
 ### Custo / tokens
 - [ ] Sessão simulada de ~2h tem **custo ~constante** por tick (não cresce com a duração).
 - [ ] As 2h **nunca** são reenviadas no contexto de um tick.
+- [ ] Cada tick grava `cost_usd`/`tokens`/`model_used`/`tick_latency_ms` (`MODELO-DADOS §14`);
+      o dashboard soma custo por entrevista a partir daí.
+- [ ] Teto por entrevista: alerta a 70/90%; **soft-cap (90%)** degrada cadência;
+      **hard-cap (100%)** pausa sugestões mas **mantém a transcrição** (`RESILIENCIA §4`).
+
+### Testes de RESILIÊNCIA / falha de infra (2026-06-18)
+- [ ] **Soniox cai a meio** → a sessão **NÃO encerra**; reconecta (backoff) com novo
+      `source_stream_id`; o intervalo perdido grava 1 `interview_gap` (cause=`stt_reconnect`).
+- [ ] **Limite de 2h do Soniox** → reabertura **proativa com overlap** → **gap = 0** na troca.
+- [ ] **LLM do tick dá 429/timeout** → tick **saltado** (Camada A continua); 3 falhas →
+      **fallback** para o modelo secundário do slot + aviso "modo reduzido"; falha prolongada
+      → "só transcrição" e re-sobe ao recuperar (`RESILIENCIA §3`).
+- [ ] **Net da Filipa cai** (caminho bot-online) → captura na VPS **continua**; ao voltar,
+      replay por `seq` + `state.snapshot`, nada perdido.
+- [ ] **PC dorme / app crasha** (captura local) → heartbeat perdido fecha o stream Soniox
+      órfão + abre `interview_gap`; ao reabrir, `state.snapshot` retoma.
+- [ ] **Circuit-breakers da Inês NÃO migram tal-qual:** `STT_FAILURE_THRESHOLD=2` não pode
+      encerrar a sessão; `MAX_TURNS_PER_SESSION` não se aplica ao copiloto passivo (`RESILIENCIA §6`).
+- [ ] **Parecer assinala os gaps:** cada `interview_gap` vira "⬜ não-capturado HH:MM–HH:MM";
+      critério coberto só dentro de um gap fica `não-confirmado` (`RELATORIO §3`).
 
 ### Testes NEGATIVOS de segurança / RGPD (2026-06-18)
 - [ ] Ligação WS **sem posse** da entrevista (JWT de outro recrutador) → **recusada** (close 44xx).

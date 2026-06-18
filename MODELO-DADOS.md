@@ -24,8 +24,8 @@
 9. **v1 single-tenant:** `agency_id` fica em todas as tabelas (costura p/ v2) mas **SEM RLS** na v1.
 10. **pgvector** em todos os `*_embedding` (dimensão = a do EMBEDDER escolhido; default 1536 — `MODELOS-E-API §3`).
 
-> **Total: 28 tabelas** (+ os campos `consent_*` em `process`). O DDL detalhado de cada
-> uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
+> **Total: 29 tabelas** (+ os campos `consent_*` em `process`; inclui `interview_gap` — §14).
+> O DDL detalhado de cada uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
 
 ## Diagrama de relações
 
@@ -52,7 +52,8 @@ agency
       ├── candidate_memory_fact     ← o que o candidato disse/é (RAG, durável)
       └── process  (candidatura = candidate × job)
            ├── interview
-           │    ├── interview_tick       ← estado vivo por tick
+           │    ├── interview_tick       ← estado vivo por tick (+ custo/tokens/modelo — §14)
+           │    ├── interview_gap         ← intervalos SEM captura (falha de infra — §14)
            │    ├── transcript_chunk      ← Camada A: transcrição completa + embedding
            │    └── report                ← parecer (versão interna + versão cliente)
            ├── client_verdict            ← veredito do cliente (calibração)
@@ -863,6 +864,45 @@ ALTER TABLE client_verdict ADD COLUMN bot_flag_inconsistencia BOOLEAN; -- a Vera
 - **"Não sustentado"** ≠ "raso": o parecer pode dizer "afirmou X mas não sustentou sob
   aprofundamento" **sem** dizer "mentiu" (ver regra anti-difamação, `INTAKE`).
 
+## 14. Resiliência ao vivo — intervalos não-capturados + custo do tick (gaps simulação "falha de infra" 2026-06-18)
+
+> Suporta `RESILIENCIA-E-FALHAS.md`. Dois buracos no schema: (1) não havia onde registar
+> o intervalo "não-capturado" → o parecer não conseguia **provar** o buraco (BLOQUEADOR);
+> (2) o `interview_tick` (o custo dominante × 2h) não guardava custo/tokens/modelo/latência
+> → o "dashboard de custo" e o teto por entrevista não tinham destino.
+
+```sql
+-- (BLOQUEADOR) Intervalo SEM captura — queda de STT/rede/app/PC. O parecer lê isto para
+-- assinalar honestamente "entre HH:MM e HH:MM não houve captura" (RELATORIO-CLIENTE §3).
+-- Sem esta tabela, ausência de transcrição = indistinguível de silêncio (Regra 3 anti-achismo).
+CREATE TABLE interview_gap (
+  id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  interview_id            UUID NOT NULL REFERENCES interview(id),
+  agency_id               UUID NOT NULL,
+  start_ms                INT NOT NULL,            -- offset no áudio onde a captura parou
+  end_ms                  INT,                     -- NULL = ainda aberto (gap a decorrer)
+  cause                   TEXT NOT NULL,           -- 'stt_reconnect'|'network'|'app_crash'|'pc_sleep'|'manual_pause'|'cost_cap'
+  source_stream_id_before TEXT,                    -- stream que morreu (liga a transcript_chunk.source_stream_id)
+  source_stream_id_after  TEXT,                    -- stream que retomou
+  created_at              TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX ON interview_gap (interview_id);
+
+-- (ALTO) Custo/tokens/modelo/latência por tick — fonte do dashboard F1/F2 e do teto por
+-- entrevista (RESILIENCIA §4). O tick é o custo dominante (×2h); sem isto não se mede nada.
+ALTER TABLE interview_tick ADD COLUMN tokens_in      INT;
+ALTER TABLE interview_tick ADD COLUMN tokens_out     INT;
+ALTER TABLE interview_tick ADD COLUMN cost_usd       NUMERIC(10,5);
+ALTER TABLE interview_tick ADD COLUMN model_used     TEXT;        -- qual slot/modelo correu (LIVE vs fallback EXTRACTOR)
+ALTER TABLE interview_tick ADD COLUMN tick_latency_ms INT;        -- p/ B4 (tick_latency_p95)
+ALTER TABLE interview_tick ADD COLUMN degraded       BOOLEAN NOT NULL DEFAULT FALSE; -- tick saltado/modo reduzido (§3)
+```
+- **`interview_gap`** fecha a promessa de honestidade: custo de entrevista = `Σ interview_tick.cost_usd`
+  + STT-horas; **teto por entrevista** (`INTERVIEW_COST_CAP_USD`) impõe o que o
+  `LINCE_DAILY_BUDGET_USD` herdado **não** impunha (`REUSE-MAP §2`).
+- **Política de falha/retry/fallback/teto** (constantes, backoff, degradação) vive em
+  `RESILIENCIA-E-FALHAS.md` — não se repete aqui.
+
 ## RLS — políticas chave
 
 > ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há
@@ -902,17 +942,19 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 ---
 
-## Migração de arranque (28 tabelas) — ordem de criação
+## Migração de arranque (29 tabelas) — ordem de criação
 
 > ⚠️ **Aplica o "🧭 Guia de consolidação" do topo** (forma FINAL canónica). Esta é a
-> ordem por FKs das **28 tabelas** (a lista antiga de 16 estava stale — corrigida 2026-06-18).
+> ordem por FKs das **29 tabelas** (a lista antiga de 16 estava stale — corrigida 2026-06-18;
+> +`interview_gap` em 2026-06-18, §14).
 
 1. `agency` · 2. `recruiter` (+`telegram_chat_id`, +`voice_enrollment_path`) · 3. `client`
 (+`purge_after`) · 4. `job` · 5. `role_profile` · 6. `candidate` (+`anonymized_at`,
 +`purge_after`) · 7. **`process`** (+`consent_status`/`consent_evidence_ref`/`consent_at`)
 · 8. `document` (+`candidate_id`/`version`/`is_current`/`source`) · 9. `rubric`
 (+`version`, criteria com `peso`/`origem`) · 10. `client_criteria` · 11. `interview`
-(`process_id NOT NULL`, `capture_type` aceita `'none'`) · 12. `interview_tick` · 13.
+(`process_id NOT NULL`, `capture_type` aceita `'none'`) · 12. `interview_tick`
+(+custo/tokens/modelo/latência — §14) · 12b. **`interview_gap`** (§14) · 13.
 **`transcript_chunk`** (+ embedding; +campos de qualidade STT — ver §STT) · 14. `report`
 (+`content_client_md`/`rubric_version`/`filipa_verdict_override`) · 15. `client_verdict`
 (`process_id`) · 16. **`placement_outcome`** · 17. `client_memory_fact` (+ embedding,
@@ -920,7 +962,7 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 · 19. `agenda_event` · 20. **`source_doc`** (+ embedding) · 21. **`recruiter_memory_fact`**
 (+ embedding) · 22. **`assistant_action`** (+`efeito`) · 23. `intake_session` · 24.
 `intake_message`.
-*(As tabelas de embedding contam à parte: candidate/transcript/source/recruiter = 28 no total.)*
+*(As tabelas de embedding contam à parte: candidate/transcript/source/recruiter; +`interview_gap` = 29 no total.)*
 
 Extensões: **`pgvector`** (Supabase self-hosted). **v1 single-tenant: sem RLS** (agency_id
 fica como costura p/ v2).
