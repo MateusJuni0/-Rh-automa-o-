@@ -335,5 +335,16 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - 🔴 **GATES antes da Fase 3 ENTREGAR (não planear):** DPA + consentimento + retenção + anti-spoof + cifra/purga migração. **Nada disto impede continuar a SPEC.**
 
 **Próxima fase = FASE 3 (codar tudo), quando o Mateus der GO.**
+
+### Arrumação pré-código (2026-06-18) — "arruma tudo antes de começar a codar"
+- [x] **README reescrito** = índice limpo da Fase 3: nome **Vera**, fases 1/2 ✅ + 3 ⏳, portas, **mapa dos 33 docs agrupado** (entrada/cérebro/embalagem/legal-validação-processo). Estava stale ("aguarda 4 decisões", sem Vera, faltavam ~13 docs).
+- [x] **Contagem de tabelas** 16→**28** (BRAIN, README, MODELO-DADOS; G5 ✅).
+- [x] **Nome do bot** RHCopiloto→**@VeraBot** (TELEGRAM, ACESSO).
+- [x] **ACESSO §1 diagrama** alinhado a candidato GLOBAL + `process` (G6 ✅).
+- [x] **`process_id` CANÓNICO decisivo** (G1/G2 ✅): build cria interview/client_verdict/placement_outcome já com `process_id NOT NULL`, SEM job_id/candidate_id; candidate_memory_fact.job_id→process_id.
+- [x] **Apagar candidato = ANONIMIZAR** (mantém placement_outcome/client_verdict sem PII → não perde o sinal de calibração). `MODELO-DADOS §6`.
+- [x] **Testes negativos de segurança/RGPD** adicionados (`TESTES`): WS sem posse, prompt-injection, ação sem confirmação, consentimento, purga, anti-spoof foto, re-auth 24h.
+- [x] **DECISOES-ABERTAS** com aviso claro: recomendações do corpo são histórico REVERTIDO (Vercel/Recall não valem).
+- ✅ **Spec ARRUMADA e coerente — pronta para a Fase 3.** Sobram só as portas conhecidas (biometria enroll/anti-spoof, cláusula RGPD, retenção, custo 2h) que se resolvem ao entregar, não ao codar.
 - ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
 

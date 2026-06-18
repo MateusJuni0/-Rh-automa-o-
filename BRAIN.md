@@ -24,7 +24,7 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 - `CAMADA-CONHECIMENTO.md` — Role Profile JSON, 3 sub-camadas, caching, migração progressiva web→interno
 - `ACESSO-E-CONHECIMENTO.md` — base 3 canais de ingestão de docs
 - `PLANO-CONSTRUCAO.md` — 14 passos (P0–P4) com entrada/saída/garantia verificável
-- `MODELO-DADOS.md` — 16 tabelas SQL + DDL completo + RLS + índices
+- `MODELO-DADOS.md` — 28 tabelas SQL + DDL completo + RGPD + índices
 - `DECISOES-ABERTAS.md` — 5 decisões com recomendação técnica (D1-D5)
 - `TESTES-ACEITACAO.md` — critérios de aceitação por passo + 4 regras anti-achismo como testes
 

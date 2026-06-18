@@ -359,15 +359,18 @@ CREATE INDEX ON process (job_id, stage);
 CREATE INDEX ON process (candidate_id);
 ```
 
-**Supersede:** `interview`, `client_verdict` e o novo `placement_outcome` passam a
-referenciar **`process_id`** em vez de `job_id`+`candidate_id` (deriváveis via
-`process`). `candidate_memory_fact.job_id` continua **opcional** e passa a significar
-"o `process` em que o facto surgiu" (NULL = facto geral do candidato, reutilizável).
+**Supersede — CANÓNICO para a Fase 3 (fecha G1/G2, 2026-06-18):** `process_id` é a
+**chave canónica** em `interview`, `client_verdict` e `placement_outcome`. No build
+real, estas tabelas nascem **já com `process_id NOT NULL`** e **SEM** `job_id`+
+`candidate_id` (deriva-se via `process`). `candidate_memory_fact.job_id` passa a
+`process_id` (semântica "o `process` em que o facto surgiu"; NULL = facto geral,
+reutilizável). Os `ALTER` abaixo são só o caminho de evolução a partir do DDL-base
+acima — **a migração inicial (Fase 3) cria já o formato canónico**, não o antigo.
 
 ```sql
 ALTER TABLE interview        ADD COLUMN process_id UUID REFERENCES process(id);
 ALTER TABLE client_verdict   ADD COLUMN process_id UUID REFERENCES process(id);
--- (job_id/candidate_id ficam como denormalização opcional para queries, ou removem-se na migração real)
+-- build novo: process_id NOT NULL; job_id/candidate_id NÃO existem nestas tabelas (derivam de process)
 ```
 
 ### 2. Camada A — transcrição completa sem perdas (`transcript_chunk`)
@@ -520,7 +523,16 @@ ALTER TABLE report ADD COLUMN bot_verdict             TEXT;   -- o que o bot tin
 ALTER TABLE candidate ADD COLUMN purge_after TIMESTAMPTZ;   -- NULL = não agendado p/ purge
 ALTER TABLE client    ADD COLUMN purge_after TIMESTAMPTZ;
 -- Cron faz hard-delete só após purge_after; antes disso, dá para "voltar atrás" (limpar deleted_at/purge_after).
+ALTER TABLE candidate ADD COLUMN anonymized_at TIMESTAMPTZ;  -- apagar = ANONIMIZAR (ver nota abaixo)
 ```
+
+> **Apagar candidato = ANONIMIZAR, não destruir o sinal (decisão 2026-06-18, fecha o
+> órfão do `placement_outcome`):** no hard-delete da PII do candidato, **mantém-se o
+> `placement_outcome`/`client_verdict` sem dados pessoais** (carimba `anonymized_at`,
+> remove nome/CV/contactos/transcrição, guarda só o outcome `strong/ok/weak` vs
+> `hired/stayed/left`). Assim cumpre-se o apagamento **e** não se perde o ground-truth da
+> calibração (`INTAKE §D.1`). É a única exceção ao "apaga tudo" — e é sobre dados **já
+> anónimos**.
 
 > **Reutilização entre clientes:** como é **permitida** (decisão 2026-06-17, RGPD do
 > lado da Filipa), `candidate_memory_fact` (global ao candidato) **não** precisa de
