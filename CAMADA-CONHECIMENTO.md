@@ -184,6 +184,11 @@ semântica — ver `ARQUITETURA-TEMPO-REAL.md §8–§9`) como **gabarito de sig
 > (o candidato demonstrou isso?). Os dois juntos eliminam o achismo **sem** depender
 > de gatilhos lexicais.
 
+> **`o_que_e_bom` encoda SINAIS DE PROFUNDIDADE, não palavras-chave de tecnologia**
+> (`FILOSOFIA-DAS-PERGUNTAS.md`): ex. "explica quando NÃO usaria X" / "dá um caso com
+> número" — não "menciona React". As perguntas que daí saem são como/porquê/caso-real,
+> julgáveis pela Filipa não-técnica; a competência prova-se pela profundidade.
+
 ---
 
 ## O bot é BILINGUE — tech ↔ recrutador ↔ cliente (decisão 2026-06-17)

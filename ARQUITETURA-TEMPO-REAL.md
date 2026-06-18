@@ -389,6 +389,10 @@ conversa"*). Não se inventa pergunta para preencher.
 > profundidade reativa:** o bot ouve o que foi **mesmo dito** e, na hora, decompõe-no
 > em **perguntas de prova** específicas. É isto que uma pessoa a ouvir+avaliar+anotar
 > não consegue, e que uma lista de perguntas pré-gerada também não faz.
+>
+> As perguntas seguem a **`FILOSOFIA-DAS-PERGUNTAS.md`**: profundidade (como/porquê/caso
+> real/o que correu mal), **nunca checklist de tecnologias** — o tópico prova-se pelo
+> raciocínio, e isso a Filipa (não-técnica) consegue conduzir e julgar.
 
 **Mecanismo (corre em cada tick, sobre a janela recente):** para cada **afirmação com
 peso** que surge, a Camada B pergunta-se *"o que PROVARIA ou QUEBRARIA isto?"* e gera

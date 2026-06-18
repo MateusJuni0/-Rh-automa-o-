@@ -26,7 +26,7 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (36)
+## Mapa dos documentos (37)
 
 **Visão & entrada**
 | Doc | O que é |
@@ -41,6 +41,7 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 |---|---|
 | [`CAMADA-CONHECIMENTO.md`](./CAMADA-CONHECIMENTO.md) | "O que é bom" — Role Profile (nicho-agnóstico), ciclo de pesquisa, rubric |
 | [`INTAKE-E-JULGAMENTO.md`](./INTAKE-E-JULGAMENTO.md) | Input tipado + rubric + 4 regras anti-achismo + calibração + entrada de candidato |
+| [`FILOSOFIA-DAS-PERGUNTAS.md`](./FILOSOFIA-DAS-PERGUNTAS.md) | Como a Vera gera perguntas: **profundidade (como/porquê/caso real), não checklist de tecnologias** |
 | [`ARQUITETURA-TEMPO-REAL.md`](./ARQUITETURA-TEMPO-REAL.md) | Copiloto ao vivo: 2 camadas, frame, **o fosso (aprofundamento)**, concorrência, tokens |
 | [`RELATORIO-CLIENTE.md`](./RELATORIO-CLIENTE.md) | Parecer critério-a-critério (anti-ping-pong), selo de origem, 2 versões |
 | [`ASSISTENTE-CONVERSA.md`](./ASSISTENTE-CONVERSA.md) | Cérebro do chatbot: Q&A ancorado + comparar candidatos |
