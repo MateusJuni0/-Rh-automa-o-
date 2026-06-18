@@ -190,14 +190,15 @@ O overlay **não é um ecrã só** — tem um ciclo de estados. Estado de cada u
 - [x] **A ouvir** (calmo, sem sugestão — o normal): barras de áudio + "segue a conversa" + checklist. ✅ mockup
 - [x] **A pensar** (1–3s a processar um trecho): indicador subtil + requisito a "carregar". ✅ mockup
 - [x] **Sugestão** (pergunta em destaque + porquê + Usei/Pular). ✅ mockup
-- [ ] **Veredito ao vivo** (após a resposta: ✅ forte / 🟡 rasa / ⚠ atenção) — *a desenhar*
-- [ ] **Rede de segurança no fim** ("antes de terminar: falta confirmar Inglês e Liderança") — *a desenhar*
-- [ ] **Chat ao vivo aberto** (ela escreveu "falta algo?" → resposta da checklist) — *a desenhar*
-- [ ] **Pesquisa ao vivo a correr** (candidato deu um link → "a ver o repo…") — *a desenhar*
-- [ ] **Áudio caiu / a reconectar** (distinguir de silêncio) — *a desenhar*
-- [ ] **Correção de diarização** (toque para reatribuir "quem falou") — *a desenhar*
+- [x] **Veredito ao vivo** (após a resposta: ✅ forte / 🟡 rasa / ⚠ atenção + prova). ✅ mockup
+- [x] **Rede de segurança no fim** (levanta os must por cobrir, âmbar). ✅ mockup
+- [x] **Chat ao vivo aberto** ("falta algo?" → resposta da checklist). ✅ mockup
+- [x] **Pesquisa ao vivo a correr** (deu um link → "a ver o repo…" 2º plano, azul). ✅ mockup
+- [x] **Áudio caiu / a reconectar** (vermelho, distinto do silêncio; trecho guardado). ✅ mockup
+- [x] **Correção de diarização** (1 toque para reatribuir quem falou). ✅ mockup
 
-> Além do overlay, cada ecrã web tem os **3 estados UX** (loading / vazio / erro) por desenhar.
+> ✅ **Todos os estados do overlay ao vivo desenhados (2026-06-18).** Falta: os **3 estados
+> UX** (a carregar / vazio / erro) de cada ecrã web (dashboard, assistente, etc.).
 
 ### Anti-padrões a evitar
 - ❌ Parede de texto rolando (a transcrição inteira na cara).
