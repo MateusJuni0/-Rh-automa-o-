@@ -28,8 +28,15 @@ Todo login (facial ou email) termina numa **sessão Supabase** → JWT com:
 | Canal | Mecanismo |
 |---|---|
 | **Next ↔ `services/face`** | **Ed25519 + HMAC** (`${ts}.${body}`, JSON canónico) — já no cmtec-face; veredito empurrado S2S, single-use. |
-| **Next ↔ `services/agent` / `apps/realtime`** | **token interno S2S** (segredo partilhado em sops+age, header `Authorization: Bearer <s2s>`), só na rede interna/Docker; nunca exposto ao cliente. |
-| **service-role do Supabase** | **só no backend** (Next server / serviços) — **nunca** no cliente/edge/desktop. |
+| **Next ↔ `services/agent` / `apps/realtime`** | **token interno S2S** (sops+age, header `Authorization: Bearer <s2s>`), só na rede interna/Docker; nunca exposto ao cliente. ⚠️ **(R2) token DISTINTO por par de serviços** (não um global) + **rotação**; idealmente subir a **Ed25519+HMAC** como o face (reusar `signing.py`/`s2s.py`) — um Bearer estático partilhado, se vazar, dá acesso total entre serviços (o agente tem `enviar_fora`). |
+| **service-role do Supabase** | **só em migrações** (não no request path, §7) — **nunca** no cliente/edge/desktop. |
+
+> ⚠️ **(R2) Token LiveKit — TTL curto + revogação:** o token de sala (emitido por
+> `/api/interviews`) é **single-use, scoped à `interview_id`+dono** (`SEGURANCA §5`) **e** tem
+> **TTL curto + renovação ligada à sessão Supabase** — uma entrevista dura ~2h; um token
+> válido horas, se intercetado, deixa ouvir/publicar áudio do candidato toda a janela. A
+> room/participante é **revogada** no encerramento e no **kill-switch** (não confiar só em
+> `interview.status`).
 
 ## 4. Permissões (matriz v1)
 - **v1 single-tenant:** a recrutadora autenticada tem **acesso total aos dados da agência**

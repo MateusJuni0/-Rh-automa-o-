@@ -128,6 +128,14 @@ Filipa traz o candidato  (encaminha o CV  OU  cola o link/URL do LinkedIn)
 >   **arrastar CV ao vivo** (`ARQUITETURA-TEMPO-REAL §12`) e Telegram correm o mesmo match
 >   antes de criar. Senão a re-entrevista parte (nasce um id duplicado e a memória antiga
 >   não se anexa).
+> - 🔒 **Anti-envenenamento de identidade (R2, `SEGURANCA §13.e`):** as chaves de match
+>   (`email`/`linkedin_url`) são **extraídas de conteúdo NÃO-confiável** (o CV). Um CV hostil
+>   que copie o email/LinkedIn de outra pessoa faria o sistema **anexar ao perfil errado** →
+>   memória, factos e `placement_outcome` colam-se a outro candidato (fuga de PII + identidade
+>   trocada). Logo: as chaves extraídas são **indício, não prova de identidade** — **anexar a um
+>   perfil existente exige confirmação humana explícita** com dados discriminantes (a
+>   desambiguação acima passa a **obrigatória no merge**; **nunca** auto-anexar só por
+>   email/linkedin). O "arrastar ao vivo" (pressão de tempo) é o pior caso — não há atalho.
 - Sem CV (só LinkedIn): o bot pode **pesquisar o perfil público** (ciclo de pesquisa,
   `source_doc`, marcado indício) para arrancar o briefing — confirma-se na entrevista.
 

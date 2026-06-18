@@ -926,6 +926,29 @@ ALTER TABLE interview_tick ADD COLUMN degraded       BOOLEAN NOT NULL DEFAULT FA
 7. **Autovacuum** afinado nas tabelas quentes (`interview_tick`/`transcript_chunk`/
    `assistant_action`/`async_job`) — `ESCALA-E-OPERACAO §10`.
 
+**Adições da verificação adversarial R2 (`SEGURANCA §13`):**
+8. **Selar a transcrição (não-repúdio):** `transcript_chunk` é a **fonte de verdade do
+   parecer** mas não era tamper-evident. Ganha `content_hash` encadeado por `interview_id`
+   (hash-chain RFC 8785, como o `audit_ledger`) carimbado no `is_final` → um insider que edite
+   um chunk no Postgres deixa rasto; um parecer disputado é defensável (`SEGURANCA §13.b`).
+   ```sql
+   ALTER TABLE transcript_chunk ADD COLUMN content_hash TEXT;  -- hash encadeado (prev_hash∥conteúdo)
+   ALTER TABLE transcript_chunk ADD COLUMN prev_hash    TEXT;  -- GENESIS no 1º chunk da entrevista
+   ```
+9. **Isolamento de tenant na conexão do AGENTE (GUC):** as políticas RLS usam
+   `current_setting('app.agency_id')::uuid` (não `auth.uid()`, que é NULL para o role de
+   serviço do agente) → funcionam para a conexão `psycopg2` do Lince Brain, que faz
+   `SET LOCAL app.agency_id` por pedido (`SEGURANCA §1`). **RAG em pgvector** (não Chroma
+   global) para herdar o mesmo filtro.
+10. **pgvector e RLS na v2 (ANN não conhece RLS):** uma busca de similaridade pode devolver
+    vizinhos de **outra agência** mesmo com RLS nas tabelas-pai. Na v2 partilhada, o filtro
+    `agency_id` entra **dentro** da query de vetores (não só na tabela). 🟦 Confirmar
+    instância-por-agência (fecha na raiz, `INFRA §7`) vs multi-tenant partilhado (`SEGURANCA §13.l`).
+11. **Cifra + purga abrangem `source_doc.raw_text`** (conteúdo cru de URLs de terceiros, pode
+    ter PII) **e o store de RAG** — a purga em cascata inclui `collection.delete(where=…)`/DROP
+    da coleção do candidato (senão embeddings ficam pesquisáveis após Art.17). Teste "zero PII
+    órfã" corre **contra o RAG**, não só o Postgres (`SEGURANCA §13.n`).
+
 ## RLS — políticas chave
 
 > ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há RLS por

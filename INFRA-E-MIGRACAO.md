@@ -96,7 +96,17 @@ contagens (linhas por tabela) para verificar no fim.
 5. **Segredos:** `.env.enc` → **re-encriptar** com a chave age do dono novo (sops); no
    salto para o comprador, **trocar as chaves** (OpenRouter/Soniox/Google/…). Escapar
    valores que começam por `$` → `$$` (gotcha Cronos).
+   - 🔒 **(R2 — custódia da chave age, BLOQUEADOR):** a **chave privada age do comprador é
+     GERADA na VPS dele e NUNCA trafega** — nós recebemos **só a pública** para encriptar; a
+     **nossa cópia de qualquer chave da instância dele é destruída** pós-migração (senão somos
+     custodiantes de todos os segredos dele = quebra o "sem cordão umbilical"). Recomendado: 2º
+     recipient *sealed-offline* do próprio comprador (recuperação). 🟦 Mateus ratifica o modelo
+     de confiança. (`SEGURANCA §13`, decisão de produto vendável.)
 6. **Imagens:** `docker load` dos tarballs **ou** `docker compose pull` (GHCR).
+   - 🔒 **(R2 — supply-chain) integridade no destino:** imagens **assinadas (cosign)** + **pin
+     por digest** no compose; o `bootstrap.sh` **verifica checksums** dos tarballs e dos
+     **modelos ONNX** da biometria **antes** de subir — um GHCR/bundle adulterado correria com
+     a PII toda na VPS do comprador. (`SEGURANCA §13.h`.)
 7. **Biometria:** subir o container do **clone** + montar os `models/` ONNX; aplicar a
    migração do schema `face` (próprio do RH); provisionar o role Postgres dedicado
    (gotcha: password no `docker exec` — `AUTENTICACAO §6 C4`).
@@ -176,6 +186,14 @@ Consequências (o que o Mateus quer):
 - **Updates = entrega limpa e opcional** (um bundle/imagem novos que ele aplica se
   quiser), **não** um push automático nosso para dentro da máquina dele. Decoupled by
   design. *(Isto fecha o tema "updates a instâncias vendidas".)*
+
+> 🟦 **(R2 — BLOQUEADOR de design) O que o ADMIN-comprador vê dos dados de terceiros:** ao
+> vender, o admin da instância do comprador herda acesso a CV/contactos/transcrições/**saúde
+> clínica** de candidatos que nunca consentiram que *aquele* admin os visse individualmente. O
+> RGPD é da agência, mas a **arquitetura de quem-vê-o-quê é decisão técnica nossa** e cara de
+> mudar depois. Mínimo: **trilho de auditoria de LEITURA de PII** (não só de ações) + decidir
+> se o **admin tem role separado** do recrutador operacional. 🟦 Mateus decide; documentar em
+> `LEGAL-E-RGPD`. (`SEGURANCA §13.k`.)
 
 ---
 

@@ -269,6 +269,10 @@ Caminhos, por ordem de preferência:
 - **electron-updater** (electron-builder) contra um **canal de updates próprio** (feed
   estático: GitHub Releases privado **ou** bucket na VPS/Cloudflare — coerente com a infra
   CMTec, `INFRA-E-MIGRACAO.md`). Updates **assinados**; o updater **verifica a assinatura**.
+- **🔒 (R2) Pin da chave + anti-downgrade:** se o feed for comprometido, um update malicioso
+  (assinado com chave trocada) ou um **downgrade** para versão vulnerável entra na máquina que
+  capta áudio. → **pin da chave pública** de assinatura **embutida no app** (não confiar só na
+  cadeia do SO), **versão monotónica** (proibir downgrade), feed **só HTTPS**. (`SEGURANCA §13.i`.)
 - **Updates opcionais, não forçados:** coerente com *"instância independente do
   comprador"* (`ASSISTENTE-PESSOAL §2`) — o produto entregue é **dele**. O cliente vê
   *"há uma versão nova [ver o que mudou] [atualizar agora] [depois]"*; não empurramos
@@ -387,6 +391,13 @@ Filipa (web/assistente/Telegram): "vou para uma reunião" / cola link Meet
   `NEXT_PUBLIC_WS_URL` podem ir no cliente (`ARQUITETURA-INTEGRACAO §3`).
 - **Code-signing + notarização** (§6) — a Filipa não corre binário não assinado;
   protege contra um instalador adulterado.
+- **🔒 (R2 — BLOQUEADOR) Hardening do processo Electron (contrato, não escolha):** o renderer
+  carrega o HUD e abre `getUserMedia`/`getDisplayMedia` — um XSS ou navegação induzida no
+  renderer **sem** isto vira **RCE no PC da Filipa** (acesso ao mic + `safeStorage`). Logo o
+  `BrowserWindow` é **obrigatoriamente**: `sandbox:true` + `contextIsolation:true` +
+  `nodeIntegration:false`, **preload com `contextBridge` mínimo** (só as APIs necessárias),
+  `setWindowOpenHandler(() => ({action:'deny'}))`, `will-navigate` com **allowlist** (só o
+  backend Vera), e **CSP estrita** no renderer. (`SEGURANCA §13.a`.)
 - **PC perdido/roubado:** revogar dispositivo na web mata a sessão; re-auth 24h limita a
   janela; os dados ficam intactos na VPS (`AUTENTICACAO §8`).
 - **Atualizações assinadas e verificadas** (§6) — o canal de update não pode ser vetor de

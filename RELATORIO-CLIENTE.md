@@ -167,3 +167,9 @@ O botão "preparar email" e o envio do assistente precisam de um provider:
   o **GoTrue SMTP da VPS** já configurado (`smtp.gmail.com`) para volume baixo.
 - O envio é uma ação `enviar_fora` → passa pela **porta de confirmação** (`ASSISTENTE-PESSOAL §2.1`).
 - ⚠️ Pendência operacional (não bloqueia spec): pôr a chave no deployment (igual ao IRIS).
+- 🔒 **Anti-envio-mal-endereçado (R2, `SEGURANCA §13.f`):** o parecer leva PII de candidato
+  (CV, saúde, veredito). O `to:` **não é texto livre** — é **validado contra o domínio do
+  `client` do `process`**; um caráter errado (ou um endereço "sugerido" pelo LLM) que divirja do
+  domínio do cliente → **bloqueia** até override consciente da Filipa (mostrar o destinatário
+  literal ajuda, mas humanos confirmam por hábito; a defesa é técnica). Evita o vazamento
+  irreversível de PII para o cliente errado.

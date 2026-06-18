@@ -51,6 +51,26 @@ caminho de request, vira **fuga de candidatos/clientes entre agências**. Corrig
 3. **RLS por `agency_id` ligada na v2** (políticas em `MODELO-DADOS §RLS`) — mas o código
    acima já não depende dela para isolar.
 
+> ⚠️ **Correção R2 (o agente Python contorna o funil — BLOQUEADOR):** o funil "`agency_id`
+> em todo o acesso + RLS" assume o caminho **Next/Drizzle/Supabase**. Mas o **agente
+> vendorizado (Lince Brain)** fala com o Postgres por `psycopg2` (`db.py`,
+> `ThreadedConnectionPool` com **um role fixo** + `search_path`), faz **raw SQL** (`gdpr.py`,
+> `semantic_memory.py`) e a RLS planeada (`USING (… auth.uid() …)`) é **inerte** para um role
+> de serviço (`auth.uid()` = NULL). Logo a RLS por `auth.uid()` **não protege a conexão do
+> agente**. **Fix:** o agente usa o padrão **tenant-GUC** — `SET LOCAL app.agency_id = $tenant`
+> no início de cada `get_conn()`, e as políticas RLS são `USING (agency_id =
+> current_setting('app.agency_id')::uuid)` (funciona com role de serviço). Teste obrigatório:
+> a conexão do agente **recusa** cross-tenant via RLS, não só via `WHERE` à mão.
+
+> ⚠️ **Correção R2 (o RAG real é ChromaDB, fora do Postgres — BLOQUEADOR):** o RAG semântico do
+> motor vendorizado (`semantic_memory.py`) usa **ChromaDB**, um store **separado** do Postgres,
+> com **uma coleção global** `knowledge_index` e `query()` **sem filtro de tenant** (o
+> `_query_sql_fallback` também sem `agency_id`). A RLS/predicate do Postgres **não o alcança** →
+> na v2, `query()` devolve chunks de qualquer agência (fuga de CV/cliente pela porta do RAG).
+> **Fix:** o RAG da Vera **usa pgvector no Postgres** (1 store, sujeito ao mesmo funil de
+> `agency_id`), **não** um Chroma global; se Chroma ficar, **coleção-por-agência** +
+> `where={"agency_id":…}` obrigatório, nunca coleção partilhada. (Ver `MODELO-DADOS §15`.)
+
 > 🟦 Mateus: confirmar que o piloto IRIS (1 agência) aceita o custo (ínfimo) de já carregar
 > `agency_id` em tudo — é a apólice de seguro do produto vendável.
 
@@ -79,6 +99,15 @@ estas tools têm `efeito: leitura` → **não passam pela porta de confirmação
 - **Regra de tools:** qualquer tool de `efeito: leitura` que toca a rede **é obrigada** a
   usar este cliente. Adicionar tool nova de rede = usar o funil, sem exceção.
 
+> ⚠️ **Correção R2 (o Playwright NÃO é capturável pelo cliente HTTP — BLOQUEADOR):** o
+> `document_tools` (`url_to_pdf`/`screenshot_url`) faz `page.goto(url)` num **Chromium
+> headless**, que resolve e busca a URL no **seu próprio stack de rede** — o cliente HTTP
+> guardado do Python **não o intercepta**. `http://169.254.169.254` / `http://127.0.0.1:8000`
+> passam. **Fix (defesa de REDE, não de código):** (1) a Vera **não** aponta o Playwright a
+> URLs não-confiáveis sem **pré-validar** no cliente guardado; (2) corre o Chromium dentro do
+> **egress namespace sem rota para a rede interna** + `--proxy-server` para um proxy que
+> recusa IP interno. O egress namespace deixa de ser "recomendado" e passa a **obrigatório**.
+
 ---
 
 ## 3. Ingest de ficheiros guardado — o CV é um vetor de ataque
@@ -95,6 +124,11 @@ traversal** no `filename`→`storage_path`, e malware (a Filipa **reenvia** o fi
 - **`storage_path` gerado pelo SERVIDOR** (UUID), **nunca** o nome do utilizador (anti path
   traversal).
 - **Scan antivírus (ClamAV)** antes de persistir/reencaminhar.
+- **(R2) Polyglots & SVG:** o ClamAV **não** apanha um PDF/ZIP **polyglot** benigno-à-assinatura
+  nem um **SVG com `<script>`**. → allowlist de conteúdo **estrita** (PDF/DOCX **só**; **SVG
+  bloqueado** por defeito), e **re-render do PDF** (ou render-para-imagem) para neutralizar
+  polyglots. O caminho **"arrastar CV ao vivo"** usa **o mesmo** validador (testar que chama o
+  funil — não há atalho na pressão da call).
 - Fail-closed: ficheiro que não passa → recusado com mensagem clara (sem falha silenciosa).
 
 ---
@@ -141,8 +175,13 @@ com o bundle de migração (que é cifrado); e `assistant_action.args`/logs podi
 - **Em repouso:** no mínimo volume cifrado (LUKS) + **bucket de Storage cifrado**; idealmente
   **cifra a nível de coluna** (pgcrypto/app-layer) para `transcript_chunk.text`, contactos e o
   áudio — chave em **sops+age**, fora da DB. (A biometria já cifra templates AES-GCM — alinhar.)
-- **Backups cifrados:** `pg_dump | age -r <chave> > dump.sql.gz.age`; chave **fora** da VPS;
-  restore cifrado testado no drill mensal. (Detalhe operacional em `ESCALA-E-OPERACAO §5`.)
+- **Backups cifrados:** `pg_dump | age -r <chave> > dump.sql.gz.age`; restore cifrado testado
+  no drill mensal. (Detalhe operacional em `ESCALA-E-OPERACAO §5`.)
+  - ⚠️ **(R2) A chave de backup NÃO pode viver na VPS de produção** — senão quem toma a VPS
+    (cenário blast-radius, `ESCALA §2`) tem dados **+** chave **+** backup: cifra = teatro
+    contra root comprometido. A **recipient de backup é DISTINTA** da chave de runtime (sops
+    boot) e reside **off-VPS** (destino off-site / recipient offline). 🟦 Mateus: onde vive a
+    chave de backup e quem a detém.
 - **Logs/auditoria sem PII:** `assistant_action.args` guarda **referências/hashes**, não o
   payload; corpo de email/CV fora do trilho; **scrubber de PII** antes de qualquer sink
   externo. Langfuse **off por defeito** para conteúdo com PII. (Mantém-se a hash-chain de
@@ -162,6 +201,15 @@ defeito. É **segurança técnica** (logo, nossa), mesmo com o RGPD do lado da a
   zero** (header de data-policy) para **slots que veem PII** (`LIVE`, `ARCHITECT`, `EXTRACTOR`).
 - Provider sem essa garantia → **não elegível** para slots com PII (recusa, fail-closed).
 - 🟦 Mateus: validar a política de dados do OpenRouter/providers escolhidos por deployment.
+
+> ⚠️ **Correção R2 (a maior superfície de subprocessador NÃO estava coberta — ALTO):** o ZDR
+> acima só cobre **OpenRouter (chat)**. Mas o **STT (Soniox)** processa **100% do áudio** das
+> 2h e o **EMBEDDER (OpenAI text-embedding-3-small)** vê **100% do texto** (CV, transcrição,
+> parecer, saúde) — e **nenhum** passa pelo OpenRouter (`MODELOS-E-API §2`). **Fix:** a
+> exigência de **retenção-zero / no-training** (contrato/DPA) estende-se a **Soniox e ao
+> provider de embeddings**, fail-closed por deployment. 🟦 Mateus confirma a data-policy de
+> Soniox + OpenAI embeddings (ou troca por provider com retenção-zero contratual). É segurança
+> técnica (= nossa).
 
 ---
 
@@ -252,3 +300,36 @@ Quando a Vera estiver de pé (staging), corre-se o **Cyber Neo** em modo `--redt
 
 > Nada disto impede **codar** — impede **entregar com PII real**. O barato é decidi-los na
 > raiz (Fundação), não retrofitar depois de um incidente.
+
+---
+
+## 13. Verificação adversarial R2 — vetores novos (STRIDE) além dos bypasses
+
+O R2 furou os controlos do R1 (correções ⚠️ inline acima: agente Python §1, Playwright §2,
+polyglot/SVG §3, Soniox+embedder §7, chave de backup §6) **e** um STRIDE pelos fluxos
+revelou vetores **novos** (não eram bypass do R1 — eram superfície não coberta):
+
+| # | STRIDE | Vetor | Fix (raiz) | Doc |
+|---|---|---|---|---|
+| a | Tampering/EoP | **App Electron sem hardening** (XSS no renderer → RCE no PC da Filipa, acesso ao mic + `safeStorage`) | `sandbox:true`+`contextIsolation:true`+`nodeIntegration:false`+preload `contextBridge` mínimo+`will-navigate`/`setWindowOpenHandler` allowlist+CSP estrita — **contrato**, não escolha | `APP-DESKTOP §10` |
+| b | Repudiation/Tampering | **Transcrição NÃO é selada** (é a fonte de verdade do parecer; um insider edita `transcript_chunk` sem rasto) | estender a hash-chain RFC 8785 (ou `content_hash` encadeado por `interview_id`) ao `transcript_chunk` no `is_final` → Camada A tamper-evident | `MODELO-DADOS §15` |
+| c | EoP | **S2S agent/realtime = Bearer estático partilhado** (vaza → acesso total entre serviços) | tokens **distintos por par** de serviços + rotação (sops+age); subir ao Ed25519+HMAC do face (reusar `signing.py`/`s2s.py`) | `AUTH-CONTRACT §3` |
+| d | Spoofing/EoP | **Token LiveKit sem TTL curto/revogação** (válido ~2h; intercetado = ouvir/publicar áudio toda a janela) | TTL curto + renovação ligada à sessão Supabase + **revogar a room/participante** no encerramento e no kill-switch | `AUTH-CONTRACT`, `APP-DESKTOP §2.2` |
+| e | Tampering | **Entity-resolution poisoning:** dedup casa por email/linkedin **extraídos de CV não-confiável** → CV hostil cola-se ao perfil de outro (fuga + memória trocada) | chaves extraídas = **indício**, não prova; **merge a perfil existente exige confirmação humana** com dados discriminantes (nunca auto-anexar) | `INTAKE` |
+| f | Info disclosure | **Parecer mal-endereçado:** `send_email` com `to:` livre → PII do candidato para o **cliente errado** (irreversível) | destinatário **validado contra o domínio do `client` do `process`**; divergência → bloqueia até override consciente | `RELATORIO-CLIENTE §8` |
+| g | Repudiation | **Kill-switch é um ficheiro** escrito sem auditoria (quem liga/desliga o cérebro não deixa rasto) | alteração do kill-switch entra no `audit_ledger` (quem/quando) + ficheiro com permissões restritas (não escrita pelo role do request) | `RESILIENCIA §0`, `MODELO-DADOS` |
+| h | Tampering | **Supply-chain do bundle/GHCR** sem integridade no destino (imagem/ONNX adulterado corre na VPS do comprador) | **cosign** nas imagens + **pin por digest** no compose + checksums no `bootstrap.sh` (tarballs+ONNX) | `INFRA-E-MIGRACAO §2/§6` |
+| i | Tampering | **Auto-update do Electron** sem pin de chave/anti-downgrade (feed comprometido → update malicioso no endpoint que capta áudio) | pin da chave pública no app + versão monotónica (sem downgrade) + feed só HTTPS | `APP-DESKTOP §6` |
+| j 🟦 | Spoofing | **Identidade do candidato não verificada** (proxy interview: outro faz a entrevista) — o parecer decide uma contratação sobre identidade não provada | 🟦 Mateus: fator de identidade no início (candidato confirma / Filipa atesta) **ou** marcar no parecer "identidade não verificada pelo sistema" (Regra 3) | `ARQUITETURA-TEMPO-REAL §2` |
+| k 🟦 | Info disclosure | **Admin-comprador vê PII de candidatos** (CV, saúde) que não consentiram que *aquele* admin os visse | 🟦 Mateus: trilho de auditoria de **leitura** de PII + decidir role admin separado do recrutador operacional | `INFRA-E-MIGRACAO §7`, `LEGAL-E-RGPD` |
+| l 🟦 | EoP | **v2 pgvector ANN cross-agency:** índice ivfflat/HNSW não conhece RLS → busca de similaridade pode devolver vizinhos de outra agência mesmo com RLS nas tabelas | 🟦 Mateus: confirmar **instância-por-agência** (fecha na raiz — `INFRA §7`) vs multi-tenant partilhado; se partilhado, filtro `agency_id` **dentro** da query de vetores + chaves por-agência | `MODELO-DADOS §15` |
+| m | DoS | **Pesquisa ao vivo sem cap próprio:** candidato despeja muitos links → N fetches/buscas pagas (fora do orçamento de tokens do tick) | cap de fetches/buscas de pesquisa-ao-vivo **por entrevista**, separado do orçamento de tokens | `ARQUITETURA-TEMPO-REAL §9` |
+| n | Info disclosure | **`source_doc.raw_text`** (conteúdo cru de URLs de terceiros) fora do conjunto cifrado/purga | incluir `source_doc.raw_text` na cifra-em-repouso (§6) e na purga em cascata | `MODELO-DADOS §15` |
+
+> **Controlos R1 confirmados SÓLIDOS pelo red-team** (não inventar furo): auth do WS (token na
+> 1ª frame + posse re-verificada), consumo atómico do veredito facial (anti-replay), auditoria
+> hash-chain com redação que preserva a cadeia no purge, e a degradação graciosa do copiloto
+> (`RESILIENCIA`). Mantêm-se.
+
+> **Cyber Neo `--redteam`:** o gate está escrito em **`engagement-scope.yml`** (raiz do repo,
+> fail-closed, `staging.rh.cmtecnologia.pt` com `confirmed:false` até OK do Mateus).

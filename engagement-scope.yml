@@ -1,0 +1,69 @@
+# engagement-scope.yml — gate do Cyber Neo --redteam para a Vera (RH Automação)
+#
+# FAIL-CLOSED por design (metodologia Cyber Neo, memória project_cyber_neo_human_layer_2026_06_03):
+#   - sem este ficheiro / sem pyyaml / parse-error  -> DENY (recusa tudo)
+#   - um alvo só é testável com `confirmed: true` EXPLÍCITO do Mateus
+#   - probes destrutivos só com `destructive_allowed: true` E `env: staging`
+#   - clientes (instâncias vendidas) exigem `authorization_file` assinado pelo dono
+#
+# Estado (2026-06-18): SPEC/artefacto — NÃO há código a correr. Patilha de TODOS os alvos
+# TRAVADA (confirmed:false). Quando a Vera estiver de pé em staging e o Mateus disser
+# "Cyber Neo testa a Vera", confirma-se o scope -> flip confirmed:true do alvo -> corre --redteam.
+
+version: 1
+product: vera
+owner: cmtecnologia
+
+defaults:
+  destructive_allowed: false        # nunca destrutivo por defeito
+  follow_redirects_to_internal: false
+  rate_limit_rps: 2                  # probes gentis; não derrubar o próprio serviço
+
+targets:
+  # --- A própria instância de staging da Vera (o que o redteam vai atacar) ---
+  - name: vera-staging-web
+    host: staging.rh.cmtecnologia.pt
+    env: staging
+    confirmed: false                 # 🔒 TRAVADO até OK explícito do Mateus
+    scope:
+      - https://staging.rh.cmtecnologia.pt        # Next.js (login, intake, upload, signed URLs)
+      - wss://staging.rh.cmtecnologia.pt/ws        # WebSocket (auth na 1ª frame, posse)
+    probes:                          # alinhados com SEGURANCA.md §10 + TESTES-ACEITACAO
+      - authz_bypass_idor             # posse da entrevista, agency_id em todo acesso
+      - ssrf                          # cliente HTTP guardado + Playwright/egress namespace
+      - upload_fuzz                   # validador único (magic/XXE/polyglot/SVG/path-traversal)
+      - prompt_injection              # conteúdo web/CV = dados, não instruções
+      - auth_bruteforce               # rate-limit/lockout email+senha + /auth/face/*
+      - storage_acl                   # bucket privado + signed URL (sem getPublicUrl)
+    notes: >
+      Probes NÃO-destrutivos. Loop: recon -> probe -> PROPÕE-FIX-PARA-APROVAÇÃO -> re-testa
+      (regra CMTec "não modificar sem aprovação"). Não tocar em PII real de candidatos —
+      staging usa dados seed sintéticos (INFRA-E-MIGRACAO §8 seed).
+
+  # --- Serviços internos (NÃO expostos; só testar a partir de dentro, em staging) ---
+  - name: vera-staging-internal
+    env: staging
+    confirmed: false                 # 🔒 TRAVADO
+    scope:
+      - http://127.0.0.1:18794        # agente (Lince Brain) — kill-switch, S2S, tools
+      - http://127.0.0.1:8000         # Supabase self-hosted (RLS/roles least-privilege)
+    probes:
+      - s2s_token_scope               # tokens S2S distintos por par + rotação (AUTH-CONTRACT §3)
+      - tenant_isolation              # GUC app.agency_id + RLS pela conexão do agente
+      - killswitch_audit              # alteração do kill-switch é auditada (SEGURANCA §13)
+    notes: >
+      NUNCA correr contra a VPS de produção 72.60.88.137 nem contra Cronos/Madalena/Lince
+      reais — só a stack de staging da Vera. Fora desta lista -> DENY.
+
+# --- Instâncias VENDIDAS (compradores) — só com autorização escrita do dono ---
+# Exemplo (desativado): uma instância de comprador NUNCA é testada sem ficheiro de autorização
+# assinado pelo próprio (o comprador é o Controlador; nós não pentestamos a casa dele sem ordem).
+#  - name: cliente-exemplo
+#    host: rh.cliente-exemplo.pt
+#    env: prod
+#    confirmed: false
+#    authorization_file: ./authorizations/cliente-exemplo-2026.signed   # obrigatório p/ prod de cliente
+#    destructive_allowed: false
+
+# Guardrail permanente: versões operacionais de ataque contra terceiros sem consentimento
+# ficam recusadas. O --redteam opera SÓ contra assets próprios/autorizados via este ficheiro.

@@ -315,6 +315,34 @@ nenhum termo.
 - [ ] **Logs sem PII:** `assistant_action.args`/logs guardam referências/hashes, não payload;
       scrubber antes de sink externo (`SEGURANCA §6`).
 
+### Testes adversariais R2 — os controlos não são contornáveis (2026-06-18, `SEGURANCA §13`)
+- [ ] **Isolamento pela conexão do AGENTE:** a conexão `psycopg2` do Lince Brain (role de
+      serviço) **recusa cross-tenant via RLS** (GUC `app.agency_id`), não só por `WHERE` à mão.
+- [ ] **RAG isolado:** `query()` do RAG **não** devolve chunks de outra agência (pgvector com
+      `agency_id`, ou coleção-por-agência) — testar com 2 agências seed.
+- [ ] **SSRF via Playwright:** `url_to_pdf`/`screenshot_url` para IP interno → **recusado** (o
+      Chromium corre no egress namespace + proxy que bloqueia IP interno).
+- [ ] **Purga atinge o RAG:** após Art.17, os embeddings do candidato **somem do store de RAG**
+      (não só do Postgres) — "zero PII órfã" corre contra o RAG.
+- [ ] **Subprocessador:** Soniox + embedder com retenção-zero (não só OpenRouter).
+- [ ] **Upload polyglot/SVG:** PDF/ZIP polyglot e SVG-com-script → recusados; "arrastar ao
+      vivo" chama o **mesmo** validador.
+- [ ] **Transcrição selada:** editar um `transcript_chunk` no Postgres quebra a `content_hash`
+      chain (tamper-evident).
+- [ ] **Token LiveKit:** TTL curto; token de uma entrevista não entra noutra sala; kill-switch
+      **revoga** a room/participante.
+- [ ] **Entity-resolution:** CV com email/linkedin de outra pessoa **não** auto-anexa — exige
+      confirmação humana.
+- [ ] **Parecer mal-endereçado:** `to:` com domínio ≠ do cliente do `process` → **bloqueia**.
+- [ ] **Electron hardening:** `sandbox`/`contextIsolation`/`nodeIntegration:false`/`will-navigate`
+      allowlist/CSP ativos; auto-update com pin de chave + anti-downgrade.
+- [ ] **Supply-chain:** imagens verificadas por digest/cosign; `bootstrap.sh` valida checksums
+      (tarballs + ONNX). **Chave age do comprador gerada na VPS dele** (não trafega).
+- [ ] **Backup:** chave de cifra do backup **não** está na VPS de produção.
+- [ ] **S2S:** tokens distintos por par de serviços + rotação (não Bearer global).
+- [ ] **Cyber Neo redteam:** `engagement-scope.yml` fail-closed — alvo sem `confirmed:true` →
+      DENY; prod de cliente exige `authorization_file`.
+
 ### Testes de ESCALA / capacidade agregada (2026-06-18, `ESCALA-E-OPERACAO.md`)
 - [ ] **Concorrência:** acima de `MAX_CONCURRENT_INTERVIEWS` → **recusa graciosa** ("agenda
       cheia"), sem degradar as entrevistas a decorrer; latência p95 do tick fica no orçamento.
