@@ -29,6 +29,42 @@ screening → interview → submitted → client_iv → offer → placed
 - O **kanban da Tela 1** ganha as colunas em falta: `Enviados → Entrevista do cliente →
   Oferta → Colocado`. A Filipa vê o funil **até ao fim**, não até "enviado".
 
+### 1.1 Ciclo de vida do parecer (`report`) — encerramento, geração durável, guardas
+> Contratos de processo sobre o schema de `MODELO-DADOS §16.B` (`report.status`,
+> `invalidated_at`, `stale_reason`) e `§14/§16` (`interview_gap`). O envio que move
+> para `submitted` (acima) **só é legítimo se o parecer existir e estiver pronto** —
+> estas regras garantem-no.
+
+**a) Gatilho ÚNICO canónico de encerramento (server-side).** O ENCERRAMENTO da
+`interview` — feito pela **Filipa**, pelo **assistente**, OU pelo **reaper** de órfãs
+(`ESCALA-E-OPERACAO §7`) — converge num único caminho server-side que:
+1. seta `interview.ended_at`;
+2. **enfileira a geração do parecer**.
+Fica **desacoplado de quem fecha o cliente** (mover o `process` para `submitted` é outro
+gesto): qualquer das três origens de encerramento dispara o mesmo gatilho, uma só vez.
+
+**b) Geração DURÁVEL (sobrevive a fechar a app).** O parecer corre como
+`async_job kind='gen_parecer'` (`MODELO-DADOS §16.B`), não no pedido HTTP:
+- `POST .../report` **enfileira** e devolve `jobId` (não bloqueia à espera do LLM);
+- o **worker** escreve `report.status` (`generating` → `ready`/`failed`) e emite
+  **progresso por WebSocket**;
+- ao reabrir a app, a UI **lê `report.status`** — o parecer **nunca** é "perdido"
+  (está `generating`, `ready` ou `failed`, sempre num estado conhecido).
+- **Interview `status='unstructured'`** (gravou-se sem vaga/candidato ligados) → o parecer
+  fica **pendente** até a entrevista ser estruturada; não se gera contra um alvo nulo.
+
+**c) Guarda na transição → `submitted`.** A passagem para `submitted` (que o envio do
+parecer dispara) **recusa (HTTP 409)** se `report.status ≠ 'ready'`, e corre na **MESMA
+transação** que escreve `report.client_sent_at` (`MODELO-DADOS §16.B`) — nunca se marca
+"enviado" sem um parecer pronto, nem se duplica o avanço de etapa.
+
+**d) Fechar `interview_gap` aberto no encerramento.** O **escritor único** (§11 da
+`ARQUITETURA-TEMPO-REAL`), no encerramento, fecha **todos** os `interview_gap` com
+`end_ms IS NULL`: `SET end_ms = ` último áudio recebido / `ended_at`, **preservando**
+`cause` (`MODELO-DADOS §14/§16`). Um `interview_gap` com `end_ms` ainda **NULL após o
+encerramento** é tratado pelo gerador do parecer como **ERRO** (gap a decorrer sem
+entrevista viva é estado impossível) — não como "silêncio".
+
 ---
 
 ## 2. ⭐ Capturar o resultado da colocação (`placement_outcome`) — o ground-truth

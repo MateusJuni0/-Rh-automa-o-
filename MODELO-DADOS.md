@@ -24,9 +24,10 @@
 9. **v1 single-tenant:** `agency_id` fica em todas as tabelas (costura p/ v2) mas **SEM RLS** na v1.
 10. **pgvector** em todos os `*_embedding` (dimensão = a do EMBEDDER escolhido; default 1536 — `MODELOS-E-API §3`).
 
-> **Total: 33 tabelas** (+ os campos `consent_*` em `process`). Inclui as 4 de embedding
+> **Total: 34 tabelas** (+ os campos `consent_*` em `process`). Inclui as 4 de embedding
 > (candidate/transcript/source/recruiter), o runtime do agente (`assistant_thread`/
-> `assistant_message`/`async_job` — §12), `contradiction` (§13) e `interview_gap` (§14).
+> `assistant_message`/`async_job` — §12), `contradiction` (§13), `interview_gap` (§14) e
+> `proactive_task` (§16).
 > O DDL detalhado de cada uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
 
 ## Diagrama de relações
@@ -951,6 +952,85 @@ ALTER TABLE interview_tick ADD COLUMN degraded       BOOLEAN NOT NULL DEFAULT FA
     da coleção do candidato (senão embeddings ficam pesquisáveis após Art.17). Teste "zero PII
     órfã" corre **contra o RAG**, não só o Postgres (`SEGURANCA §13.n`).
 
+## 16. Fixes da simulação de prova (2026-06-18) — proveniência, parecer, multi-CV, proativo, calibração
+
+> A simulação multi-ângulo (12 lentes + crítico de completude) achou **5 famílias** de gaps de
+> SCHEMA/contrato a fechar **ANTES da migração inicial** (regra "o build cria a forma FINAL").
+> Aqui as ADIÇÕES (colunas/tabela); os CONTRATOS de processo estão nos docs indicados.
+
+### A — Proveniência dura chunk→facto/tick (raiz da cascata de diarização)
+```sql
+ALTER TABLE candidate_memory_fact ADD COLUMN source_chunk_id    UUID[];  -- chunks que fundamentam o facto (FK lógica → transcript_chunk)
+ALTER TABLE candidate_memory_fact ADD COLUMN source_document_id UUID REFERENCES document(id); -- se veio de um CV: qual
+ALTER TABLE candidate_memory_fact ADD COLUMN cv_version         INT;     -- versão do CV-fonte (multi-CV)
+ALTER TABLE interview_tick        ADD COLUMN derived_from_chunk_ids JSONB; -- chunks que o tick usou (re-atribuição/auditoria)
+```
+- Sem isto a "rastreabilidade" (`ARQUITETURA-TEMPO-REAL §8`) e a "correção que se propaga" (§2)
+  eram irrealizáveis (só `transcript_chunk_embedding` e `contradiction.chunk_a/b` tinham FK a
+  chunk). **Serviço de re-atribuição** (chunk com `speaker` alterado → recomputar/invalidar
+  factos/ticks/contradições que o citam) + **reversão de estado** em `ARQUITETURA-TEMPO-REAL §2/§9`.
+
+### B — Ciclo de vida do parecer (`report`)
+```sql
+ALTER TABLE report ADD COLUMN status TEXT NOT NULL DEFAULT 'generating'
+  CHECK (status IN ('generating','ready','failed'));
+ALTER TABLE report ADD COLUMN invalidated_at TIMESTAMPTZ;  -- ficou stale (correção a montante)
+ALTER TABLE report ADD COLUMN stale_reason   TEXT;
+```
+- Geração **durável** (`async_job kind='gen_parecer'`), **gatilho único** de encerramento
+  (Filipa/assistente/reaper → `interview.ended_at` + enfileira) e guarda `status='ready'` na
+  transição →`submitted`: contratos em `JORNADA-POS-PARECER §1`. Correção a montante de um
+  `report` já `ready` → `invalidated_at`/`stale_reason` + alerta (`RELATORIO §8`).
+
+### C — Multi-CV: o juízo só contra o CV de REFERÊNCIA
+```sql
+ALTER TABLE document ADD COLUMN based_on_document_id UUID REFERENCES document(id); -- CV gerado → CV-fonte
+ALTER TABLE document ADD CONSTRAINT doc_is_current_only_uploaded
+  CHECK (is_current = FALSE OR source IN ('uploaded','attested'));   -- CV gerado pela Vera NUNCA alimenta o perfil/juízo
+ALTER TABLE contradiction ADD COLUMN cv_document_id    UUID REFERENCES document(id); -- vs_cv: contra QUAL CV
+ALTER TABLE contradiction ADD COLUMN divergence_origin TEXT; -- 'candidate' | 'vera_generated' (este exclui-se da deteção de mentira)
+```
+- CV `source IN ('generated','report')` nasce `is_current=FALSE` e NUNCA alimenta
+  `candidate.profile`/gap-analysis/`vs_cv`. `vs_cv` mede contra o CV de referência e o parecer
+  cita o **document concreto** (filename+version), não "(CV)". Factos `source_type='cv'` de CV
+  não-corrente → `estado_prova='superseded'` (fora do score). Divergência candidato↔CV-**gerado**
+  → `divergence_origin='vera_generated'` → **excluída** de `misrepresentation`/calibração
+  (anti-difamação por artefacto nosso). Selo "reformatado por IA" no CV gerado enviado (`RELATORIO`).
+
+### D — Motor proativo (NOVA tabela — não existia entidade de tarefa agendada)
+```sql
+CREATE TABLE proactive_task (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  kind          TEXT NOT NULL,   -- 'guarantee_followup'|'comparison_suggest'|'prep_summary'|'noshow_reschedule'
+  target_type   TEXT NOT NULL,   -- 'candidate'|'process'|'interview'|'client'
+  target_id     UUID NOT NULL,
+  due_at        TIMESTAMPTZ NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'pending',  -- 'pending'|'fired'|'cancelled'|'suppressed'
+  payload       JSONB NOT NULL DEFAULT '{}',
+  fired_at      TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX ON proactive_task (status, due_at);
+```
+- Worker/cron determinístico: `due_at<now AND status='pending'` → **GUARD DE FRESCURA obrigatório**
+  (re-ler a entidade-alvo) ANTES de disparar; aborta/suprime se obsoleta. Regras (cancelar no
+  purge/anonimização; suprimir durante entrevista `live`; re-ler `process.stage`) em
+  `ASSISTENTE-PROATIVO`. `agenda_event` (reuniões) **≠** `proactive_task` (follow-ups a 80 dias).
+
+### E — Calibração determinística e honesta
+```sql
+ALTER TABLE client_verdict    ADD COLUMN rubric_version INT;  -- segmentar a precisão por versão de régua
+ALTER TABLE placement_outcome ADD COLUMN rubric_version INT;
+```
+- **Hierarquia + contagem por `process`** (1 amostra máx; ground-truth `placement_outcome >
+  client_verdict > filipa_verdict_override`; sinais fracos numa métrica SEPARADA); calibração só
+  agrega pares da **mesma `rubric_version`**; **piso `CALIBRATION_MIN_N`** + **IC de Wilson** antes
+  de exibir "%". Regras em `INTAKE-E-JULGAMENTO §D.1`.
+
+> **Contagem: 34 tabelas** (+`proactive_task`). As restantes adições são colunas à base canónica.
+
 ## RLS — políticas chave
 
 > ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há RLS por
@@ -996,12 +1076,13 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 ---
 
-## Migração de arranque (33 tabelas) — ordem de criação
+## Migração de arranque (34 tabelas) — ordem de criação
 
 > ⚠️ **Aplica o "🧭 Guia de consolidação" do topo** (forma FINAL canónica). Esta é a
-> ordem por FKs das **33 tabelas** (a lista antiga de 16/28/29 estava stale — corrigida
+> ordem por FKs das **34 tabelas** (a lista antiga de 16/28/29/33 estava stale — corrigida
 > 2026-06-18: faltavam `assistant_thread`/`assistant_message`/`async_job` (§12) e
-> `contradiction` (§13) na ordem; + `interview_gap` §14).
+> `contradiction` (§13) na ordem; + `interview_gap` §14; + `proactive_task` §16, criar após
+> `process`/`recruiter`). As colunas novas do §16 são ALTERs às tabelas já listadas.
 
 1. `agency` · 2. `recruiter` (+`telegram_chat_id`, +`voice_enrollment_path`) · 3. `client`
 (+`purge_after`) · 4. `job` · 5. `role_profile` · 6. `candidate` (+`anonymized_at`,
@@ -1020,9 +1101,10 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 22e. **`contradiction`** (§13; FK→`process`+`transcript_chunk`) · 23. `intake_session` · 24.
 `intake_message`.
 *(Contagem: 24 numeradas + 4 embeddings (candidate/transcript/source/recruiter) +
-`interview_gap` + `assistant_thread`/`assistant_message`/`async_job` + `contradiction` =
-**33 tabelas**. Nota de FK: `assistant_action.thread_id`→`assistant_thread`, por isso criar
-`assistant_thread` no mesmo bloco; `contradiction` depois de `process`+`transcript_chunk`.)*
+`interview_gap` + `assistant_thread`/`assistant_message`/`async_job` + `contradiction` +
+`proactive_task` = **34 tabelas**. Nota de FK: `assistant_action.thread_id`→`assistant_thread`,
+criar `assistant_thread` no mesmo bloco; `contradiction` depois de `process`+`transcript_chunk`;
+`proactive_task` depois de `recruiter`.)*
 
 Extensões: **`pgvector`** (Supabase self-hosted). **v1 single-tenant: sem RLS** (agency_id
 fica como costura p/ v2).

@@ -227,6 +227,16 @@ Regras transversais (já LOCKED noutros docs, repetidas aqui como contrato da pu
    sem PII). Carimbar `anonymized_at`. → cumpre Art.17 **e** preserva `INTAKE §D.1`.
 7. **PII direta** no `candidate`: limpar `name`/`name_normalized`/`email`/`phone`/`linkedin_url`/
    `profile`; manter o `id` como âncora anónima dos outcomes.
+7-bis. **Tarefas proativas pendentes** (`proactive_task`, `MODELO-DADOS §16`): cancelar as que
+   apontam ao candidato, senão um follow-up (ex.: `guarantee_followup` a 80 dias) **dispara
+   contra um candidato já anonimizado**:
+   ```sql
+   UPDATE proactive_task SET status='cancelled'
+   WHERE target_type='candidate' AND target_id=$id AND status='pending';
+   ```
+   > O **GUARD DE FRESCURA** do worker (`ASSISTENTE-PROATIVO §1-bis`, regra (a): aborta se
+   > `anonymized_at`) é a **2ª linha de defesa** — este passo cancela à cabeça; o guard
+   > apanha tarefas de `process`/`interview` do candidato e qualquer corrida concorrente.
 8. **Auditoria:** escrever em `assistant_action` / `audit_ledger` a operação de purga
    (quem/quando/contagens), **redigindo** (preserva hash-chain — `gdpr.py`), nunca apagando o trilho.
 

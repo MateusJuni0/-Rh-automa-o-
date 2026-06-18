@@ -276,6 +276,24 @@ bot_predicted                    ──►  vs  placement_outcome (stayed/left) 
   baixa confiança nunca é escondida (Regra 3). É isto que nos torna defensáveis — os
   concorrentes (Metaview/BrightHire) não fecham este loop até ao outcome real.
 
+#### D.1 — Regras determinísticas da métrica (anti-inflação do N)
+
+- **Hierarquia + contagem por `process`:** cada `process` contribui com **NO MÁXIMO 1
+  amostra** para a precisão. O ground-truth desse processo é escolhido por prioridade:
+  **`placement_outcome.guarantee_result` > `client_verdict` > `report.filipa_verdict_override`**.
+  Sinais mais fracos **não somam ao mesmo N** — podem alimentar uma métrica **SEPARADA**
+  (concordância override↔outcome). Regra de bolso: *3 sinais em desacordo → conta 1, pelo
+  mais forte.*
+- **Segmentar por `rubric_version`:** a precisão por (cliente, role) só agrega pares da
+  **MESMA `rubric_version`**. Para isso, propagar `rubric_version` para `client_verdict` e
+  `placement_outcome` **na criação** (colunas em `MODELO-DADOS §16`). Se a régua mudou a
+  meio do processo, **separar as séries** — não misturar avaliações feitas contra rubrics
+  diferentes (compararia maçãs com laranjas).
+- **Gate de exibição:** piso **`CALIBRATION_MIN_N`** (ex.: 5) abaixo do qual a UI mostra
+  *"ainda sem dados suficientes (N=2)"* e **nunca uma %**. Acima do piso, a % vem **com
+  intervalo de confiança de Wilson 95%** (ex.: *"8/10, IC 55–93%"*), **nunca** o ponto cru
+  — o IC é o que comunica honestamente a incerteza de uma amostra pequena (Regra 3).
+
 ---
 
 ## Parte E — o resto do trabalho do recrutador (motivação, logística, venda)

@@ -242,6 +242,12 @@ O assistente **escreve a sua própria memória** enquanto fala com ela — apren
   + embedding), com proveniência.
 - **Camada curada/destilada:** consolidação periódica resume e organiza o que se
   acumulou (os padrões estáveis sobem; o ruído cai).
+- **A avaliação avançada do candidato destila para a memória:** a "leitura detalhada"
+  (afirmação-a-afirmação, prova graduada, contradições, confiança; ver
+  `ARQUITETURA-TEMPO-REAL §9`) é **destilada e guardada na memória** com proveniência dura
+  (`candidate_memory_fact.source_chunk_id`, `MODELO-DADOS §16`) — automática e contínua (a
+  Filipa nunca pede "guarda"), nunca um resumo leve descartável. É isto que torna o recall e
+  o parecer defensáveis e que faz a memória do candidato compor-se com o tempo.
 
 ### ⚠️ Lição do claude-mem — NUNCA "travar 6 meses depois" (a dor do Mateus)
 O claude-mem do Mateus **parou de destilar em silêncio (abr→jun/2026)** e ninguém

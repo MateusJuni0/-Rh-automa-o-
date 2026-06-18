@@ -355,6 +355,28 @@ nenhum termo.
 - [ ] **Volume:** com muitas linhas, RAG/Q&A mantêm latência (partição + índice vetorial
       afinado); purga em cascata deixa **zero PII órfã**.
 
+### Testes da simulação de prova (2026-06-18)
+- [ ] **Correção de falante propaga E reverte:** reatribuir um `transcript_chunk` recomputa
+      factos/ticks/contradições que o citam; um requisito cuja única prova era esse chunk
+      DESCE de `coberto-com-prova` para `raso` (não fica "verde" falso).
+- [ ] **Gate de speaker_confidence:** chunk com `speaker_confidence` baixo NÃO vira facto
+      firme do candidato (fica `a_confirmar`); fala avaliadora em call 3-vozes não é
+      auto-creditada ao candidato.
+- [ ] **CV gerado não contamina o juízo:** gerar um CV pela Vera NÃO muda o gap-analysis nem
+      a base de `vs_cv` (só `source='uploaded'` é `is_current`); divergência candidato↔CV-gerado
+      NUNCA produz `misrepresentation`.
+- [ ] **vs_cv aponta o CV certo:** com N CVs, a contradição cita o `cv_document_id` de
+      referência (filename+version), não "(CV)".
+- [ ] **Parecer durável + guarda:** fechar a app a meio da geração → ao reabrir, `report.status`
+      recupera (nunca "perdido"); a transição →`submitted` é recusada (409) se
+      `report.status≠'ready'`; `interview_gap` aberto é fechado no encerramento.
+- [ ] **Guard de frescura proativo:** `proactive_task` re-lê a entidade-alvo antes de disparar;
+      cancela se candidato anonimizado, suprime durante entrevista `live`, cancela
+      noshow/comparison se `process.stage` ∈ {rejected,withdrawn,placed}.
+- [ ] **Calibração determinística:** 3 sinais em desacordo no mesmo `process` contam 1 (pelo
+      mais forte); N<`CALIBRATION_MIN_N` não exibe %; acima, exibe com IC de Wilson; só agrega
+      a mesma `rubric_version`.
+
 ---
 
 ## Como usar este documento no build

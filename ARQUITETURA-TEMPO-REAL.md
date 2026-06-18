@@ -68,6 +68,32 @@ idioma → tradução pelo LLM no tick.
 - **A Filipa corrige "quem falou" num toque:** se a etiqueta sair trocada, reatribui o
   trecho (overlay) e o estado/factos corrigem-se. Marca como `corrigido_pela_filipa`.
 
+#### Gate de `speaker_confidence` (espelha o de `stt_confidence`, §9 / `realtime-config`)
+Tal como o `stt_confidence` baixo não vira prova firme, um `transcript_chunk` com
+`speaker_confidence < SPEAKER_CONFIDENCE_MIN` (**nova constante** em `realtime-config`,
+irmã do limiar de `stt_confidence` do §9) **NÃO destila facto firme atribuído ao candidato**.
+
+- **Caminho NÃO-corrigido é o que manda (default conservador) — não é só "a Filipa
+  corrige":** se ninguém reatribui, o facto fica `estado_prova='a_confirmar'`/confiança
+  baixa e a UI marca *"quem disse isto?"* no trecho. Auto-creditar ao candidato sem
+  confiança alta é a falha que esta regra previne; a correção humana é o caminho feliz,
+  não o pressuposto.
+- **Call com 3+ vozes (cliente presente):** uma fala **avaliadora/imperativa** (*"para
+  nós é essencial que…"*, *"e consegue lidar com pressão?"*) é **provável recrutador/
+  cliente**, não candidato → exige-se confiança alta de falante antes de auto-creditar
+  qualquer afirmação como prova **do candidato** (senão um requisito sobe a
+  `coberto-com-prova` com a voz errada).
+
+#### Serviço de re-atribuição (determinístico) — quando o `speaker` de um chunk muda
+Dado um `transcript_chunk` cujo `speaker` foi alterado (pela Filipa ou por correção da
+diarização), corre um passo **determinístico** (não probabilístico):
+1. **Selecionar** o que cita esse chunk: factos via `candidate_memory_fact.source_chunk_id`,
+   ticks via `interview_tick.derived_from_chunk_ids`, contradições via
+   `contradiction.chunk_a/chunk_b` (FKs lógicas — `MODELO-DADOS §16`).
+2. **Recomputar/invalidar** cada um (o facto deixa de ter o chunk como fonte → re-deriva
+   das fontes restantes ou cai; o tick re-avalia; a contradição re-verifica).
+3. A reversão de estado do requisito que daí resulta segue a regra abaixo (§9).
+
 > **Reuso CMTec:** já temos isto em produção no `cmtec-voice-platform`
 > (**Soniox** para STT streaming + diarização, **LiveKit** para o transporte de áudio).
 > Não construímos do zero — adaptamos (confirmar suporte multi-idioma + 3+ falantes).
@@ -306,6 +332,22 @@ não-tocado  ──►  raso  ──►  coberto-com-prova
 Este estado é o que pinta o semáforo da UI (✅/🟡/⬜/⚠) e o que o relatório usa para
 saber o que está provado e o que ficou por confirmar.
 
+#### Reversão de estado (a seta da máquina acima só vai para a frente — esta é a exceção)
+A máquina desenha transições só para a frente (`não-tocado → raso → coberto-com-prova`).
+Uma **re-atribuição** (§2) ou correção a montante pode obrigar a **DESCER**. Regra:
+> o estado de um requisito é **função(provas RESTANTES)** depois de excluir o chunk
+> reatribuído — **não** um valor que só sobe.
+
+- Se o único chunk que provava `React` afinal era do **cliente/recrutador**, `React`
+  pode **descer** de `coberto-com-prova` para `raso` (ou `não-tocado` se não sobra nada).
+- **Des-riscar na checklist** de cobertura (§9 "riscar até fechar tudo") e emitir um
+  **veredito-ao-vivo de correção** (*"afinal isto ainda não está provado"*) — não fica
+  uma cobertura fantasma.
+- **Re-avaliar** as `contradiction` que referenciavam o chunk: pode deixar de haver
+  contradição (a fala não era do candidato) ou mudar o lado.
+- **Prioridade humana:** um requisito marcado `corrigido_pela_filipa` tem precedência —
+  a re-derivação automática **não** sobrepõe a correção explícita da Filipa.
+
 **Confiança por requisito (2026-06-17):** além do estado, cada requisito carrega uma
 **confiança** (`alta`/`média`/`baixa`) — quão forte é a evidência. Um `coberto-com-prova`
 com um caso concreto + número = `alta`; uma única menção de passagem = `baixa`. A
@@ -425,6 +467,25 @@ escada, mas **perseguida em profundidade**, não uma pergunta única.
 **Guarda-corpos (herdam o ritmo):** continua **1 sugestão de cada vez**; não vira
 interrogatório — só fura quando a afirmação é relevante (must-have ou preferência do
 cliente) e há deixa natural; respeita o limiar de silêncio/rapport abaixo.
+
+#### Avaliar o que o candidato diz: o MAIS detalhado e defensável possível (pedido Mateus)
+A avaliação do que o candidato diz **não é um resumo leve** — é a peça mais densa e
+auditável do produto. Para **CADA afirmação com peso**, a Camada B faz, ao vivo:
+1. **Decompor** a afirmação nas suas partes verificáveis (não tratar "liderei a equipa"
+   como um bloco — separar: liderou? quantos? quanto tempo? que decisões?).
+2. **Prova + avaliação por rubric** de cada parte (`fraco`/`ok`/`forte`), ancorada na
+   evidência concreta (caso/número/exemplo), não numa impressão.
+3. **Confiança** (`alta`/`média`/`baixa`) — dita, nunca escondida (Regra 3 anti-achismo).
+4. **Contradições** — cruza com o CV de referência e com o que foi dito antes (§13).
+5. **Destila para a memória COM proveniência:** o `candidate_memory_fact` resultante
+   guarda `source_chunk_id` (os chunks exatos que o fundamentam, `MODELO-DADOS §16`) —
+   é isto que torna o juízo **rastreável e reversível** (a re-atribuição de §2 depende
+   desta proveniência).
+
+> Isto é o que alimenta, sem perda, o **parecer defensável** (`RELATORIO-CLIENTE §5/§6`,
+> citação + timestamp por afirmação) e a **destilação durável** após a call
+> (`ASSISTENTE-PESSOAL §4`). A profundidade ao vivo e a defensabilidade no fim são **o
+> mesmo facto** visto em dois momentos — não duas análises separadas.
 
 ### ⭐ Pesquisa ao vivo (link / projeto / repo que o candidato dá)
 

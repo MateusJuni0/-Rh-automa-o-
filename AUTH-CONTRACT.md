@@ -49,6 +49,14 @@ Todo login (facial ou email) termina numa **sessão Supabase** → JWT com:
 - **v2 (multi-agência):** RLS por `agency_id` (políticas em `MODELO-DADOS §RLS`) + as
   permissões passam a filtrar por agência. `agency_id` já está nos claims.
 
+> **Acesso = app interno fechado (2026-06-18):** a Vera é um **app interno da IRIS Tech**;
+> **apenas a Filipa e a Inês** têm conta e acedem (login email/senha ou biometria —
+> `AUTENTICACAO §2`). **Não há acesso externo/anónimo/público:** nenhuma rota serve
+> utilizadores não-autenticados (exceto o handshake de login); não há auto-registo; novas
+> contas só por provisionamento manual. É por isto que os dados de terceiros (candidatos)
+> podem ser tratados com rigor — a superfície de quem-vê é mínima e conhecida. (Expansão
+> futura do nº de utilizadoras = só acrescentar contas; sem multi-tenant.)
+
 ## 5. Renovação & revogação
 - **Sessão:** access token curto + refresh token (refresh silencioso, inclui no WS).
 - **Perdeu o dispositivo:** revoga em `trusted_devices` → a sessão morre; dados intactos

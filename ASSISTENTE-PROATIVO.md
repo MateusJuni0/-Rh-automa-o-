@@ -29,6 +29,41 @@ Esta capacidade é **além do RAG** (que responde quando perguntado). Aqui o bot
 
 ---
 
+## 1-bis. Motor proativo (worker + guarda de frescura)
+
+A entidade que materializa cada lembrete/ação agendada é a tabela **`proactive_task`**
+(`MODELO-DADOS §16`) — **distinta** de `agenda_event` (que é uma reunião de calendário).
+Ex.: o follow-up de garantia a **80 dias** é um `proactive_task`
+(`kind='guarantee_followup'`), **não** um `agenda_event`. Os 4 `kind` previstos:
+`guarantee_followup` · `comparison_suggest` · `prep_summary` · `noshow_reschedule`.
+
+### Worker/cron determinístico
+- Seleciona `status='pending' AND due_at < now` (índice `(status, due_at)`).
+- Para **cada** tarefa, executa um **GUARD DE FRESCURA OBRIGATÓRIO**: **re-ler a
+  entidade-alvo no momento do disparo** (`target_type`/`target_id`) **ANTES de agir**.
+  Se a entidade estiver obsoleta, a tarefa **NÃO dispara**.
+
+### Regras do guard (todas obrigatórias)
+- **(a) Candidato apagado/anonimizado** — se `candidate.anonymized_at IS NOT NULL` ou
+  `deleted_at` (alvo direto, ou candidato do `process`/`interview` alvo) → `status='cancelled'`
+  / suprimir. **Nunca** fazer push a um candidato apagado (RGPD; ver `DATA-RETENTION`).
+- **(b) Recrutadora em entrevista `live`** — se a recrutadora tem uma `interview` em curso
+  → `status='suppressed'` + **re-enfileirar** para o fim da call (novo `due_at`). Pushes
+  autónomos **não interrompem** a entrevista. Isto é distinto da cadência do copiloto
+  *durante* a call (`ARQUITETURA-TEMPO-REAL §13`) — aqui falamos de ações do secretário.
+- **(c) Estado do processo mudou** — para `noshow_reschedule` e `comparison_suggest`,
+  re-ler `process.stage`; se ∈ {`rejected`, `withdrawn`, `placed`} → **cancelar**.
+  Adicionalmente, `comparison_suggest` só dispara se re-confirmar **≥2 `process`** em
+  `submitted`/`client_iv` **NO MOMENTO** do disparo (a sugestão de comparação perde
+  sentido se já só resta um candidato vivo).
+
+### Auditoria
+Toda transição de estado de `proactive_task` (`fired`/`cancelled`/`suppressed`, com
+`fired_at`) regista em **`assistant_action`** — rasto auditável de o-que-disparou-quando
+e do-que-foi-suprimido-porquê.
+
+---
+
 ## 2. Deteção de LACUNAS no mandato
 
 Quando a Filipa recebe/cria um mandato (vaga) e **falta detalhe**, o bot **não fica
