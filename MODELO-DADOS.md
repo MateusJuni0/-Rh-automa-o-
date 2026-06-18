@@ -823,6 +823,46 @@ ALTER TABLE candidate_memory_fact ADD COLUMN revalidate_after TIMESTAMPTZ; -- > 
 - **Dedup universal:** as chaves (`name_normalized`+`email`/`phone`+`linkedin_url`) servem
   a resolução de entidade em TODOS os pontos de criação (ver `INTAKE`).
 
+## 13. Cenário adversarial + cliente na call (gaps simulação 2026-06-18)
+
+```sql
+-- (BLOQ1) O falante pode ser o CLIENTE (3+ vozes) — não cai em 'other'
+ALTER TABLE transcript_chunk      ALTER COLUMN speaker TYPE TEXT; -- valores: 'candidate'|'recruiter'|'client'|'other'
+ALTER TABLE transcript_chunk      ADD COLUMN speaker_label TEXT;  -- nome do participante (N pessoas)
+-- (candidate_memory_fact.speaker idem: passa a aceitar 'client'); correção de diarização ganha o balde 'client'.
+
+-- (ALTO3) Inconsistência DURÁVEL e citável dos dois lados (não só num JSONB de trabalho)
+CREATE TABLE contradiction (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  process_id    UUID NOT NULL REFERENCES process(id),
+  requisito     TEXT,
+  tipo          TEXT NOT NULL,            -- 'vs_cv' | 'interno' (afirmação A vs B)
+  chunk_a       UUID REFERENCES transcript_chunk(id),  -- 1º lado (ex.: 11:58)
+  chunk_b       UUID REFERENCES transcript_chunk(id),  -- 2º lado (ex.: 40:12) ou NULL se vs CV
+  detalhe       TEXT,                     -- "disse 5 anos; CV diz 3"
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+-- o parecer cita OS DOIS lados com timestamp (defensável).
+
+-- (MÉDIO6) Estado "afirmou alto e NÃO sustentou" (distinto de 'raso' honesto)
+ALTER TABLE candidate_memory_fact ADD COLUMN nao_sustentado BOOLEAN NOT NULL DEFAULT FALSE;
+-- afirmou forte → sob aprofundamento não provou. Distingue 'não sabe' (raso) de 'inflou'. SEM imputar intenção.
+
+-- (ALTO5) Calibração aprende "era treta"
+-- client_verdict.reason_type ganha 'misrepresentation' (além de skill_gap|cultural_fit|salary|other)
+ALTER TABLE client_verdict ADD COLUMN bot_flag_inconsistencia BOOLEAN; -- a Vera tinha marcado contradito/nao_sustentado?
+-- par (bot marcou ↔ cliente confirmou desonestidade) = ground-truth da deteção de mentira.
+
+-- (ALTO2) Preferência do cliente REVELADA ao vivo → persiste (não evapora)
+-- client_memory_fact.source_type ganha 'live_reveal'; gravada como pendente (confirmed_at NULL) no pós-call.
+```
+- O **cliente na call** passa a ser cidadão de 1ª classe (falante próprio, preferências ao
+  vivo persistidas, fala rotulada no parecer/Q&A).
+- **Inconsistência** é durável e **citada dos dois lados** — base da reportagem defensável.
+- **"Não sustentado"** ≠ "raso": o parecer pode dizer "afirmou X mas não sustentou sob
+  aprofundamento" **sem** dizer "mentiu" (ver regra anti-difamação, `INTAKE`).
+
 ## RLS — políticas chave
 
 > ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há

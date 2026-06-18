@@ -258,6 +258,18 @@ nenhum termo.
 - [ ] Login facial com **foto/vídeo** (quando anti-spoof ON) → **recusado**.
 - [ ] Re-auth facial força nova biometria às **24h** (o refresh do JWT não contorna).
 
+### Testes ADVERSARIAIS (candidato que mente/infla; cliente na call) — 2026-06-18
+- [ ] Candidato afirma "5 anos" e o CV diz 3 → estado `contradito` com **os dois lados +
+      timestamps** citáveis (tabela `contradiction`), mesmo após a janela comprimir.
+- [ ] Candidato afirma forte e recua sob aprofundamento → `nao_sustentado` (distinto de `raso`).
+- [ ] **Parecer NUNCA usa vocabulário de intenção/caráter** ("mentiu/desonesto") — grep ao
+      output proíbe; só factos+prova (5ª regra anti-achismo).
+- [ ] Cliente na call → fala rotulada `speaker='client'`; preferência revelada ao vivo
+      grava em `client_memory_fact` (`live_reveal`, pendente); modo "cliente a conduzir"
+      baixa a cadência das sugestões.
+- [ ] Cliente confirma desonestidade → `client_verdict.reason_type='misrepresentation'`
+      chega à calibração e cruza com o `bot_flag_inconsistencia`.
+
 ---
 
 ## Como usar este documento no build

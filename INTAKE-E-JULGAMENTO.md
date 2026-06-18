@@ -196,9 +196,18 @@ Quatro regras duras. Se uma cair, o produto vira adivinhação:
    baixa é um sinal visível, não silêncio.
 4. **Linguagem simples sempre** (regra do `ACESSO-E-CONHECIMENTO.md §5`): o nível do
    rubric é traduzido ("forte" = "consegue resolver sozinho problemas difíceis disto").
+5. **NUNCA imputar intenção/caráter — assinalar factos, não acusar (regra anti-difamação,
+   2026-06-18).** Mesmo num candidato que mente/infla, a Vera diz *"disse 5 anos (11:58);
+   o CV diz 3 (CV) — vale reconfirmar"* ou *"afirmou X mas não sustentou sob aprofundamento
+   (40:12)"* — **NUNCA** *"mentiu / é desonesto / inflou de propósito"*. O `contradito` e o
+   `nao_sustentado` (`MODELO-DADOS §13`) reportam-se com **os dois lados + timestamps**, e
+   a **Filipa interpreta a intenção**, não a Vera. É um produto **assistivo**: imputar
+   desonestidade seria difamação (e o output textual é gerado por nós, não por ela —
+   `LEGAL-E-RGPD`).
 
-> Estas quatro regras são **requisitos de produto**, não enfeite. Entram nos prompts
-> do sistema e nos testes de aceitação (ver futura SPEC §testes).
+> Estas regras são **requisitos de produto**, não enfeite. Entram nos prompts do sistema
+> e nos testes de aceitação (`TESTES-ACEITACAO.md`) — incl. um teste de que o output
+> **nunca** usa vocabulário de intenção/caráter.
 
 ---
 

@@ -599,3 +599,29 @@ Durante a entrevista correm **duas coisas ao mesmo tempo**: o **copiloto ao vivo
 > Em resumo: **o vivo tem sempre prioridade**; o agente vive ao lado, lê o estado e faz
 > o trabalho pesado em segundo plano. A Filipa sente os dois como **um só** assistente,
 > mas por baixo são duas peças que não se pisam.
+
+## 13. Cliente na call + cenário adversarial (gaps simulação 2026-06-18)
+
+**Cliente presente na call (3+ vozes):**
+- A diarização rotula o **cliente** como falante próprio (`speaker='client'`, `MODELO §13`)
+  — não cai em `'other'`. As **preferências que ele revela ao vivo** ("para nós é essencial
+  aguentar pressão") são captadas → `client_memory_fact` (`source='live_reveal'`, pendente
+  de confirmação no pós-call) e alimentam o **degrau 4** da escada (preferência revelada).
+- **Modo "cliente a conduzir":** quando o cliente toma a palavra/faz as perguntas dele, a
+  Vera **baixa a cadência / silencia sugestões** (a Filipa não tem o turno nem consegue
+  olhar o overlay) e **credita as perguntas do cliente** no auto-dismiss (uma pergunta
+  feita pelo cliente também risca a sugestão).
+- **Privacidade no PRESENCIAL com terceiros:** se cliente/candidato estão na mesma sala
+  física, o overlay a marcar "⚠ contradito / bandeira vermelha" fica a um relance de ombro.
+  Regra: no presencial com terceiros → **modo discreto** (esconde vereditos/red-flags, só
+  mostra a próxima pergunta) **ou** exige 2º dispositivo só-Filipa. (`UI-DESIGN`)
+
+**Candidato que mente/infla (sem difamar):**
+- **`nao_sustentado`** (`MODELO §13`) ≠ `raso`: afirmou forte e **não provou** sob
+  aprofundamento (distinto de "não sabe"). O parecer di-lo com a afirmação inicial + a
+  falha + timestamps.
+- **Inconsistência interna** (10min vs 40min) é **persistida** em `contradiction` (os dois
+  `transcript_chunk`) — citável dos dois lados, mesmo depois de a janela de trabalho
+  comprimir. (Antes vivia só num JSONB descartável.)
+- **NUNCA acusar:** a Vera assinala factos + prova; **imputar intenção/desonestidade é
+  proibido** (5ª regra anti-achismo, `INTAKE Parte C`). A Filipa interpreta; a Vera mostra.

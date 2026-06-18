@@ -77,6 +77,14 @@ com uma credencial obrigatória por verificar — num nicho regulado isso é ris
 não um falso-negativo técnico. (É a **exceção** à filosofia "profundidade > checklist" —
 ver `FILOSOFIA-DAS-PERGUNTAS`.)
 
+### Inconsistências/evasão — reportar com prova, NUNCA acusar (gap simulação adversarial 2026-06-18)
+Quando há `contradito` ou `nao_sustentado` (`MODELO-DADOS §13`), o parecer mostra-os como
+**facto com os dois lados + timestamps** — *"disse 5 anos (11:58); o CV diz 3 (CV)"* /
+*"afirmou liderar equipas mas não sustentou com um caso quando aprofundado (40:12)"*.
+**Proibido** vocabulário de intenção/caráter (*"mentiu", "é desonesto", "inflou de
+propósito"*) — 5ª regra anti-achismo (`INTAKE Parte C`). A Filipa/cliente interpretam; a
+Vera só assinala. É o que torna o parecer **defensável** (e não difamatório).
+
 ---
 
 ## 4. Duas versões, uma fonte
