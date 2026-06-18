@@ -221,6 +221,15 @@ qualidade = `ARCHITECT`; tarefas simples/extração = `EXTRACTOR`; faceta ao viv
 > detalhe técnico.
 
 O assistente **escreve a sua própria memória** enquanto fala com ela — aprende contínuo:
+
+> **Regra dura (Mateus, 2026-06-18): salva-se SOZINHO, sempre.** As mensagens/factos são
+> **persistidos automaticamente e em contínuo** — a Filipa **nunca** tem de dizer "guarda
+> isto" e a memória **nunca fica desatualizada**. (Pedir para salvar à mão é exatamente o
+> anti-padrão que queremos evitar.) E porque o uso vai **crescer muito** (transcrições de 2h,
+> destilação, pasta curada — expansão futura), o desenho assume **muitos dados** desde já:
+> consolidação que limita o crescimento (§"crescimento limitado") + health-check que alerta se
+> a destilação parar (a dor do claude-mem) — **nunca perder informação**. Detalhe em `DATA-RETENTION.md`.
+
 - **Estilo dela:** tom, formato, assinatura → os rascunhos saem **na voz dela**.
 - **Preferências:** template de CV por cliente, critérios que pesa, como gosta dos
   pareceres → antecipa.

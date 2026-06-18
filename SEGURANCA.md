@@ -326,6 +326,12 @@ revelou vetores **novos** (não eram bypass do R1 — eram superfície não cobe
 | m | DoS | **Pesquisa ao vivo sem cap próprio:** candidato despeja muitos links → N fetches/buscas pagas (fora do orçamento de tokens do tick) | cap de fetches/buscas de pesquisa-ao-vivo **por entrevista**, separado do orçamento de tokens | `ARQUITETURA-TEMPO-REAL §9` |
 | n | Info disclosure | **`source_doc.raw_text`** (conteúdo cru de URLs de terceiros) fora do conjunto cifrado/purga | incluir `source_doc.raw_text` na cifra-em-repouso (§6) e na purga em cascata | `MODELO-DADOS §15` |
 
+> ⚠️ **Scope (2026-06-18):** com a Vera **só para a IRIS** (sem revenda, ADR `DECISOES-E-MVP`),
+> as linhas **k** (admin-comprador vê PII) e **l** (v2 pgvector multi-tenant) deixam de ser
+> gates → **futuro-opcional**. **j** (identidade do candidato) fica resolvido na v1 por
+> **atestação da recrutadora + selo "não verificada"** (biometria de candidato = futuro). Tudo
+> o resto (a–i, m, n) **mantém-se** como gate técnico.
+
 > **Controlos R1 confirmados SÓLIDOS pelo red-team** (não inventar furo): auth do WS (token na
 > 1ª frame + posse re-verificada), consumo atómico do veredito facial (anti-replay), auditoria
 > hash-chain com redação que preserva a cadeia no purge, e a degradação graciosa do copiloto

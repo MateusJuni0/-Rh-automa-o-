@@ -9,6 +9,12 @@
 > + `cronos-game/docs/DEPLOY.md`). O RH é **mais** que isso (multi-serviço), então este
 > doc estende a receita.
 
+> ⚠️ **Correção de scope (2026-06-18):** **NÃO há comprador / revenda** — a Vera é só para a
+> IRIS Tech (ADR em `DECISOES-E-MVP`). O que **fica**: o salto **Local → VPS dedicada (nossa→IRIS)**
+> — o runbook §3 vale na mesma. O que vira **futuro-opcional, NÃO gate**: a Fase 2 "infra do
+> COMPRADOR", a custódia de chave ao comprador, o bundle auto-instalável de revenda (§7). O
+> `agency_id`/bundle portável ficam como costura barata para uma expansão futura, não produto.
+
 ---
 
 ## 0. Decisão: a migração é CÓDIGO, não o agente a improvisar

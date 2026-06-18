@@ -7,6 +7,12 @@
 > reescrever nada. Por agora hospedado connosco e o Mateus paga (OpenRouter); ao
 > vender, trocam-se as chaves/modelos e muda para a VPS do comprador.
 
+> ⚠️ **Correção de scope (2026-06-18):** **NÃO há revenda** — a Vera é só para a IRIS Tech
+> (ADR em `DECISOES-E-MVP`). O design **agnóstico ao modelo mantém-se** — mas por **boa
+> engenharia + custo + expansão futura**, não para "sair de nós". Onde se lê "comprador"/"ao
+> vender", entende-se "IRIS / numa futura troca de modelo". Trocar Opus por algo mais barato
+> sem reescrever já é razão suficiente.
+
 ---
 
 ## 1. A regra de ouro: pensar em CAPACIDADES, não em "Claude"

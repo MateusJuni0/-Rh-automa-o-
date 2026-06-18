@@ -369,3 +369,58 @@ ChatGPT: "GO só para Fundação (P0.1), NO-GO para build paralelo até fechar b
 - ✅ **Spec ARRUMADA e coerente — pronta para a Fase 3.** Sobram só as portas conhecidas (biometria enroll/anti-spoof, cláusula RGPD, retenção, custo 2h) que se resolvem ao entregar, não ao codar.
 - ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
 
+### 🔻 CORREÇÃO DE SCOPE + decisões do Mateus + reconciliação ChatGPT (2026-06-18, pós loop de segurança)
+
+**🟥 ADR-SCOPE (LOCKED, supersede tudo o que diga "produto para vender"):** a Vera é **SÓ para a
+IRIS Tech — NÃO se revende a terceiros.** Um **único deployment**, **2 utilizadoras** (Filipa +
+Inês, sócias da mesma empresa), numa **VPS dedicada**. Consequências:
+- **SUPERSEDED:** "produto para VENDER / sair de nós" (entradas 264, 268, 303), "instância do
+  comprador / multi-tenant comercial v2 / migração para VPS do comprador / custódia de chave ao
+  comprador / code-signing por comprador / SBOM de revenda". `agency_id` **fica** no schema como
+  **costura barata** para uma **expansão futura do uso** (Mateus: "no futuro podemos expandir"),
+  **não** como produto multi-tenant. `INFRA-E-MIGRACAO §7` (comprador) e `SEGURANCA §13.k/l`
+  (admin-comprador, multi-tenant ANN) ficam como **futuro-opcional, não gate**.
+- **Mantém-se** a disciplina de isolamento (`agency_id` em todo o acesso + GUC do agente) — é
+  defesa-em-profundidade barata e serve a expansão futura, não custa nada na v1.
+
+**As 8 decisões 🟦 — FECHADAS:**
+1. **Scope:** só IRIS, sem revenda (ADR acima). v2 multi-tenant comercial = **fora**.
+2. **Painel/admin:** não há "admin comprador". O **painel web da Vera** (UI-DESIGN Telas 1-12)
+   TEM de existir com as secções: **chat com a Vera** (Tela 9), **candidatos** (Tela 4),
+   **clientes/vagas** (Telas 2/8), pipeline (Tela 1), comparar (10), definições (12). Mockup
+   visual do painel inteiro feito 2026-06-18 (faltava — só o overlay estava mockado).
+3. **Identidade do candidato:** "sim" → v1 = **atestação da recrutadora** + selo *"identidade
+   não verificada pelo sistema"* no parecer (Regra 3); **biometria do candidato = futuro**, não
+   v1 (risco de fraude baixo: a Filipa faz headhunting de quem sourcing). 🟦 se quiseres
+   verificação forte já, dizes.
+4. **Backup + VPS:** **VPS dedicada** à Vera (Mateus: "vps mais fácil"); **chave de cifra do
+   backup off-VPS** (cold/offline, não na VPS de produção). + **memória auto-salva** (ponto novo
+   abaixo).
+5. **Data-policy Soniox/embedder (Mateus deferiu "não sei qual é melhor"):** **fail-closed,
+   retenção-zero/no-training obrigatório nos dois.** Default: Soniox em modo sem-retenção
+   (confirmar config da conta); embedder = OpenAI `text-embedding-3-small` (API OpenAI **não
+   treina** com dados de API por defeito) **ou** self-host (fallback) se a política não bastar.
+   `SEGURANCA §7`.
+6. **Auth (modelo do Mateus, substitui o "3 fatores"):** **email/senha OU biometria facial**;
+   a **biometria só se cadastra DEPOIS do 1º acesso** ao painel/app (login inicial por
+   email/senha → enroll facial) → daí em diante **biometria = login passwordless** (Filipa ou
+   Inês). **2 utilizadoras** (mesma empresa). NÃO é 2FA obrigatório. `AUTENTICACAO §2` reescrito.
+7. **Custódia/VPS:** "certo" — VPS dedicada nossa→IRIS; chave de backup off-VPS (ponto 4).
+8. **IP/licença:** **tudo da IRIS Tech.** O produto e o IP pertencem à IRIS Tech (sem licença de
+   revenda a terceiros; code-signing no nome da IRIS/CMTec conforme acordo).
+
+**Ponto novo — MEMÓRIA AUTO-SALVA (Mateus, reforço):** a Vera **salva sempre as mensagens
+automaticamente** → a memória **nunca fica desatualizada** e a Filipa **nunca tem de pedir
+"salva isto"**. Já é o desenho de `ASSISTENTE-PESSOAL §4` (auto-escrita contínua + destilação +
+camada curada + health-check anti-"travar 6 meses depois"). **Planear para MUITOS dados**
+(transcrições de 2h, destilação, pasta curada) — expansão futura do uso. Reforçado no §4.
+
+**Reconciliação do ChatGPT (GO P0.1, NO-GO PII/venda):**
+- **MOOT pelo scope (só IRIS):** multi-tenant partilhado, verificação biométrica do candidato
+  (→ futuro), migração-para-comprador, code-signing-por-comprador, SBOM-de-revenda, custódia de
+  chave ao comprador. (O isolamento por `agency_id` **mantém-se** como defesa, não como produto.)
+- **ACEITE como contrato de spec (P0.1 — congelar em `packages/core`/`authz`):** ① `agent_db_session(agency_id, actor_id)` (wrapper obrigatório: transação curta + `SET LOCAL app.agency_id` + reset garantido no pool) ② `search_knowledge(agency_id, scope, embedding, filters)` única (ninguém faz vector search manual) ③ `can_join_interview(actor, interview_id)` (cobre entrevista com `process` E cold-start `process_id` nulo) ④ `capture_session` (TTL curto, revoke-on-stop, renew, nega se `assertCaptureAllowed` falha) ⑤ `assistant_action` persiste `effect`/`needs_confirm`/`policy_version`/`input_hash`/`output_hash`/`provider`/`cost` ⑥ registry comum chat/STT/embedder com `zdr_required`/`stores_audio`/`stores_text`/`allowed_for_pii` (deploy falha se faltar) ⑦ hierarquia de identidade de falante (`speaker_source`/`speaker_confidence`/`speaker_label_locked`/`corrected_by`; active-speaker ≠ prova) ⑧ `save_memory_fact`: só factos explícitos da Filipa entram diretos; CV/web/email/inferido = `a_confirmar`. **Estes são P0.1, não buracos de spec** — anotados aqui para o construtor.
+- **NOVO doc criado:** `DATA-RETENTION.md` (matriz de retenção + purga em cascata incl. RAG/Storage/backups, job `purge_candidate`, monitor de frescura). Fecha a porta "números de retenção".
+- **Fase-3 SPIKES (validar cedo, antes de feature):** (a) Soniox real — diarização/`speaker_id`/2h/reconnect; (b) captura desktop Windows/macOS+LiveKit; (c) pgvector com filtro por `agency_id` + purge cascade; (d) ambiente local reprodutível (`make dev` sobe web/db/ws/agent/face/realtime-mock) antes do build paralelo.
+- **Concordâncias do ChatGPT já no nosso plano:** não começar pelo HUD; Python nunca com service-role/conexão global; sem ChromaDB global (→pgvector); active-speaker ≠ identidade; nada de PII a fornecedor sem ZDR; auto-update Electron assinado+pinado; capacidade simultânea (`MAX_CONCURRENT_INTERVIEWS` 1–3 na IRIS) como decisão de raiz.
+

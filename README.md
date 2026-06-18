@@ -9,6 +9,10 @@ em linguagem que ela entende. *(Marca pública = Vera; motor interno = Lince.)*
 > **Estado (2026-06-18): Fase 1 (cérebro) e Fase 2 (embalagem & design) COMPLETAS em
 > spec.** Próxima = **Fase 3: codar tudo** (ainda não começou — nada de código até lá).
 > Decisões de arranque (hosting, web search, bot de call, WhatsApp) já estão **fechadas**.
+>
+> **🟥 SCOPE (LOCKED 2026-06-18):** a Vera é **só para a IRIS Tech — NÃO se revende.** Um
+> deployment, **2 utilizadoras** (Filipa + Inês), **VPS dedicada**. `agency_id` fica só como
+> costura para expansão futura, não como produto multi-tenant. (ADR em `DECISOES-E-MVP`.)
 
 ## Fases
 1. **Cérebro** ✅ spec — o que o produto pensa/decide.
@@ -16,22 +20,22 @@ em linguagem que ela entende. *(Marca pública = Vera; motor interno = Lince.)*
 3. **Código** ⏳ — construir tudo (local-first → nossa infra → comprador).
 
 ## Portas antes de a Fase 3 ENTREGAR (não impedem codar)
-Bug de enroll da biometria · anti-spoof ON antes de vender/>1 utilizador · cláusula RGPD
-no contrato (RGPD = responsabilidade da agência) · números de retenção · provar custo 2h ·
+Bug de enroll da biometria · anti-spoof ON antes do **uso real** (2 utilizadoras, a cara
+destranca a conta) · cláusula RGPD no contrato (RGPD = responsabilidade da agência) ·
+retenção/purga (`DATA-RETENTION.md`) · provar custo 2h ·
 **gates de segurança** (`SEGURANCA.md §12`: isolamento por `agency_id`+roles, anti-SSRF,
 validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 **gates de escala** (`ESCALA-E-OPERACAO §12`: limites de container, capacidade, backup do Storage).
 
-## Decisões 🟦 à espera do Mateus (do loop de segurança)
-Não bloqueiam codar; **bloqueiam vender/pôr PII real** — e algumas mudam a raiz, decidir cedo:
-1. **v2 = instância-por-agência** (fecha o risco pgvector cross-agency na raiz) **vs** multi-tenant partilhado? (`SEGURANCA §13.l`)
-2. **Admin-comprador vê PII** de candidatos? → audit de leitura + role admin separado? (`SEGURANCA §13.k`, `INFRA-E-MIGRACAO §7`)
-3. **Identidade do candidato** — verificar no início (anti proxy-interview) ou marcar "não verificada" no parecer? (`SEGURANCA §13.j`)
-4. **Chave de cifra do backup:** onde vive / quem detém (tem de ser **off-VPS**). (`SEGURANCA §6`)
-5. **Data-policy de Soniox (STT) + embedder OpenAI** — retenção-zero contratual ou trocar provider? (`SEGURANCA §7`)
-6. **2FA na via email+senha** no piloto? (`SEGURANCA §8`)
-7. **Custódia da chave age do comprador** (gerada na VPS dele) + **VPS dedicada** à Vera a médio prazo. (`INFRA §5`, `ESCALA §2`)
-8. (negócio) IP/licença + code-signing em nome do comprador. (`LEGAL-E-RGPD §5`)
+## Decisões 🟦 — FECHADAS (2026-06-18; ADR completo em `DECISOES-E-MVP`)
+1. **Scope:** só IRIS, **sem revenda** → multi-tenant comercial / admin-comprador / migração-p/-comprador = **fora** (futuro-opcional, não gate).
+2. **Painel web** existe com secções (chat-Vera / candidatos / clientes / pipeline / comparar / definições) — mockup feito.
+3. **Identidade do candidato:** v1 = atestação da recrutadora + selo "não verificada"; biometria do candidato = futuro.
+4. **VPS dedicada** + **chave de backup off-VPS** + **memória auto-salva** (nunca pedir "guarda").
+5. **Soniox + embedder:** ZDR/no-training **fail-closed** nos dois (default Soniox sem-retenção; embedder OpenAI sem-treino ou self-host).
+6. **Auth:** email/senha **ou** biometria; biometria **só após 1º login** → depois passwordless; 2 utilizadoras (Filipa+Inês).
+7. **IP/licença:** **tudo da IRIS Tech.**
+8. **Contratos P0.1 a congelar** (review ChatGPT): `agent_db_session` (GUC), `search_knowledge`, `can_join_interview`, `capture_session`, registry ZDR, hierarquia de falante.
 
 ---
 
@@ -40,9 +44,9 @@ Não bloqueiam codar; **bloqueiam vender/pôr PII real** — e algumas mudam a r
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (40)
+## Mapa dos documentos (41)
 
-> Além dos 40 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
+> Além dos 41 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
 > (gate do Cyber Neo `--redteam`) e `PROMPT-CHATGPT-REVIEW.md` (prompt p/ revisão externa).
 
 **Visão & entrada**
@@ -83,7 +87,8 @@ Não bloqueiam codar; **bloqueiam vender/pôr PII real** — e algumas mudam a r
 | [`TELEGRAM-BOT-SPEC.md`](./TELEGRAM-BOT-SPEC.md) | Canal B: ingestão por Telegram (voz, multi-msg) |
 | [`INFRA-E-MIGRACAO.md`](./INFRA-E-MIGRACAO.md) | Local → nossa infra → comprador; bundle portável + runbook |
 | [`SEGURANCA.md`](./SEGURANCA.md) | **Postura técnica de segurança + modelo de ameaças (lente Cyber Neo):** isolamento de tenant, anti-SSRF, upload, cifra, ZDR, testes |
-| [`ESCALA-E-OPERACAO.md`](./ESCALA-E-OPERACAO.md) | **Escala agregada:** capacidade simultânea, crescimento de dados, backup/DR, blast-radius, frota |
+| [`ESCALA-E-OPERACAO.md`](./ESCALA-E-OPERACAO.md) | **Escala agregada:** capacidade simultânea, crescimento de dados, backup/DR, blast-radius |
+| [`DATA-RETENTION.md`](./DATA-RETENTION.md) | **Matriz de retenção + purga em cascata** (transcrição/embeddings/RAG/Storage/backups); auto-salva, nunca perder info |
 | [`ACESSO-E-CONHECIMENTO.md`](./ACESSO-E-CONHECIMENTO.md) | Acesso da Filipa, canais de ingestão |
 
 **Legal · validação · processo**

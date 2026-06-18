@@ -1,7 +1,9 @@
 # Autenticação — desktop, web e WebSocket (fecha o bloqueador #5)
 
-> **Decisão (LOCKED 2026-06-17):** biometria **facial primeiro**, email+senha como
-> alternativa. Reaproveitamos o **engine/código** do `cmtec-face` que a CMTec já tem
+> **Decisão (LOCKED 2026-06-17, refinada 2026-06-18 — ver §2):** **email/senha OU biometria
+> facial**; a biometria **só se cadastra após o 1º login** (não a frio) e depois é o login
+> passwordless do dia-a-dia. **2 utilizadoras** (Filipa + Inês). Reaproveitamos o
+> **engine/código** do `cmtec-face` que a CMTec já tem
 > **em produção** (go-live 2026-06-15, painéis CMTec) — mas **CLONADO como instância
 > própria deste projeto**, **não** partilhando o serviço do painel. Identidade e
 > sessão continuam assentes no **Supabase Auth** — a face é o *fator da porta*, o
@@ -42,24 +44,36 @@ A tabela abaixo é o que clonamos:
 
 ---
 
-## 2. Os três fatores de login da Filipa (por ordem)
+## 2. Login — email/senha OU biometria (modelo do Mateus, LOCKED 2026-06-18)
+
+> **Correção 2026-06-18:** não é "biometria primeiro com email de recurso". É **dois
+> caminhos de login** — email/senha **ou** biometria facial — e a **biometria só se
+> cadastra DEPOIS do 1º acesso** (não dá para fazer enroll a frio). **2 utilizadoras**:
+> **Filipa e Inês** (sócias, mesma empresa). Futuro: expandir o nº de utilizadores.
 
 ```
-1º  BIOMETRIA FACIAL (cmtec-face)         ← caminho principal
-        │  verify (liveness FSM + SFace 1:1) → veredito single-use
-        ▼
-    backend consome veredito  →  sessão Supabase (JWT)
+1º ACESSO (bootstrap, obrigatório por email/senha)
+   email + senha (Supabase Auth) → sessão (JWT) → ENTRA no painel/app
         │
-2º  EMAIL + SENHA (Supabase Auth)          ← alternativa direta
-        │  signInWithPassword → sessão Supabase (JWT)
+        ▼  (já dentro) — ENROLL da cara 1× (cmtec-face clonado → face_templates)
+        │   só aqui se pode cadastrar a biometria (precisa de sessão válida)
         ▼
-3º  MAGIC-LINK (GoTrue/SMTP)               ← recuperação / 1º device-binding
+DEPOIS (dia-a-dia) — DOIS caminhos equivalentes:
+   • BIOMETRIA FACIAL → verify (liveness FSM + SFace 1:1) → veredito single-use
+        → backend consome → sessão Supabase (JWT)   ← passwordless, o normal
+   • EMAIL + SENHA  → signInWithPassword → sessão (JWT)   ← sempre disponível
+        │
+   MAGIC-LINK (GoTrue/SMTP) = recuperação de senha + device-binding (não é login normal)
 ```
 
-A Filipa **regista a cara 1×** (enroll → `face_templates`). A partir daí, o login
-do dia-a-dia é olhar para a câmara. Se a biometria falhar (luz, câmara, etc.), cai
-para email+senha sem fricção. Magic-link serve para **estabelecer o dispositivo**
-(device-binding) e recuperação.
+- **Porquê enroll só após login:** cadastrar uma cara como credencial exige **provar
+  primeiro quem és** (a sessão de email/senha). Sem isto, qualquer um registava a sua
+  cara. Logo: email/senha **é o bootstrap**; a biometria é uma **conveniência
+  passwordless** que se liga a uma conta já provada.
+- **Dia-a-dia:** olhar para a câmara basta (loga Filipa **ou** Inês — 1:1 contra o
+  template de cada uma). Se a biometria falhar (luz/câmara), email/senha sem fricção.
+- **2 utilizadoras, 1 empresa:** cada uma tem a sua conta Supabase + o seu template
+  facial. Sem multi-tenant (é a mesma agência). Expansão futura = só acrescentar contas.
 
 ---
 
@@ -131,7 +145,7 @@ CMTec) além do email+senha. Mesma sessão, mesmo JWT.
 | # | Caveat | Impacto | O que fazer antes de confiar |
 |---|---|---|---|
 | C1 | **Bug de enroll suspeito** no `cmtec-face`: enroll parece cadastrar **rápido demais, sem mostrar a tela colorida (flash liveness)** — foi o que aconteceu da 1ª vez. (Henrique diz que funciona; estado incerto. Também houve a 06-15 um enroll que "recusava com movimentos certos".) | Se o flash liveness não corre, o enroll perde uma camada de vivacidade — e o **clone herda o bug**. | **Resolver OUTRO DIA na origem (painel-cmtec), ANTES de clonar.** Não nesta sessão. Anotado em memória `project_cmtec_face_enroll_bug_2026_06_17`. Gate de qualidade, não de spec. |
-| C2 | **Anti-spoof passivo (MiniFASNet) DESLIGADO** por false-reject. Sobram liveness FSM ativo + device-binding + anti-troca. | Defesa anti-foto/vídeo mais fraca. **Num produto para VENDER, "1 utilizadora de confiança" deixa de valer** (o comprador pode ter >1 recrutador). | **GATE (2026-06-18):** aceitável só na v1-piloto com a Filipa (1 pessoa). **Anti-spoof TEM de estar ON antes de qualquer deployment com >1 utilizador OU venda externa** — não "antes da v2". Ver `LEGAL-E-RGPD §9`. |
+| C2 | **Anti-spoof passivo (MiniFASNet) DESLIGADO** por false-reject. Sobram liveness FSM ativo + device-binding + anti-troca. | Defesa anti-foto/vídeo mais fraca. **Há 2 utilizadoras (Filipa + Inês) desde o dia 1** e a biometria é login passwordless → uma foto da Filipa não pode logar. | **GATE (2026-06-18, scope só-IRIS):** aceitável só num arranque controlado; **anti-spoof TEM de estar ON antes do uso real com a biometria como login** (são 2 pessoas, e a cara destranca a conta). Ver `LEGAL-E-RGPD §9`. (Já não há "venda externa" — ver ADR-SCOPE em `DECISOES-E-MVP`.) |
 | C3 | O molde foi construído para o **painel web** (cookie/middleware Next.js). O desktop precisa do **adaptador da §3** (device-id no safeStorage + rota `complete` para o backend RH). | Pequena peça nova a construir. | Faz parte do `apps/desktop` + uma rota em `apps/web`. Não é serviço novo. |
 | C4 | Clonar = **novo schema/role/deploy** próprios do RH (não tocar no `cmtec` do painel). Provisionamento do role Postgres teve atrito no painel (syntax de password no `docker exec`). | Setup, não runtime. | Aplicar a migração de face num schema próprio do RH; DSN/role dedicados. |
 
