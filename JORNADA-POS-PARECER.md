@@ -35,13 +35,17 @@ screening → interview → submitted → client_iv → offer → placed
 > para `submitted` (acima) **só é legítimo se o parecer existir e estiver pronto** —
 > estas regras garantem-no.
 
-**a) Gatilho ÚNICO canónico de encerramento (server-side).** O ENCERRAMENTO da
-`interview` — feito pela **Filipa**, pelo **assistente**, OU pelo **reaper** de órfãs
+**a) Gatilho ÚNICO canónico de encerramento (server-side, COMPARE-AND-SET).** O ENCERRAMENTO
+da `interview` — feito pela **Filipa**, pelo **assistente**, OU pelo **reaper** de órfãs
 (`ESCALA-E-OPERACAO §7`) — converge num único caminho server-side que:
-1. seta `interview.ended_at`;
+1. **CAS atómico:** `UPDATE interview SET status='done', ended_at=now() WHERE id=$ AND status='live'`
+   — e **só procede** (passos 2-3) se afetou **1 linha**. Garante que **só uma** das três origens
+   encerra: reaper × worker × Filipa **nunca coexistem** como encerrador (família G, `ARQUITETURA-TEMPO-REAL §11.1`).
 2. **enfileira a geração do parecer**.
+3. o **escritor único** verifica `status='live'` antes de cada flush e **pára** após o CAS — não
+   há `interview_tick` com `created_at > ended_at` (estado impossível, espelha o ponto **d**).
 Fica **desacoplado de quem fecha o cliente** (mover o `process` para `submitted` é outro
-gesto): qualquer das três origens de encerramento dispara o mesmo gatilho, uma só vez.
+gesto): qualquer das três origens dispara o mesmo gatilho, uma só vez.
 
 **b) Geração DURÁVEL (sobrevive a fechar a app).** O parecer corre como
 `async_job kind='gen_parecer'` (`MODELO-DADOS §16.B`), não no pedido HTTP:

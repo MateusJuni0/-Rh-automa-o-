@@ -674,6 +674,47 @@ Durante a entrevista correm **duas coisas ao mesmo tempo**: o **copiloto ao vivo
 > o trabalho pesado em segundo plano. A Filipa sente os dois como **um só** assistente,
 > mas por baixo são duas peças que não se pisam.
 
+### 11.1 SERIALIZAÇÃO do estado vivo (não só precedência) — família G da sim de prova (2026-06-18)
+
+> A simulação de concorrência mostrou que a regra "escritor único" (acima) tinha **3 buracos**:
+> (a) só enumerava `transcript_chunk`/`interview_tick`/checklist — mas a re-atribuição (§2), a
+> reversão (§9) e a destilação ao vivo (§9) **também** escrevem `candidate_memory_fact`/
+> `contradiction`/frame; (b) o encerramento não era atómico (reaper × worker podiam coexistir);
+> (c) o `candidate` é **GLOBAL** e a Filipa **e a Inês** podem entrevistar **o mesmo candidato em
+> paralelo** → a entidade partilhada ficava sem dono. A spec tinha **precedência** (`corrigido_
+> pela_filipa` ganha), faltava **serialização** (uma única ordem de aplicação). Fecha-se assim:
+
+1. **O escritor único possui TODO o estado derivado da entrevista viva.** Enquanto
+   `interview.status='live'`, **só o worker `apps/realtime` dessa entrevista** escreve
+   `candidate_memory_fact` (do `process` corrente), `contradiction`, o frame (`interview_tick.
+   live_state`) e a cobertura — **não só** `transcript_chunk`/`interview_tick`. A regra 1 acima
+   estende-se a tudo o que deriva da call.
+2. **Correção da Filipa e re-atribuição NÃO escrevem direto durante a call — ENFILEIRAM.** O
+   overlay (correção de falante) e o serviço de re-atribuição (§2) emitem um **comando**
+   (`reattribution_request`) que o worker aplica **dentro do seu loop serializado**, junto ao
+   próximo tick. Assim a precedência `corrigido_pela_filipa` (§9) torna-se **determinística** —
+   uma só ordem de aplicação, sem corrida entre o overlay e o tick.
+3. **Encerramento = compare-and-set atómico sobre `interview.status`.** O gatilho único
+   (`JORNADA §1.1`) faz `UPDATE interview SET status='done', ended_at=now() WHERE id=$ AND
+   status='live'` e **só procede se afetou 1 linha**; o worker verifica `status='live'` (lease/
+   heartbeat) **antes de cada flush** e **pára** quando o CAS o despromove. Um `interview_tick`
+   com `created_at > ended_at` é **rejeitado** (estado impossível, espelha `JORNADA §1.1.d`). O
+   reaper (`ESCALA §7`) usa **lease com grace** coerente com o heartbeat — reaper × worker
+   **nunca coexistem** como escritores.
+4. **Entidade GLOBAL partilhada é serializada à parte do per-entrevista.** Os factos gerais
+   (`candidate_memory_fact` com `process=NULL`), o `candidate.profile` e o `revalidate_after`
+   nascem **sempre process-scoped** ao vivo (ligados a P1/P2) e só são **promovidos a "geral"**
+   por um passo **idempotente pós-call com advisory lock por `candidate_id`** — **nunca**
+   escritos como "geral" por dois workers ao vivo. Atualizações a `candidate.profile`/
+   `revalidate_after` passam por advisory lock por `candidate_id` (fila por entidade) → sem
+   last-write-wins quando o mesmo candidato está em 2 calls simultâneas (Filipa + Inês).
+5. **Pós-call:** destilação-final × re-atribuição × edição manual serializam por **advisory lock
+   pg por `interview_id`** (ou `SELECT … FOR UPDATE` no `process`/`interview`).
+
+> É implementação por **locks/CAS/fila-de-comandos** (não tabela nova) — o invariante fica aqui;
+> o handshake de encerramento em `JORNADA §1.1`, o lease do reaper em `ESCALA §7`, o dono de
+> cada tabela durante a call em `ARQUITETURA-INTEGRACAO §8`. Testes em `TESTES-ACEITACAO`.
+
 ## 13. Cliente na call + cenário adversarial (gaps simulação 2026-06-18)
 
 **Cliente presente na call (3+ vozes):**

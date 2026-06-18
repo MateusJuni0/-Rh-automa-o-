@@ -119,6 +119,12 @@ Filipa fecha o portátil sem parar) somam streams/locks/ticks e **Soniox-horas**
 **Decisão:** **reaper global** que encerra entrevistas `live` sem heartbeat há X minutos
 (marca `interview_gap` + fecha streams) — liga ao teto de capacidade (§1) e ao custo.
 
+> ⚠️ **Corrida reaper × worker (família G, `ARQUITETURA-TEMPO-REAL §11.1`):** o reaper encerra
+> via o **mesmo CAS** do gatilho único (`JORNADA §1.1.a`: `... WHERE status='live'`) → se o
+> heartbeat voltar 1s depois, **ou** o reaper falha o CAS (a entrevista continua) **ou** o worker
+> já parou — **nunca** os dois escrevem em simultâneo. O critério de órfã usa um **lease com
+> grace** coerente com o intervalo de heartbeat (não encerrar por um soluço de rede de 1s).
+
 ---
 
 ## 8. Frota de N instâncias vendidas — monitorização sem violar a independência

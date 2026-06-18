@@ -377,6 +377,19 @@ nenhum termo.
       mais forte); N<`CALIBRATION_MIN_N` não exibe %; acima, exibe com IC de Wilson; só agrega
       a mesma `rubric_version`.
 
+### Testes de SERIALIZAÇÃO do estado vivo (família G, 2026-06-18, `ARQUITETURA-TEMPO-REAL §11.1`)
+- [ ] **Correção × tick no MESMO requisito:** reatribuir o falante DURANTE um tick que promove o
+      mesmo requisito → resultado **determinístico** (a correção enfileira e o worker aplica na
+      sua ordem), sem cobertura fantasma nem facto destilado apagado por corrida.
+- [ ] **Encerramento CAS:** o heartbeat volta 1s após o reaper começar a encerrar → **ou** o
+      reaper falha o CAS (entrevista continua) **ou** o worker já parou; **nunca** há um
+      `interview_tick` com `created_at > ended_at`.
+- [ ] **Candidato global em 2 calls simultâneas (Filipa + Inês):** os factos gerais
+      (`process=NULL`) não duplicam nem se corrompem; `candidate.profile`/`revalidate_after` não
+      ficam last-write-wins (advisory lock por `candidate_id`); precedência determinística.
+- [ ] **Escritor único cobre TUDO:** durante `live`, só o worker da entrevista escreve
+      `candidate_memory_fact`/`contradiction`/frame/cobertura — o agente só lê (sem corrida).
+
 ---
 
 ## Como usar este documento no build
