@@ -40,18 +40,21 @@ validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 ---
 
 ## 👉 Por onde começar
+0. **[`FASE-3-ARRANQUE.md`](./FASE-3-ARRANQUE.md)** — **começar AQUI para codar:** método (build+
+   simulação ao vivo), sequência P0.1→P4, contratos a congelar, gates, spikes, reuso.
 1. **[`BUILD-READY.md`](./BUILD-READY.md)** — sumário mestre: o que está decidido + arranque.
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (41)
+## Mapa dos documentos (42)
 
-> Além dos 41 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
+> Além dos 42 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
 > (gate do Cyber Neo `--redteam`) e `PROMPT-CHATGPT-REVIEW.md` (prompt p/ revisão externa).
 
 **Visão & entrada**
 | Doc | O que é |
 |---|---|
+| [`FASE-3-ARRANQUE.md`](./FASE-3-ARRANQUE.md) | **Começar aqui para codar:** método, sequência, contratos, gates, spikes |
 | [`BUILD-READY.md`](./BUILD-READY.md) | Entrada: decidido vs arranque |
 | [`VISAO-FILIPA.md`](./VISAO-FILIPA.md) | North star: a Filipa, a lente do cliente |
 | [`PLANO.md`](./PLANO.md) · [`DIA-A-DIA-RECRUTADOR.md`](./DIA-A-DIA-RECRUTADOR.md) | Problema, ideia, dores ranqueadas |
