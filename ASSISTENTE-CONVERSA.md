@@ -83,6 +83,13 @@ Azure (nice)             | 🔴 só teoria              | ✅ certificada
 > Regra: comparar é **alinhar evidência**, não inventar um ranking. Se um candidato
 > tem um critério `não-tocado`, a matriz **assinala o buraco** em vez de assumir.
 
+> ⚠️ **Funil parcial (gap "dia caótico" 2026-06-18):** num funil real, alguns candidatos
+> ainda **não foram entrevistados** (só têm CV, em `sourced`/`screening`). A matriz tem de
+> **distinguir** "requisito `não-tocado` numa entrevista FEITA" de "candidato ainda **não
+> entrevistado** (só CV)" — e marca a coluna inteira como **"sem entrevista — só CV"**.
+> **Nunca** pontua a partir do CV como se fosse prova (seria achismo). Compara-se quem tem
+> base comparável; os outros aparecem assinalados, não inventados.
+
 ### Modo D — Chat AO VIVO (durante a entrevista)
 Já em `ARQUITETURA-TEMPO-REAL.md §9`: a Filipa escreve no overlay (*"ele já falou de
 salário?"*) e o bot responde do **estado vivo + transcrição corrente**, **sem parar a
@@ -115,6 +122,10 @@ Como o candidato é **global** (talent pool), ele reaparece. Política de recall
 - **Frescura:** facto antigo é **re-validado ao vivo**, não assumido — *"há 6 meses
   disseste que não tinhas Azure; mudou?"*. O bot trata memória velha como **ponto de
   partida a confirmar**, nunca como verdade atual (mesma disciplina anti-achismo).
+  **Mecanismo (não ao acaso do LLM):** factos com `created_at` > N meses ganham
+  `revalidate_after` (`MODELO-DADOS §12`); na re-entrevista, o frame ao vivo **injeta** os
+  factos marcados e a escada de prioridade **puxa-os para re-confirmação**. Assim o "há 6
+  meses disseste X" é disparado por **regra**, não por sorte.
 
 ---
 

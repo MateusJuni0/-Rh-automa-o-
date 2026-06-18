@@ -753,6 +753,76 @@ ALTER TABLE job ADD COLUMN n_vagas INT NOT NULL DEFAULT 1; -- nº de colocaçõe
 
 ---
 
+## 12. Runtime do agente + entidade + entrevista órfã (gaps simulação "dia caótico" 2026-06-18)
+
+> A camada de runtime do agente estava só em prosa. Estas tabelas/campos fazem-na descer
+> ao modelo (senão o "ChatGPT dela" desfaz-se no 1º dia com volume).
+
+```sql
+-- (BLOQ1) Conversa do agente — persiste entre sessões (não Redis-only)
+CREATE TABLE assistant_thread (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  active_context JSONB NOT NULL DEFAULT '{}',  -- entidade(s) em foco: {client_id?, job_id?, candidate_id?, process_id?}
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE assistant_message (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  thread_id     UUID NOT NULL REFERENCES assistant_thread(id),
+  role          TEXT NOT NULL,            -- 'recruiter'|'assistant'
+  content       TEXT NOT NULL,
+  refs          JSONB,                    -- entidades/fontes citadas
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+-- (Redis = cache do estado quente do grafo; a VERDADE da conversa/contexto está aqui.)
+
+-- (ALTO4) Tarefas longas (sourcing) — duráveis, retomáveis, sobrevivem a fechar a app
+CREATE TABLE async_job (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID NOT NULL,
+  recruiter_id  UUID NOT NULL REFERENCES recruiter(id),
+  thread_id     UUID REFERENCES assistant_thread(id),
+  kind          TEXT NOT NULL,            -- 'sourcing'|'gen_doc'|'export'|...
+  args          JSONB NOT NULL DEFAULT '{}',
+  status        TEXT NOT NULL DEFAULT 'running', -- 'running'|'done'|'failed'|'pending_confirm'
+  progress      JSONB,                    -- {pct, msg}
+  result_ref    TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+-- o jobId dos frames WS (ARQUITETURA-INTEGRACAO §2.4) referencia esta tabela.
+
+-- (MÉDIO9) Ligar cada ação à conversa (fila de confirmações por thread)
+ALTER TABLE assistant_action ADD COLUMN thread_id UUID REFERENCES assistant_thread(id);
+-- a "fila de confirmações pendentes" = SELECT * FROM assistant_action WHERE status='pending_confirm' AND thread_id=?
+ALTER TABLE assistant_action ADD COLUMN expires_at TIMESTAMPTZ; -- confirmação pendente expira
+
+-- (ALTO5) Chaves de dedup/resolução de entidade do candidato
+ALTER TABLE candidate ADD COLUMN email TEXT;
+ALTER TABLE candidate ADD COLUMN phone TEXT;
+ALTER TABLE candidate ADD COLUMN name_normalized TEXT; -- nome sem acentos/maiúsculas p/ matching
+CREATE INDEX ON candidate (agency_id, name_normalized);
+CREATE INDEX ON candidate (email);
+-- (BAIXO11) alias de cliente
+ALTER TABLE client ADD COLUMN aliases TEXT[]; -- alcunhas ("TechCorp", "a Tech")
+
+-- (ALTO7) Entrevista ÓRFÃ (começou sem contexto — §12 arranque a frio)
+ALTER TABLE interview ALTER COLUMN process_id DROP NOT NULL; -- pode ser NULL até estruturar
+-- interview.status ganha 'unstructured' (gravou, falta ligar a vaga/candidato)
+-- fila visível: SELECT * FROM interview WHERE status='unstructured'
+
+-- (MÉDIO8) Frescura de factos (re-entrevista) — re-validar o que envelheceu
+ALTER TABLE candidate_memory_fact ADD COLUMN revalidate_after TIMESTAMPTZ; -- > N meses → flag p/ re-confirmar ao vivo
+```
+- **Conversa + contexto ativo + jobs** são **duráveis** (Postgres) → sobrevivem a fechar a
+  app (cumpre `ASSISTENTE-PESSOAL §4`). Redis é só cache quente.
+- **Entrevista órfã:** `process_id` nulo + `status='unstructured'` resolve o "começou sem
+  contexto" (`ARQUITETURA-TEMPO-REAL §12`); fila do que falta estruturar.
+- **Dedup universal:** as chaves (`name_normalized`+`email`/`phone`+`linkedin_url`) servem
+  a resolução de entidade em TODOS os pontos de criação (ver `INTAKE`).
+
 ## RLS — políticas chave
 
 > ⚠️ **v1 é SINGLE-TENANT (só a IRIS) — decisão 2026-06-17.** Nesta versão **não há

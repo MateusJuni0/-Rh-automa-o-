@@ -533,6 +533,41 @@ CMTec já tem.
 
 ---
 
+## 12. Arranque a frio + contexto AO VIVO (o mundo real bagunçado) — Mateus 2026-06-18
+
+> Cenário real: a Filipa **já está na reunião e esqueceu de ativar**, ou o candidato/
+> cliente apareceu e a Vera **não tem contexto nenhum** (sem vaga/CV/briefing criados). O
+> produto **não pode partir** — tem de degradar com graça. Princípio: **capturar primeiro,
+> contexto ao vivo, ligar por nome, estruturar depois.**
+
+**1. Capturar primeiro (nunca perder a entrevista).** Assim que ativa — mesmo a meio —
+a **Camada A começa a gravar** tudo (transcrição diarizada). O que aconteceu **antes** de
+ativar fica marcado `não-capturado` (honesto, §9), mas dali para a frente nada se perde.
+A Vera funciona **mesmo sem vaga/rubric** — só não sugere com profundidade até ter contexto.
+
+**2. Contexto AO VIVO (a Filipa alimenta sem sair da call):**
+- **Arrastar o CV** do candidato (PDF) para o overlay **em tempo real** → a Vera extrai o
+  perfil na hora e começa a ligar o que ouve ao CV.
+- **Escrever/ditar contexto:** *"é para a vaga de dev da TechCorp"* / *"o cliente quer
+  alguém que já liderou"* → a Vera incorpora no estado vivo e afia as sugestões a partir daí.
+- Sem contexto nenhum, a Vera **pergunta o mínimo** (*"para que vaga é? tens o CV?"*) — uma
+  vez, sem insistir — e entretanto **só transcreve + estrutura factos** para a Filipa
+  completar depois.
+
+**3. Ligar por NOME + dados (resolução de entidade):** a Vera liga sempre o que capta a um
+**candidato/cliente por nome + dados** — se já existe no talent pool, **anexa** (re-entrevista,
+`ASSISTENTE-CONVERSA §4.1`); se não, **cria** com o que tiver e completa depois. Se um dia
+ficar "perdida", a âncora é o **nome + dados** (não um id que ela não digitou). Desambigua
+sempre (`INTAKE`): *"é o João Silva que já entrevistaste, ou um novo?"*.
+
+**4. Estruturar DEPOIS:** no fim, a Vera apresenta o que capturou + o que falta
+(*"gravei a entrevista; faltou dizer-me a vaga e o salário — queres ligar a uma vaga e
+preencher?"*) → a Filipa fecha em 2 cliques, e o parecer/memória ficam completos
+retroativamente. A entrevista crua **nunca se perde** por falta de setup prévio.
+
+> UX (overlay): um estado **"sem contexto — a só transcrever"** (calmo, distinto do "a
+> ouvir" com vaga) + zona de **arrastar CV** + campo de **contexto rápido**. Ver `UI-DESIGN`.
+
 ## 11. Concorrência — o copiloto ao vivo E o agente ao mesmo tempo (spec, 2026-06-17)
 
 Durante a entrevista correm **duas coisas ao mesmo tempo**: o **copiloto ao vivo**

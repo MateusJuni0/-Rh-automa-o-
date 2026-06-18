@@ -117,6 +117,17 @@ Filipa traz o candidato  (encaminha o CV  OU  cola o link/URL do LinkedIn)
 - **Dedup obrigatório:** candidato é **global**; nunca criar duplicado — liga ao
   existente e abre só um `process` novo (reusa a memória que já temos dele — re-entrevista,
   `ASSISTENTE-CONVERSA §4.1`).
+
+> **Mecânica de resolução de entidade (gap "dia caótico" 2026-06-18):**
+> - **Chaves de match:** `linkedin_url` (forte) · `email`/`phone` (forte) ·
+>   `name_normalized` (sem acentos/maiúsculas — fraca, só com 2ª chave). (`MODELO-DADOS §12`)
+> - **2 "Joães" no pool:** o bot **NUNCA escolhe em silêncio** — mostra a desambiguação
+>   com **dados discriminantes** (*"João Silva (TechCorp, 2024) ou João Costa (Finap)?"*),
+>   ou "criar novo".
+> - **Dedup UNIVERSAL — em TODOS os pontos de criação**, não só no headhunting: upload web,
+>   **arrastar CV ao vivo** (`ARQUITETURA-TEMPO-REAL §12`) e Telegram correm o mesmo match
+>   antes de criar. Senão a re-entrevista parte (nasce um id duplicado e a memória antiga
+>   não se anexa).
 - Sem CV (só LinkedIn): o bot pode **pesquisar o perfil público** (ciclo de pesquisa,
   `source_doc`, marcado indício) para arrancar o briefing — confirma-se na entrevista.
 

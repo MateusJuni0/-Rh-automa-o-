@@ -196,8 +196,9 @@ O overlay **não é um ecrã só** — tem um ciclo de estados. Estado de cada u
 - [x] **Pesquisa ao vivo a correr** (deu um link → "a ver o repo…" 2º plano, azul). ✅ mockup
 - [x] **Áudio caiu / a reconectar** (vermelho, distinto do silêncio; trecho guardado). ✅ mockup
 - [x] **Correção de diarização** (1 toque para reatribuir quem falou). ✅ mockup
+- [ ] **Sem contexto — a só transcrever** (arranque a frio mid-call: zona de **arrastar CV** + campo de **contexto rápido**; distinto do "a ouvir" com vaga) — *a desenhar* (`ARQUITETURA-TEMPO-REAL §12`)
 
-> ✅ **Todos os estados do overlay ao vivo desenhados (2026-06-18).**
+> ✅ **Estados principais do overlay desenhados (2026-06-18); falta o "sem contexto".**
 > ✅ **3 estados UX web desenhados (vazio com CTA / a carregar com esqueleto / erro com
 > retry) — 2026-06-18.** Padrão aplica-se a todos os ecrãs web (dashboard, assistente,
 > comparar, parecer, etc.). **DESIGN DA FASE 2 COMPLETO.**

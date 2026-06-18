@@ -128,7 +128,25 @@ porta de segurança — e a regra é **não chatear** (decisão Mateus 2026-06-1
 
 **Estado (persistido em Postgres, recupera após queda):** conversa + **contexto ativo**
 (em que cliente/vaga/candidato ela está) + plano corrente + resultados intermédios.
-Memória: `recruiter_memory_fact` (estilo/preferências) + RAG sobre os dados dela.
+Tabelas: `assistant_thread` (+`active_context`) + `assistant_message` + `async_job`
+(`MODELO-DADOS §12`). Redis = só cache quente. Memória: `recruiter_memory_fact` +
+RAG sobre os dados dela.
+
+**Contexto ativo (web, não só Telegram) — gap "dia caótico":** o `active_context` do
+`assistant_thread` guarda a(s) **entidade(s) em foco**. Cada turno **atualiza-o** (ela diz
+"o Rui" → resolve e foca o Rui) e os pedidos seguintes **herdam-no** até mudar. É o que
+evita pedir o alvo a cada frase **e** colar tudo ao primeiro candidato.
+
+**Multi-tarefa (pedido composto) — gap "manhã caótica":** quando ela manda vários numa
+rajada (*"compara o João e a Ana, gera o CV do Rui, marca com a Marta, email ao cliente X"*),
+o **Roteador decompõe em sub-tarefas**, **resolve o alvo de CADA uma** (não herda cego o
+contexto), e cada uma corre o seu fluxo (com a sua porta de confirmação). Mostra o plano
+("vou fazer 4 coisas: …") para ela ver/reordenar.
+
+**Fila de confirmações:** as ações `gravar`/`enviar_fora` pendentes ficam em
+`assistant_action (status='pending_confirm', thread_id, expires_at)` → a UI mostra-as
+**agrupadas por pedido**, ordenadas, com expiração; ela aprova/rejeita cada uma (a #1 pode
+ficar pendente enquanto aprova a #3). Sem isto, rajadas deixam confirmações órfãs.
 
 **Salvaguardas (do Lince Brain):**
 - **Kill switch** — corta o agente se descarrilar.
