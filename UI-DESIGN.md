@@ -112,9 +112,18 @@ por cima** do Zoom/Meet/Teams. O app é:
 > `web` = TODO o resto (cadastros, Role Profile/rubric, relatórios, Q&A, agenda). Mesmo
 > backend. A Tela 6 abaixo descreve o overlay desktop; as outras telas são web.
 
-### Layout do overlay (~360px, always-on-top)
+### Footprint: MODO COMPACTO que expande (decisão Mateus 2026-06-18)
+Por defeito o overlay é uma **pílula fina** (~300×44px, always-on-top, arrastável) que
+ocupa o mínimo do ecrã da call. **Clique/hover → expande** para o painel completo
+(~360px). Estados da pílula:
+- **A ouvir** (calmo): cara do bot + "a ouvir — segue a conversa" + `8/12` + chevron.
+- **Nova sugestão**: borda **teal** + a pergunta em 1 linha (truncada) + 🟢 da lente +
+  chevron destacado — chama o olhar ~1s; ela expande se quiser o porquê/ações.
+A Filipa nunca é obrigada a ter o painel inteiro à frente; abre-o quando precisa.
+
+### Layout do overlay expandido (~360px, always-on-top)
 Fica **por cima** da janela do Meet/Zoom/Teams (ou em 2º monitor / tablet no
-presencial). Não cobre o rosto do candidato.
+presencial). Não cobre o rosto do candidato. (Footprint expandido ≈ 1/5 do ecrã 1080p.)
 
 ```
 ┌───────────────────────────────┐
