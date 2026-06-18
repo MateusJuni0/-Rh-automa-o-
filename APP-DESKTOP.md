@@ -102,6 +102,16 @@ Caminhos, por ordem de preferência:
 > Isto evita ficar refém do loopback do macOS para o caso de uso mais comum (entrevistas
 > online de agência).
 
+> 🧊 **ALVO v1 (spec freeze, 2026-06-18) — resposta ao risco do ChatGPT:**
+> - **v1 = bot-online PRIMÁRIO** (LiveKit entra na call e capta o áudio + diarização por
+>   faixa). O **app desktop v1 = o OVERLAY (display always-on-top)** sobre a call.
+> - **Captura de áudio LOCAL (mic+sistema) = FAST-FOLLOW** (presencial) — **NÃO está no
+>   caminho crítico da v1**. Logo o risco do áudio de sistema macOS (D1) **sai da v1**.
+> - Plataforma do app v1: **Windows + macOS** (Electron); o **spike de captura local**
+>   faz-se quando o fast-follow presencial arrancar, não antes da UI do overlay.
+> Resultado: o que é arriscado (captura local multiplataforma) fica fora do MVP; o
+> overlay + bot-online (o comum) entregam valor primeiro.
+
 ### 2.2 Formato e transporte para o `realtime`
 - **Codificação:** PCM 16-bit, **16 kHz mono** (suficiente para STT; poupa banda). A
   resampling/mono-mix corre no renderer (Web Audio `AudioWorklet`) **antes** de enviar.

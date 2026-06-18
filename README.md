@@ -26,7 +26,7 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 2. **[`VISAO-FILIPA.md`](./VISAO-FILIPA.md)** — a visão e o porquê (a dor da Filipa).
 3. **[`ARQUITETURA-INTEGRACAO.md`](./ARQUITETURA-INTEGRACAO.md)** — a cola: monorepo, contratos, carris (a usar na Fase 3).
 
-## Mapa dos documentos (34)
+## Mapa dos documentos (36)
 
 **Visão & entrada**
 | Doc | O que é |
@@ -57,6 +57,8 @@ no contrato (RGPD = responsabilidade da agência) · números de retenção · p
 | [`APP-DESKTOP.md`](./APP-DESKTOP.md) | App desktop (Electron): overlay always-on-top + captura de áudio |
 | [`AGENTE-TOOLS-E-WS.md`](./AGENTE-TOOLS-E-WS.md) | Ferramentas do agente + auth do WebSocket |
 | [`AUTENTICACAO.md`](./AUTENTICACAO.md) | Biometria (clone) + email + auth WS + multi-dispositivo |
+| [`AUTH-CONTRACT.md`](./AUTH-CONTRACT.md) | Claims JWT, validação WS, S2S, matriz de permissões |
+| [`REUSE-MAP.md`](./REUSE-MAP.md) | De onde clonar/reaproveitar (biometria, agente, LiveKit/Soniox) — repo/commit/módulos/smoke |
 | [`UI-DESIGN.md`](./UI-DESIGN.md) | Princípios + ecrãs + estados; direção visual **HUD escuro (Vera)** |
 | [`DESIGN-TOKENS.md`](./DESIGN-TOKENS.md) | Tokens de cor/tipografia/espaço/raio (fonte única do dark HUD) |
 | [`TELEGRAM-BOT-SPEC.md`](./TELEGRAM-BOT-SPEC.md) | Canal B: ingestão por Telegram (voz, multi-msg) |

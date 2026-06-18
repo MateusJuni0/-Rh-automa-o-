@@ -165,7 +165,16 @@ Para o construtor não ficar à espera de decisão. **São defaults a afinar**, 
   (Haiku) nos ticks "banais" (só atualizar estado, sem sugestão) — corta custo.
 - **Embeddings da Camada A:** em batch (não 1 a 1 por chunk), assíncrono fora do caminho
   do tick.
-> Meta de custo a confirmar na simulação: dominado por Soniox/hora + ticks `LIVE`.
+- **Pausa que dispara o tick:** silêncio de **~1500ms** após fala (fim de turno) → tick.
+- **Máx. sugestões na fila:** **3** (a regra "≤3 a exigir ação"); acima disso, dropa as
+  mais antigas/menos prioritárias.
+- **Auto-dismiss da sugestão:** ~30s **ou** quando já perguntada/respondida.
+- **Limiar de silêncio "ainda aí?":** **~8s** sem fala de ninguém → sinal de presença
+  (distinto de áudio caído, que é deteção de stream, não de silêncio).
+- **Confiança mínima p/ `coberto-com-prova`:** `stt_confidence ≥ ~0.6` **e** evidência
+  concreta; abaixo disso fica `raso` e re-sonda.
+> Tudo isto vai para `packages/core/realtime-config.ts` (constantes v1) **na Fase 3** — é
+> o primeiro a calibrar na simulação de 2h. Meta de custo: dominado por Soniox/h + ticks `LIVE`.
 
 ---
 

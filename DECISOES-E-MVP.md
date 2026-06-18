@@ -330,6 +330,20 @@ Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT de
 - [x] **Telegram DEFERIDO** (Mateus: "não sei se é interessante eles terem Telegram"). **A secretária/Vera vive no APP (desktop) + WEBSITE** — é aí que ela interage. Canal B (Telegram intake) passa a **opcional/depois**; intake principal = web app (e WhatsApp/Evolution se preciso, mais tarde). Reavaliar com a Filipa.
 - ⏳ **NÃO começar a codar ainda** — faltam estados de design do overlay (ex.: estado "a ouvir/transcrever/pensar" sem sugestão) + mais ecrãs. "Temos muitas coisas ainda" (Mateus).
 
+### Review do ChatGPT (GO/NO-GO) + prontidão Fase 3 (2026-06-18) — convergiu com a simulação
+ChatGPT: "GO só para Fundação (P0.1), NO-GO para build paralelo até fechar bloqueadores". Convergiu com a minha simulação. **Fechado a nível de SPEC (agora):**
+- [x] **Schema:** resumo stale de "16 tabelas" corrigido → **28** + Guia de consolidação no topo (`MODELO-DADOS`).
+- [x] **Campos de qualidade STT** no `transcript_chunk` (is_final/stt_confidence/speaker_confidence/audio_gap_ms/start_ms/...) + ⚠️ **diarização Soniox NÃO implementada** (REUSE-MAP) = trabalho NOVO; v1 usa bot-na-call (faixa por pessoa). `MODELO-DADOS §10`.
+- [x] **`REUSE-MAP.md`** (subagente, pointers REAIS): biometria=`painel-cmtec/services/cmtec-face`@72e3679; agente=**`lince-brain-local`**@a326e7e (NÃO hermes); LiveKit/Soniox=`cmtec-voice-platform/agents`@10c079a; +módulos manter/remover+smoke. (Achados: porta cmtec-face :18795 vs :18796; deps do agente por fixar.)
+- [x] **`AUTH-CONTRACT.md`** (claims recruiter_id/agency_id, validação WS+posse, S2S face=Ed25519/agent=token interno, matriz de permissões por efeito, re-auth 24h).
+- [x] **Fronteira TS/Python decidida** + **contratos de implementação** (envelope erro, status, Idempotency-Key, WS seq/ack/replay, lifecycle de job). `ARQUITETURA-INTEGRACAO §8`.
+- [x] **Registry de capacidades** de modelo + **embedder TRAVADO v1** (1536). `MODELOS-E-API`.
+- [x] **Constantes do tempo-real** completas (pausa 1500ms, fila ≤3, silêncio 8s, conf mín 0.6). `ARQUITETURA-TEMPO-REAL §3`.
+- [x] **Alvo v1 desktop FREEZE:** bot-online primário; overlay=v1; captura local=fast-follow (tira o risco macOS da v1). `APP-DESKTOP`.
+- [x] **Design tokens** já criados (`DESIGN-TOKENS.md`).
+- ⏭️ **É P0.1/Fase-3 (código, não spec — não são buracos):** `packages/db/schema.ts`+`001_init.sql`, prompts materializados em `packages/ai/prompts/*` (+output schemas), `docker-compose.local.yml`+seeds+mocks, `realtime-config.ts`, `tailwind.config`+componentes base. ChatGPT classificou-os como bloqueadores mas SÃO o trabalho da Fundação.
+- ⏸️ **Médios tracked (fechar quando lá chegar):** fixtures de teste (golden interview), artifact_contract (templates/storage/preview dos docs gerados), defaults concretos de retenção RGPD (decisão da agência), spec-freeze final (marcar todo "decido na implementação"/"[ABERTO]" residual).
+
 - ✅✅ **FASE 2 (EMBALAGEM & DESIGN) — essencialmente COMPLETA em spec.** Resta só o que é **implementação** (Fase 3): abertos D1-D8 do `APP-DESKTOP` (áudio macOS, code-signing, canal de updates…), frames de controlo WS → `packages/core`, e o bug de enroll da biometria a resolver na origem antes de clonar.
 
 ### AUDITORIA 360° (3 subagentes paralelos, 2026-06-18) — Mateus: "tenho certeza que falta algo"

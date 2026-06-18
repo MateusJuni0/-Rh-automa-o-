@@ -211,6 +211,37 @@ e os passos de [`PLANO-CONSTRUCAO.md`](./PLANO-CONSTRUCAO.md).
 - **Versões:** Node 22 · Next.js **15.x** (NÃO 16 — `output:'standalone'` + `outputFileTracingRoot`) · TypeScript strict · Biome (lint+format) · Python 3.12 (serviços).
 - **Build SEMPRE fora da VPS** (CI→GHCR→pull); nunca buildar na VPS (OOM). Ver `INFRA-E-MIGRACAO`.
 
+## 8. Fronteira TS/Python + contratos de implementação (2026-06-18)
+
+### Quem escreve o quê (fecha a ambiguidade TS/Python)
+**`packages/db` (Drizzle/TS) é a fonte única do SCHEMA** (migrações). Escritores:
+- **App TS** (`apps/web`) — CRUD de negócio (candidate/job/process/report/client…).
+- **`services/face` (Python)** — escreve **só as suas tabelas** (`cmtec`/face: templates,
+  verdicts) e **empurra o veredito por S2S** ao backend Next (que persiste o resto). Não
+  toca em tabelas de negócio.
+- **`apps/realtime` (Python — LiveKit/Soniox)** — é o **escritor único** das tabelas
+  vivas da entrevista (`transcript_chunk`, `interview_tick`) — `ARQUITETURA-TEMPO-REAL §11`.
+- **`services/agent` (Python)** — escreve as **suas** tabelas (`assistant_action`,
+  `recruiter_memory_fact`, estado do grafo); o resto **via API interna** do Next.
+> Regra: cada serviço Python escreve **só o seu domínio**, contra o schema canónico
+> (tipos/migrações geradas de `packages/db`); **ninguém escreve o domínio de outro**.
+> Leituras cross-domínio = **API interna** (HTTP) ou query read-only. Sem SQL ad-hoc
+> noutro domínio.
+
+### Contratos ao nível de implementação (não só rotas)
+Em `packages/core` (Zod), partilhados:
+- **Envelope de resposta:** `{ ok: true, data } | { ok: false, error: { code, message } }`.
+  Status: 200/201 · 400 validação · 401/403 auth · 404 · 409 conflito/idempotência · 5xx.
+- **Idempotência:** writes aceitam header `Idempotency-Key` (UUID do cliente) → repetição
+  devolve o mesmo resultado (não duplica candidato/process/envio).
+- **Paginação:** cursor (`?cursor=&limit=`), resposta `{ data, next_cursor }`.
+- **WS fiável:** cada frame leva `seq` (monótono) + o cliente envia `ack`; na **reconexão**
+  o cliente manda `last_seq` e o servidor **faz replay** do que faltou (o estado vivo
+  está em `interview_tick` — fonte de resgate). Eventos têm `v` (versão) para evoluir sem
+  partir clientes.
+- **Lifecycle de job** (ferramentas longas): `job.accepted → job.progress* → job.done|job.error`
+  (já em §2.4).
+
 ## 6. Regra de ouro para os subagentes
 > Constrói contra o contrato em `packages/core`. **Nunca inventes uma junção.** Se um
 > contrato precisa mudar, muda-se em `core` primeiro (um sítio) e os dois lados seguem.

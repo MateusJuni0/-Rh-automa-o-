@@ -681,12 +681,35 @@ CREATE INDEX ON document (candidate_id, doc_type, version);
 - **Relatórios PDF:** o parecer (`report`) e outros documentos exportam para PDF
   (ferramenta do assistente, `ASSISTENTE-PESSOAL §3`); o ficheiro vai para Storage.
 
+### 10. Qualidade de STT + diarização no `transcript_chunk` (2026-06-18)
+
+> O motor ao vivo depende de saber a **confiança** do STT, os **gaps** de áudio e **quem
+> falou** (diarização). O `transcript_chunk` ganha os campos de qualidade:
+
+```sql
+ALTER TABLE transcript_chunk ADD COLUMN is_final           BOOLEAN NOT NULL DEFAULT TRUE; -- parcial vs final
+ALTER TABLE transcript_chunk ADD COLUMN stt_confidence     REAL;        -- 0..1 (baixa → não vira prova; §9)
+ALTER TABLE transcript_chunk ADD COLUMN speaker_confidence REAL;        -- confiança da diarização
+ALTER TABLE transcript_chunk ADD COLUMN audio_gap_ms       INT;         -- gap antes deste chunk (queda/silêncio)
+ALTER TABLE transcript_chunk ADD COLUMN start_ms           INT;         -- offset no áudio
+ALTER TABLE transcript_chunk ADD COLUMN end_ms             INT;
+ALTER TABLE transcript_chunk ADD COLUMN source_stream_id   TEXT;        -- qual stream (reconexão = novo stream)
+ALTER TABLE transcript_chunk ADD COLUMN provider_segment_id TEXT;       -- id do segmento no Soniox
+-- speaker já existe ('candidate'|'recruiter'|'other') + speaker_corrected (§6)
+```
+
+> ⚠️ **RISCO NOVO (REUSE-MAP, 2026-06-18): a diarização do Soniox NÃO está implementada**
+> no adapter atual do `cmtec-voice-platform` (`STTResult` sem `speaker_id`). É **trabalho
+> NOVO** do carril tempo-real — não vem "de graça" do reuso. Caminho v1: **bot na call**
+> dá faixa-por-participante (diarização perfeita); o adapter de diarização-por-voz fica
+> para o presencial/fallback. Ver `REUSE-MAP.md` e `ARQUITETURA-TEMPO-REAL §2`.
+
 ### Ordem de criação (delta sobre a lista original)
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
 (+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
 **`agenda_event`**, **`source_doc`** (+ embedding), **`recruiter_memory_fact`**
-(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7, §9) aplicam-se às tabelas já
-existentes.
+(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7, §9, §10) aplicam-se às tabelas
+já existentes.
 
 ---
 
@@ -729,24 +752,25 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 ---
 
-## Migração de arranque (resumo)
+## Migração de arranque (28 tabelas) — ordem de criação
 
-Ordem de criação (respeitando FKs):
-1. `agency`
-2. `recruiter` ← inclui `telegram_chat_id`
-3. `client`
-4. `job`
-5. `role_profile`
-6. `rubric`
-7. `candidate`
-8. `document`
-9. `interview`
-10. `interview_tick`
-11. `report`
-12. `client_memory_fact` + embedding
-13. `candidate_memory_fact` + embedding
-14. `client_verdict`
-15. `intake_session` ← novo (Telegram multi-mensagem)
-16. `intake_message` ← inclui campos Telegram + audio_transcript
+> ⚠️ **Aplica o "🧭 Guia de consolidação" do topo** (forma FINAL canónica). Esta é a
+> ordem por FKs das **28 tabelas** (a lista antiga de 16 estava stale — corrigida 2026-06-18).
 
-Extensões necessárias: `pgvector` (já disponível no Supabase self-hosted desde v0.5+).
+1. `agency` · 2. `recruiter` (+`telegram_chat_id`, +`voice_enrollment_path`) · 3. `client`
+(+`purge_after`) · 4. `job` · 5. `role_profile` · 6. `candidate` (+`anonymized_at`,
++`purge_after`) · 7. **`process`** (+`consent_status`/`consent_evidence_ref`/`consent_at`)
+· 8. `document` (+`candidate_id`/`version`/`is_current`/`source`) · 9. `rubric`
+(+`version`, criteria com `peso`/`origem`) · 10. `client_criteria` · 11. `interview`
+(`process_id NOT NULL`, `capture_type` aceita `'none'`) · 12. `interview_tick` · 13.
+**`transcript_chunk`** (+ embedding; +campos de qualidade STT — ver §STT) · 14. `report`
+(+`content_client_md`/`rubric_version`/`filipa_verdict_override`) · 15. `client_verdict`
+(`process_id`) · 16. **`placement_outcome`** · 17. `client_memory_fact` (+ embedding,
++`source_doc_id`) · 18. `candidate_memory_fact` (+ embedding, +`source_type`/`source_doc_id`/`estado_prova`)
+· 19. `agenda_event` · 20. **`source_doc`** (+ embedding) · 21. **`recruiter_memory_fact`**
+(+ embedding) · 22. **`assistant_action`** (+`efeito`) · 23. `intake_session` · 24.
+`intake_message`.
+*(As tabelas de embedding contam à parte: candidate/transcript/source/recruiter = 28 no total.)*
+
+Extensões: **`pgvector`** (Supabase self-hosted). **v1 single-tenant: sem RLS** (agency_id
+fica como costura p/ v2).

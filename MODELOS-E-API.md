@@ -87,6 +87,20 @@ comprador não se queimar:
 
 > Mensagem ao comprador: *"usa o LLM que quiseres — só respeita estas 3 amarras."*
 
+### Registry de capacidades (cada modelo declara o que sabe — não só o nome) — 2026-06-18
+Para o sistema escolher/validar um modelo num slot, cada entrada do registry tem
+**capacidades**, não só o id:
+```jsonc
+{ "id": "anthropic/claude-sonnet-4-6", "slots": ["LIVE","EXTRACTOR"],
+  "supports_json": true, "supports_tools": true, "supports_streaming": true,
+  "supports_prompt_cache": true, "max_context": 200000, "cost_in": .., "cost_out": .. }
+```
+- O seletor da app (Definições) **filtra por slot** usando estas flags (no `LIVE` só
+  modelos com `streaming`+`tools`+baixa latência; no `ARCHITECT` `json`+contexto longo).
+- **Embedder TRAVADO na v1:** `EMBEDDER = text-embedding-3-small`, **dimensão 1536 fixa**
+  (a coluna `pgvector` é 1536). **Trocar o embedder = v2** (obriga re-index de todos os
+  vetores — `§3` amarra 1). Não é configurável "ao vivo" na v1.
+
 ---
 
 ## 4. Custo & venda
