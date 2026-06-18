@@ -57,6 +57,7 @@ rh-bundle/
   models/                       # ONNX da biometria (YuNet/SFace/…) — pesados, vão no bundle
   cloudflared/  *.yml           # config dos túneis (hostnames)
   cron/                         # timers systemd (lembretes, backups, auto-deploy)
+  agent-packs/                  # packs de ferramentas/skills da Vera (recrutamento/documentos/comunicação/agenda/sourcing) — ASSISTENTE-PESSOAL §8; viajam com o agente
   bootstrap.sh                  # SOBE tudo: carrega imagens, restaura DB+storage, sobe compose
   RUNBOOK.md                    # este passo-a-passo, versão executável
 ```

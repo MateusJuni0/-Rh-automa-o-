@@ -179,6 +179,14 @@ qualidade = `ARCHITECT`; tarefas simples/extração = `EXTRACTOR`; faceta ao viv
 - As ferramentas de **documentos Office** (xlsx/docx/pdf) são reais — reaproveitam as
   skills de geração de ficheiros da CMTec. A planilha de comparação é um **artefacto
   gerado** que ela baixa e edita, não um ecrã rígido.
+- **Vários CVs por candidato (decisão Mateus 2026-06-18):** a Vera adiciona/gere **N CVs**
+  por candidato (versões ao longo do tempo — o de hoje e o de há 1 ano). Pode **gerar um
+  CV novo** (reformatar no template do cliente, ou melhorar) — fica guardado como
+  `source='generated'`, **sem destruir os originais** (`MODELO-DADOS §9`).
+- **Relatórios em PDF:** o parecer e outros documentos exportam para **PDF** prontos a
+  enviar. Tudo personalizado (template/estilo do cliente), **nada genérico** — é o ponto:
+  a Filipa **não vai a uma IA do Google**; a Vera tem o LLM, as ferramentas e o contexto
+  dela, e faz aqui.
 
 > **A2 (entrar na call) — reclassificado:** parte é **embalagem** (a mecânica LiveKit/
 > captura), mas o **gatilho e a orquestração são do assistente** — ela nunca configura
@@ -233,6 +241,22 @@ soube. Este assistente **não pode** repetir isso. Regras duras:
   ver, corrigir e **mandar apagar** (soft-delete com `purge_after`).
 - **Anti-achismo:** o assistente **mostra o que aprendeu** e deixa-se corrigir — nunca
   decide com base em memória que ela não pode inspecionar.
+
+### Memória ENTRE SESSÕES — separa, aprende, recupera (verificável) — Mateus 2026-06-18
+A memória **não vive numa sessão** — vive na **DB (VPS)**, por isso **persiste entre
+sessões** (fecha a app hoje, abre amanhã, ela está toda lá — mesmo princípio do cliente
+fino). Três coisas que **têm de funcionar de verdade** (e ser testadas, não assumidas):
+1. **Separa** — memória por entidade isolada: do **recrutador** (estilo/preferências) ·
+   do **candidato** · do **cliente**. Pessoal etiquetado à parte (fora do score). Nunca
+   se misturam num saco só.
+2. **Aprende** — cada correção/edição/veredito atualiza a camada certa (consolidação
+   periódica, monitorizada — §4 health check).
+3. **Recupera bem** — recall por **RAG (pgvector) + busca direta** como fallback; o
+   assistente **cita a fonte** do que recupera. Se a busca falhar, degrada para a busca
+   direta — **nunca "não sei" por o recall ter partido** (a lição do claude-mem).
+> **Critério de aceitação (TESTES):** numa sessão nova, perguntar algo dito numa sessão
+> anterior → recupera com a fonte; um facto do candidato A **não** aparece no candidato
+> B; uma preferência corrigida pela Filipa **prevalece** sobre a inferida.
 
 > Modelo: `recruiter_memory_fact` (+embedding) + `client_memory_fact` /
 > `candidate_memory_fact` (§7, `MODELO-DADOS §8`). A consolidação + o health check são
@@ -297,3 +321,35 @@ Há **um** assistente; estes docs são facetas dele:
 
 > Nova memória a acrescentar ao modelo de dados: **`recruiter_memory_fact`** (estilo,
 > preferências, padrões da Filipa) — o que torna o assistente *dela*. Ver `MODELO-DADOS`.
+
+---
+
+## 8. Packs de ferramentas/skills + auto-melhoria (a Vera é "como o Claude Code") — Mateus 2026-06-18
+
+> **Visão do Mateus:** *"ela tecnicamente vai ser como você — pode até se arrumar. Podemos
+> fazer packs de ferramentas e skills e tudo o que precisa para quando migrar para a VPS
+> dela."* Ou seja: a Vera não é um chatbot fixo — é um **agente extensível**, como o
+> setup Claude Code/Hermes da CMTec, **e o que ela sabe fazer viaja com ela**.
+
+### Packs de ferramentas/skills (deployáveis, versionados)
+As capacidades da Vera estão organizadas em **packs** — não soltas no código:
+- **Recrutamento** (briefing, comparar, parecer, calibração) · **Documentos** (planilhas,
+  CVs, PDFs) · **Comunicação** (email, mensagens) · **Agenda** (Google Calendar) ·
+  **Sourcing** (Apify) · **Pesquisa** (Exa/Brave).
+- Cada pack = um conjunto de **skills/ferramentas** com o seu descritor (`AGENTE-TOOLS-E-WS`).
+  **Adicionar capacidade = adicionar uma skill ao pack**, não reescrever o agente.
+- **Os packs viajam no bundle de migração** (`INFRA-E-MIGRACAO`) → "tudo o que ela precisa"
+  vai junto quando o produto vai para a VPS do comprador. Nada fica preso connosco.
+
+### Auto-melhoria ("pode se arrumar") — com guardrails
+Como o **self-improve** do Hermes (logging de melhorias): a Vera **aprende e afina-se** —
+das correções da Filipa, dos vereditos do cliente e dos outcomes de colocação, **propõe
+ajustes** às suas próprias prompts/skills (ex.: "o teu cliente X pesa fit cultural → vou
+sondar isso mais"). **NÃO é autonomia selvagem:**
+- Tudo **auditado** (`assistant_action`) e **inspecionável** pela Filipa.
+- **Sem auto-deploy não-supervisionado** — mudanças à sua própria configuração ficam como
+  **proposta** até alguém (Filipa/CMTec) aprovar; ações de efeito passam pela porta de
+  confirmação (§2.1).
+- O kill switch (§2.1) está sempre presente.
+> É "como eu" no sentido de **agente com skills + memória que aprende + se afina** — mas
+> com a humana no controlo, não um agente solto.

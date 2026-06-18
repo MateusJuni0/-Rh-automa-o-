@@ -636,11 +636,35 @@ ALTER TABLE rubric ADD COLUMN superseded_at TIMESTAMPTZ;   -- quando uma versão
 ALTER TABLE report ADD COLUMN rubric_version INT;          -- contra que versão o parecer avaliou
 ```
 
+### 9. Documentos do candidato — VÁRIOS CVs, versões e CVs gerados (2026-06-18)
+
+> Mateus: "a secretária tem de poder adicionar **vários CVs por candidato** (faz muita
+> coisa, ou atualiza daqui a 1 ano), e às vezes a Filipa quer **gerar um CV novo** para
+> o candidato, ou **relatórios em PDF**." O candidato é global → acumula documentos ao
+> longo do tempo.
+
+```sql
+-- O document já existe; ligar ao candidato GLOBAL + versionar + marcar gerados.
+ALTER TABLE document ADD COLUMN candidate_id UUID REFERENCES candidate(id);  -- CVs pertencem ao candidato (global), não à vaga
+ALTER TABLE document ADD COLUMN version     INT NOT NULL DEFAULT 1;          -- CV v1, v2… ao longo do tempo
+ALTER TABLE document ADD COLUMN is_current   BOOLEAN NOT NULL DEFAULT TRUE;   -- qual CV é o "atual" p/ leitura
+ALTER TABLE document ADD COLUMN source       TEXT NOT NULL DEFAULT 'uploaded';-- 'uploaded' | 'generated' (CV feito pela Vera) | 'report'
+ALTER TABLE document ADD COLUMN generated_for TEXT;                          -- ex.: 'cliente TechCorp' (CV reformatado p/ um cliente)
+CREATE INDEX ON document (candidate_id, doc_type, version);
+```
+- **Vários CVs:** um `candidate` tem **N `document`** (`doc_type='candidate_cv'`), com
+  `version`/`created_at` → histórico (CV de hoje + o de há 1 ano). O `is_current` marca
+  o que alimenta o perfil destilado; os antigos ficam para consulta.
+- **CV gerado pela Vera:** `source='generated'` (reformatar no template do cliente, ou
+  melhorar) — fica guardado, exportável (PDF/markdown), nunca destrói os originais.
+- **Relatórios PDF:** o parecer (`report`) e outros documentos exportam para PDF
+  (ferramenta do assistente, `ASSISTENTE-PESSOAL §3`); o ficheiro vai para Storage.
+
 ### Ordem de criação (delta sobre a lista original)
 Inserir após `candidate`: **`process`**. Após `interview`: **`transcript_chunk`**
 (+ embedding). Junto de `client`: **`client_criteria`**. Depois: **`placement_outcome`**,
 **`agenda_event`**, **`source_doc`** (+ embedding), **`recruiter_memory_fact`**
-(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7) aplicam-se às tabelas já
+(+ embedding), **`assistant_action`**. ALTERs (§5, §6, §7, §9) aplicam-se às tabelas já
 existentes.
 
 ---
