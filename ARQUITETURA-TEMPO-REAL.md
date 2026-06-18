@@ -153,6 +153,20 @@ Uma entrevista de 2h não pode custar uma fortuna. Regras de construção:
 > Medir tokens/entrevista num dashboard (`REVISAO-360` F1) e **provar** a constância
 > simulando 2h antes de pôr à frente de um cliente (B6).
 
+### Parâmetros de arranque (valores iniciais — validar na simulação 2h, fecha B6)
+Para o construtor não ficar à espera de decisão. **São defaults a afinar**, não dogma:
+- **Cadência do tick:** dispara em **pausa / mudança de tópico**, ou no máximo a cada
+  **~15s** de fala contínua. Nunca por palavra.
+- **Janela recente enviada por tick:** últimos **~8–12 turnos** (≈ 60–90s de conversa).
+- **Rolling summary (`resumo_corrente`):** teto **~800–1200 tokens**; destila (Haiku) a
+  transcrição antiga para dentro dele quando a janela recente passa **~1500 tokens** ou a
+  cada **~5 min** — o que vier primeiro. Assim o contexto por tick fica ~constante.
+- **Modelo por tick:** `LIVE` (Sonnet) nos ticks que produzem sugestão; `EXTRACTOR`
+  (Haiku) nos ticks "banais" (só atualizar estado, sem sugestão) — corta custo.
+- **Embeddings da Camada A:** em batch (não 1 a 1 por chunk), assíncrono fora do caminho
+  do tick.
+> Meta de custo a confirmar na simulação: dominado por Soniox/hora + ticks `LIVE`.
+
 ---
 
 ## 4. Stack de tempo real (deltas sobre `DECISOES-E-MVP.md §4`)

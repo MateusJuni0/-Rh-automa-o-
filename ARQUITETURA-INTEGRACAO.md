@@ -195,6 +195,22 @@ e os passos de [`PLANO-CONSTRUCAO.md`](./PLANO-CONSTRUCAO.md).
 
 ---
 
+## 7. Ponteiros de reuso + tooling (para o Agente 1 não adivinhar) — 2026-06-18
+
+**De onde se clona/reaproveita (não construir do zero):**
+| O quê | Origem | Notas |
+|---|---|---|
+| **Biometria** (`services/face`) | `MateusJuni0/painel-cmtec` → `services/cmtec-face` | versão **já corrigida** (enroll-liveness, branch merged em main). Clonar como instância própria do RH (schema/role/túnel próprios) — `AUTENTICACAO.md`. |
+| **Motor do agente** (`services/agent`) | core do **Lince Brain** (repo do hermes, `workspace/projects/hermes`) | vendorizar o **core** (grafo LangGraph + tool-calling + estado Postgres + auditoria + kill switch); **deixar fora** as tools de operações da CMTec. `ASSISTENTE-PESSOAL §2`. |
+| **LiveKit + Soniox** (`apps/realtime`) | `cmtec-voice-platform` (`MateusJuni0/cmtec-voice-platform`) | a "Inês" já usa LiveKit+Soniox em produção PT; reusar transporte+STT. Confirmar credenciais. |
+| **Geração de ficheiros** (xlsx/docx/pdf) | skills de documentos da CMTec | para CVs/planilhas/relatórios (`ASSISTENTE-PESSOAL §3`). |
+| **Sourcing** | skills `lead-scraper-apify` + `lead-enricher` (Hermes) | 5 tokens Apify + token broker já em produção. |
+
+**Tooling fixado (scaffold):**
+- **Monorepo:** pnpm workspaces (`apps/*` + `packages/*`); `services/*` (Python) são containers à parte no compose.
+- **Versões:** Node 22 · Next.js **15.x** (NÃO 16 — `output:'standalone'` + `outputFileTracingRoot`) · TypeScript strict · Biome (lint+format) · Python 3.12 (serviços).
+- **Build SEMPRE fora da VPS** (CI→GHCR→pull); nunca buildar na VPS (OOM). Ver `INFRA-E-MIGRACAO`.
+
 ## 6. Regra de ouro para os subagentes
 > Constrói contra o contrato em `packages/core`. **Nunca inventes uma junção.** Se um
 > contrato precisa mudar, muda-se em `core` primeiro (um sítio) e os dois lados seguem.

@@ -6,6 +6,27 @@
 
 ---
 
+## 🧭 Guia de consolidação — schema FINAL canónico (LÊ PRIMEIRO, 2026-06-18)
+
+> Este doc tem o **DDL base** + uma secção **"Evolução"** com supersedes/ALTERs. **O
+> build NÃO faz base-depois-ALTER — cria já a forma FINAL.** Aplica estas resoluções ao
+> escrever o schema Drizzle (uma só fonte de verdade):
+
+1. **`process` é a chave do ciclo.** `interview`, `client_verdict`, `placement_outcome`
+   nascem com **`process_id NOT NULL`** e **SEM** `job_id`/`candidate_id` (derivam de `process`).
+2. **`candidate_memory_fact.job_id` → `process_id`** (NULL = facto geral, reutilizável).
+3. **`candidate` global** (talent pool) + **`anonymized_at`** (apagar = anonimizar, mantém `placement_outcome` sem PII).
+4. **`document` +`candidate_id`/`version`/`is_current`/`source`** — vários CVs por candidato + CVs gerados + relatórios (§9).
+5. **`rubric.criteria`** inclui `peso`/`origem`/`origin_criteria_id`; **+`version`** (versionamento mid-process); `report.rubric_version`.
+6. **`assistant_action` +`efeito`** (`leitura|gravar|enviar_fora`); `recruiter_memory_fact`(+emb) p/ a memória da Vera.
+7. **`process` +`consent_status`/`consent_evidence_ref`/`consent_at`**; **`interview.capture_type` aceita `'none'`** (entrevista sem captura — candidato recusou).
+8. **`transcript_chunk`** (Camada A, +emb) · **`source_doc`**(+emb, ciclo de pesquisa) · **`client_criteria`** · **`agenda_event`**.
+9. **v1 single-tenant:** `agency_id` fica em todas as tabelas (costura p/ v2) mas **SEM RLS** na v1.
+10. **pgvector** em todos os `*_embedding` (dimensão = a do EMBEDDER escolhido; default 1536 — `MODELOS-E-API §3`).
+
+> **Total: 28 tabelas** (+ os campos `consent_*` em `process`). O DDL detalhado de cada
+> uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
+
 ## Diagrama de relações
 
 > **Mudança estrutural (2026-06-17):** o **candidato é uma entidade GLOBAL**

@@ -171,6 +171,20 @@ Consequências (o que o Mateus quer):
 
 ## 8. Teste LOCAL-FIRST (antes de a Filipa ver)
 
+### Ambiente de dev local (o concreto — dia 1 do build)
+- **DB:** **Supabase local** via `supabase start` (Docker oficial: Postgres+pgvector+Auth+
+  Storage no PC) — NÃO usar a Supabase de produção da VPS para dev. Migrações Drizzle
+  contra o local.
+- **Serviços:** `docker compose -f docker-compose.dev.yml up` sobe web(Next dev)+ws+
+  realtime+agent+face+redis; o desktop (Electron) corre `npm run dev` apontando ao WS local.
+- **Chaves (dev):** `OPENROUTER_API_KEY` (nossa); `SONIOX`/`LIVEKIT` (dev do
+  cmtec-voice-platform); Apify (tokens existentes); Brave (free, a localizar). `.env.local`
+  gitignored (ou `.env.dev.enc` sops).
+- **Modelos baratos em dev:** pôr os slots `LIVE`/`ARCHITECT` num modelo barato do
+  OpenRouter enquanto se itera; subir a qualidade só para o teste de entrevista a sério.
+- **Seed:** script que cria 1 agência (IRIS) + 1 recrutador (Filipa) + 1 cliente + 1 vaga
+  + 1 candidato — arranca com dados, evita o estado vazio a cada reset.
+
 1. **Correr local** (Docker Compose, nossas chaves).
 2. **E2E local:** criar cliente+vaga → briefing → **entrevista SIMULADA em tempo real**
    (Mateus + um amigo, pagando Soniox + ticks) → veredito ao vivo → parecer → Q&A.
