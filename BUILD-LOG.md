@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~02:30] iteração 8 — `apps/ws` codec de frames (fiabilidade seq/ack)
+
+**Feito:** `apps/ws` (@rh/ws) — codec de frames WebSocket que consome `@rh/core`:
+- `parseClientMessage(raw)` — aceita string JSON ou objeto, valida via `clientMessage` (Zod), devolve `ParseResult` (sem throw); rejeita JSON malformado E frames inválidos.
+- `SeqCounter` — `seq` monótono por ligação (base do replay/ack na reconexão).
+- `buildServerFrame(payload, seq)` — injeta `v`+`seq` e valida contra `serverMessage`; `ServerFramePayload` = `DistributiveOmit<ServerMessage,"v"|"seq">` (segurança por variante).
+- `FrameSession` — prende o SeqCounter ao builder (emite seq incremental).
+
+**Verde:** typecheck ✅ · 7/7 testes ✅ (parse auth/ack, rejeição de lixo, seq incremental, `@ts-expect-error` no `auth.error` code inválido = segurança em compilação) · Biome (59 fich.) ✅. **63 testes no total** (core 31 + db 25 + ws 7). Wiring do socket real (ws + upgrade HTTP + auth.refresh) deferido para fatia seguinte.
+
+**A fazer:** `services/agent`+`services/face` (estrutura Python + contrato HTTP/S2S, não correr). GATED: docker-compose.dev, seeds, createDb, migração ao vivo (Docker down).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~02:25] iteração 7 — scaffold `apps/web` (Next.js 15) + consumo de contratos
 
 **Feito:** `apps/web` (Next.js **15.5.19** — NÃO 16; App Router + TS strict + Tailwind v4):
