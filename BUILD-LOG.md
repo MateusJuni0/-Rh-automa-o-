@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:48] iteração 29 — ✅ FASE E COMPLETA: destilar→RAG + calibração
+
+**Feito:** `apps/web`:
+- `lib/embedder.ts` `getEmbedder()` — factory (mock determinístico até à chave `EMBEDDER_API_KEY`; €0).
+- `lib/destilar.ts` `destilarFacto` — persiste `candidate_memory_fact` + `indexCandidateFact` (RAG pgvector). Route `/api/destilar`.
+- `lib/verdict.ts` `registarVerdict` — insere `client_verdict` (ground-truth da calibração: veredito do cliente × `bot_predicted`). Route `/api/verdict`.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**12 rotas API**) · **13/13 testes web** (+destilar: RAG devolve o facto mais próximo da query, isolado por agency; +verdict: grava+lê) · Biome ✅.
+
+🎉 **FASE E ("Depois") COMPLETA** — parecer+export, memória RAG durável, calibração. KEYS-TODO atualizado (OpenRouter 🟡 inerte; Embedder mock ativo).
+
+**A fazer:** F ingestão (intake + bots stub) · G services Python · H auth.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:42] iteração 28 — Fase E1: parecer ("Depois") + export markdown
 
 **Feito:** `apps/web/lib/parecer.ts`:

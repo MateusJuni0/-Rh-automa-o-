@@ -6,8 +6,8 @@
 
 | Serviço | Env var(s) | Onde liga | Ativa | Estado |
 |---|---|---|---|---|
-| **OpenRouter** (LLM chat) | `OPENROUTER_API_KEY` (+ `MODEL_EXTRACTOR/ARCHITECT/LIVE`) | `@rh/ai` (transporte) | extração de vaga/CV, Role Profile, Rubric, briefing, tick ao vivo, parecer | ⬜ |
-| **Embedder** (OpenAI `text-embedding-3-small`, dim 1536) | `EMBEDDER_API_KEY` | `packages/knowledge` (embedder) | RAG por candidato/cliente (pgvector) | ⬜ |
+| **OpenRouter** (LLM chat) | `OPENROUTER_API_KEY` (+ `MODEL_EXTRACTOR/ARCHITECT/LIVE`) | `@rh/ai` (transporte) + `apps/web/lib/ai.ts` `aiOptions` | extração de vaga/CV, Role Profile, Rubric, briefing, tick ao vivo, parecer | 🟡 transporte real escrito (inerte sem chave) |
+| **Embedder** (OpenAI `text-embedding-3-small`, dim 1536) | `EMBEDDER_API_KEY` | `packages/knowledge` (embedder) + `apps/web/lib/embedder.ts` `getEmbedder` | RAG por candidato/cliente (pgvector) | ⬜ (mock determinístico ativo; falta adapter real) |
 | **Exa** (web search) | `EXA_API_KEY` | `packages/knowledge` (search) | Role Profile (conhecimento de mercado) | ⬜ |
 | **Brave** (search fallback) | `BRAVE_API_KEY` | `packages/knowledge` (search) | fallback do Role Profile | ⬜ |
 | **LiveKit** (áudio da call) | `LIVEKIT_URL` `LIVEKIT_API_KEY` `LIVEKIT_API_SECRET` | `apps/realtime` | bot entra na call (transporte de áudio) | ⬜ |
