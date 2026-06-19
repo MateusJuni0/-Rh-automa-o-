@@ -110,3 +110,31 @@ export type CriterioOrigem = z.infer<typeof criterioOrigem>;
 /** Tipo de critério: competência (prova-se por profundidade) vs credencial (por documento, §11). */
 export const criterioTipo = z.enum(["competencia", "credencial"]);
 export type CriterioTipo = z.infer<typeof criterioTipo>;
+
+/** Estado de uma credencial regulada (§11) — verificada por DOCUMENTO, não por profundidade. */
+export const credencialEstado = z.enum(["por_verificar", "verificado", "invalido", "expirado"]);
+export type CredencialEstado = z.infer<typeof credencialEstado>;
+
+/** A QUEM pertence uma entrada de intake (envelope tipado — o bot nunca adivinha). */
+export const intakeAlvo = z.enum(["cliente", "vaga", "candidato"]);
+export type IntakeAlvo = z.infer<typeof intakeAlvo>;
+
+/** Intenção de uma entrada de intake (decide o fluxo; só 'pergunta' NÃO grava nada durável). */
+export const intakeIntencao = z.enum([
+  "setup",
+  "add_requisito",
+  "corrigir_facto",
+  "pergunta",
+  "nova_vaga",
+  "novo_candidato",
+]);
+export type IntakeIntencao = z.infer<typeof intakeIntencao>;
+
+/** Resposta a um critério no relatório do cliente (RELATORIO-CLIENTE §3). */
+export const respostaCriterio = z.enum([
+  "coberto-com-prova",
+  "raso",
+  "não-confirmado",
+  "contradito",
+]);
+export type RespostaCriterio = z.infer<typeof respostaCriterio>;
