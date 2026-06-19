@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+/*
+ * Tema Apollo (dark) para o painel web. Os valores crus vivem em @rh/ui/styles/tokens.css
+ * (--vera-*, importado no layout); aqui mapeiam-se para utilitários Tailwind semânticos
+ * (bg-surface, text-ink, border-line, …). Single source = tokens.css.
+ */
+@theme {
+  --color-surface: var(--vera-bg-base);
+  --color-raised: var(--vera-bg-raised);
+  --color-card: var(--vera-bg-card);
+  --color-line: var(--vera-border-default);
+  --color-line-subtle: var(--vera-border-subtle);
+
+  --color-ink: var(--vera-text-primary);
+  --color-ink-2: var(--vera-text-secondary);
+  --color-ink-3: var(--vera-text-tertiary);
+
+  --color-accent: var(--vera-accent);
+  --color-accent-bg: var(--vera-accent-bg);
+  --color-accent-ink: var(--vera-accent-text);
+  --color-on-accent: var(--vera-on-accent);
+
+  --color-strong: var(--vera-state-strong);
+  --color-shallow: var(--vera-state-shallow);
+  --color-alert: var(--vera-state-alert);
+  --color-untouched: var(--vera-state-untouched);
+  --color-info: var(--vera-state-info);
+
+  --radius-card: var(--vera-radius-card);
+  --radius-md: var(--vera-radius-md);
+
+  --font-sans: var(--vera-font-sans);
+  --font-mono: var(--vera-font-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--vera-bg-base);
+  color: var(--vera-text-primary);
+  font-family: var(--vera-font-sans);
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,3 +1,4 @@
+import { Chip, EmptyState } from "@rh/ui";
 import { CreateForm } from "@/components/CreateForm";
 import { listClientes } from "@/lib/clientes";
 import { getDb } from "@/lib/db";
@@ -15,7 +16,7 @@ export default async function VagasPage() {
   ]);
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-semibold text-xl">Vagas</h1>
+      <h1 className="font-semibold text-ink text-xl">Vagas</h1>
       <CreateForm
         endpoint="/api/vagas"
         fields={[
@@ -29,18 +30,21 @@ export default async function VagasPage() {
           { name: "requirementsText", label: "Requisitos (texto do cliente)", type: "textarea" },
         ]}
       />
-      <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
-        {vagas.length === 0 ? (
-          <li className="px-4 py-3 text-neutral-400 text-sm">Sem vagas ainda.</li>
-        ) : (
-          vagas.map((v) => (
-            <li key={v.id} className="flex justify-between px-4 py-3 text-sm">
+      {vagas.length === 0 ? (
+        <EmptyState
+          title="Sem vagas ainda"
+          description="Cola a descrição do cliente acima — a Vera extrai os requisitos."
+        />
+      ) : (
+        <ul className="divide-y divide-line-subtle rounded-card border border-line bg-card">
+          {vagas.map((v) => (
+            <li key={v.id} className="flex items-center justify-between px-4 py-3 text-ink text-sm">
               <span>{v.title}</span>
-              <span className="text-neutral-400">{v.roleTypeSlug}</span>
+              <Chip tone="muted">{v.roleTypeSlug}</Chip>
             </li>
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

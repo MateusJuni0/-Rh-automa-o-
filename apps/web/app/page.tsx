@@ -10,18 +10,18 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-semibold text-2xl">Vera</h1>
-        <p className="text-neutral-500 text-sm">Copiloto de recrutamento — IRIS Tech.</p>
+        <h1 className="font-semibold text-2xl text-ink">Vera</h1>
+        <p className="text-ink-2 text-sm">Copiloto de recrutamento — IRIS Tech.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         {CARDS.map((c) => (
           <Link
             key={c.href}
             href={c.href}
-            className="rounded-lg border border-neutral-200 bg-white p-4 hover:border-violet-300"
+            className="rounded-card border border-line bg-card p-4 transition-colors hover:border-accent"
           >
-            <h2 className="font-medium">{c.title}</h2>
-            <p className="text-neutral-500 text-sm">{c.desc}</p>
+            <h2 className="font-medium text-ink">{c.title}</h2>
+            <p className="text-ink-2 text-sm">{c.desc}</p>
           </Link>
         ))}
       </div>

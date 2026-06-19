@@ -9,6 +9,33 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~15:10] iteração 34 — ✅ FASE I COMPLETA: design system Apollo + `@rh/ui` + shell web dark
+
+> **Nova branch de build:** `phase3/product` (criada de `phase3/build`; merge via PR no fim — o `phase3/build` não foi tocado). Início do build do PRODUTO (Fases I–N do `PLANO-CONCLUSAO-V1.md`).
+
+**Feito (2 sub-fatias):**
+- **`packages/ui` (`@rh/ui`)** — biblioteca de componentes partilhada (web ↔ futuro desktop Electron), **sem dependência de Tailwind** (classes `.vera-*` portáveis):
+  - `styles/tokens.css` — **fonte única** dos tokens dark "Apollo" (`--vera-*`: superfícies `#0E1116`/`#11151B`/`#161B22`, acento teal `#5DCAA5`, semáforo, raios, Inter). Flat (sem gradiente/sombra/blur).
+  - `styles/ui.css` — classes de componente + `.sr-only`.
+  - 10 componentes tipados: `Button` (variant/size, type=button), `Card`, `Field`+`Input`/`Textarea`/`Select`, `Tabs` (controlado), `Modal` (presentational, `useId`+`aria-labelledby`), `Chip`, **`StateLight`** (semáforo: reusa `RequisitoStatus` de `@rh/core` — `Record` exaustivo em compile-time; estado canónico sempre exposto a leitores de ecrã), `Skeleton`, `EmptyState`, `ErrorRetry`. `cx()` util. Barrel `index.ts`.
+- **Integração web (`apps/web`)** — fim do tema branco/violeta:
+  - `globals.css` — `@import tailwindcss` + `@theme` mapeia `--vera-*` → utilitários semânticos (`bg-surface`/`text-ink`/`border-line`/`rounded-card`…); `body` dark + `color-scheme: dark`.
+  - `layout.tsx` importa `tokens.css`+`ui.css`+`globals.css`; shell dark + `NavBar` (client; `usePathname` → contexto ativo `aria-current` + breadcrumb).
+  - Re-skin: `page.tsx` (home), `clientes`/`vagas`/`candidatos` (dark + `EmptyState`), `CreateForm` (refactor → `@rh/ui`). **3 estados UX** ligados: `EmptyState` (vazio), `loading.tsx` (Skeleton), `error.tsx` (ErrorRetry).
+  - `next.config` transpila `@rh/ui`; `biome.json` exclui `globals.css` (parser CSS do Biome não suporta `@theme` do Tailwind v4).
+
+**Verde:** typecheck (ui+web) ✅ · `next build` ✅ (CSS compilado contém `--vera-bg-base`, `.vera-*`, body dark, chip `color-mix`) · **`pnpm -r test` = 149** (ui **16** novos · core 37 · db 28 · ai 35 · ws 11 · knowledge 5 · realtime 2 · intake-bots 1 · web 14) · Biome limpo.
+
+**Code-review** (code-reviewer): **0 CRITICAL, 3 HIGH — todos corrigidos:** (1) `Modal` `aria-labelledby`+`useId`; (2) `Chip` shallow/alert ganham fundo semântico (`color-mix`); (3) `StateLight` expõe sempre o estado canónico a AT (não só sem label). +MEDIUM: `Field`/`CreateForm` removida a dupla-associação `htmlFor`/`id` (associação implícita via `<label>`).
+
+**Dívida v1 documentada (não-bloqueante, do review):** `Modal` sem focus-trap; `Tabs` sem tríade `aria-controls`/`role=tabpanel` (presentational — o pai põe o painel); `EmptyState` usa `<p>` no título.
+
+**A fazer:** **FASE J** — `apps/desktop` Electron + overlay HUD (hardening R2; feed WS MOCK; reusa `@rh/ui`). Depois K/L/M/N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~13:14] iteração 33 — ✅ FASE H COMPLETA: auth/sessão — 🏁 BUILD C–H COMPLETO
 
 **Feito:** `apps/web/lib/session.ts` `getSession()` → `{agencyId, recruiterId}` (lê cookies `vera_agency`/`vera_recruiter`; senão o seed fixo IRIS/Filipa). **Refactor:** todos os **10 routes + 3 pages** passam a obter a identidade do shim (`DEV_AGENCY_ID` agora só em `db.ts`+`session.ts`); as libs continuam a receber `agencyId` por parâmetro (testes intactos). TODO(KEYS): `@supabase/ssr` (Auth) — login email/senha OU biometria (`services/face`). KEYS-TODO atualizado.

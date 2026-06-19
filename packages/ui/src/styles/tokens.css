@@ -1,0 +1,43 @@
+/*
+ * Vera — design tokens (HUD escuro "Apollo"). FONTE ÚNICA de cor/raio/tipografia.
+ * Derivado de DESIGN-TOKENS.md (LOCKED 2026-06-17). Partilhado web + desktop (Electron).
+ * Flat: sem gradientes, sombras, blur ou glow (regra da casa + legibilidade no escuro).
+ */
+:root {
+  /* Superfícies (escuro — não preto puro) */
+  --vera-bg-base: #0e1116;
+  --vera-bg-raised: #11151b;
+  --vera-bg-card: #161b22;
+  --vera-border-default: #262c36;
+  --vera-border-subtle: #20252d;
+
+  /* Texto */
+  --vera-text-primary: #e6e8eb;
+  --vera-text-secondary: #9aa0a8;
+  --vera-text-tertiary: #6b7280;
+
+  /* Acento de marca (teal "Vera") */
+  --vera-accent: #5dcaa5;
+  --vera-accent-bg: #10312a;
+  --vera-accent-text: #9fe1cb;
+  --vera-on-accent: #0e1116;
+
+  /* Estado (semáforo — só status, não decoração) */
+  --vera-state-strong: #5dcaa5;
+  --vera-state-strong-deep: #1d9e75;
+  --vera-state-shallow: #ef9f27;
+  --vera-state-shallow-text: #f0c475;
+  --vera-state-alert: #e24b4a;
+  --vera-state-alert-text: #f09595;
+  --vera-state-untouched: #5f6670;
+  --vera-state-info: #85b7eb;
+
+  /* Raio de canto */
+  --vera-radius-pill: 22px;
+  --vera-radius-card: 12px;
+  --vera-radius-md: 8px;
+
+  /* Tipografia */
+  --vera-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --vera-font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", monospace;
+}

@@ -1,0 +1,349 @@
+/*
+ * Vera — @rh/ui component styles. Consome os tokens de tokens.css (importar ambos).
+ * Classes prefixadas `vera-` (sem dependência de Tailwind → reutilizável no desktop).
+ */
+
+/* Visualmente escondido, mas lido por leitores de ecrã. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Button */
+.vera-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--vera-radius-md);
+  font-family: var(--vera-font-sans);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.vera-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.vera-btn--md {
+  padding: 9px 16px;
+  font-size: 14px;
+}
+.vera-btn--sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.vera-btn--primary {
+  background-color: var(--vera-accent);
+  color: var(--vera-on-accent);
+}
+.vera-btn--primary:hover:not(:disabled) {
+  background-color: var(--vera-accent-text);
+}
+.vera-btn--ghost {
+  background-color: transparent;
+  border-color: var(--vera-border-default);
+  color: var(--vera-text-primary);
+}
+.vera-btn--ghost:hover:not(:disabled) {
+  border-color: var(--vera-accent);
+  color: var(--vera-accent-text);
+}
+.vera-btn--danger {
+  background-color: transparent;
+  border-color: var(--vera-state-alert);
+  color: var(--vera-state-alert-text);
+}
+.vera-btn--danger:hover:not(:disabled) {
+  background-color: var(--vera-state-alert);
+  color: var(--vera-text-primary);
+}
+
+/* Card */
+.vera-card {
+  background-color: var(--vera-bg-card);
+  border: 1px solid var(--vera-border-default);
+  border-radius: var(--vera-radius-card);
+  overflow: hidden;
+}
+.vera-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--vera-border-subtle);
+}
+.vera-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--vera-text-primary);
+}
+.vera-card__body {
+  padding: 16px;
+  color: var(--vera-text-primary);
+}
+
+/* Field + inputs */
+.vera-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vera-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vera-text-secondary);
+}
+.vera-field__hint {
+  font-size: 12px;
+  color: var(--vera-text-tertiary);
+}
+.vera-field__error {
+  font-size: 12px;
+  color: var(--vera-state-alert-text);
+}
+.vera-input,
+.vera-textarea,
+.vera-select {
+  width: 100%;
+  background-color: var(--vera-bg-base);
+  border: 1px solid var(--vera-border-default);
+  border-radius: var(--vera-radius-md);
+  color: var(--vera-text-primary);
+  font-family: var(--vera-font-sans);
+  font-size: 14px;
+  padding: 9px 12px;
+}
+.vera-input::placeholder,
+.vera-textarea::placeholder {
+  color: var(--vera-text-tertiary);
+}
+.vera-input:focus,
+.vera-textarea:focus,
+.vera-select:focus {
+  outline: none;
+  border-color: var(--vera-accent);
+}
+.vera-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* Tabs */
+.vera-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--vera-bg-raised);
+  border: 1px solid var(--vera-border-default);
+  border-radius: var(--vera-radius-md);
+}
+.vera-tab {
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-family: var(--vera-font-sans);
+  font-size: 13px;
+  color: var(--vera-text-secondary);
+  cursor: pointer;
+}
+.vera-tab--active {
+  background-color: var(--vera-bg-card);
+  color: var(--vera-text-primary);
+}
+
+/* Modal */
+.vera-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.vera-modal {
+  width: 100%;
+  max-width: 420px;
+  background-color: var(--vera-bg-card);
+  border: 1px solid var(--vera-border-default);
+  border-radius: var(--vera-radius-card);
+}
+.vera-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--vera-border-subtle);
+}
+.vera-modal__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--vera-text-primary);
+}
+.vera-modal__close {
+  border: none;
+  background: transparent;
+  color: var(--vera-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.vera-modal__body {
+  padding: 16px;
+  color: var(--vera-text-primary);
+}
+
+/* Chip */
+.vera-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--vera-border-default);
+  background-color: var(--vera-bg-raised);
+  color: var(--vera-text-secondary);
+}
+.vera-chip--accent {
+  border-color: transparent;
+  background-color: var(--vera-accent-bg);
+  color: var(--vera-accent-text);
+}
+.vera-chip--muted {
+  color: var(--vera-text-tertiary);
+}
+.vera-chip--strong {
+  border-color: transparent;
+  background-color: var(--vera-accent-bg);
+  color: var(--vera-state-strong);
+}
+.vera-chip--shallow {
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--vera-state-shallow) 14%, transparent);
+  color: var(--vera-state-shallow-text);
+}
+.vera-chip--alert {
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--vera-state-alert) 14%, transparent);
+  color: var(--vera-state-alert-text);
+}
+
+/* StateLight (semáforo) */
+.vera-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.vera-state__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex: none;
+}
+.vera-state--strong {
+  color: var(--vera-text-primary);
+}
+.vera-state--strong .vera-state__dot {
+  background-color: var(--vera-state-strong);
+}
+.vera-state--shallow {
+  color: var(--vera-state-shallow-text);
+}
+.vera-state--shallow .vera-state__dot {
+  background-color: var(--vera-state-shallow);
+}
+.vera-state--alert {
+  color: var(--vera-state-alert-text);
+}
+.vera-state--alert .vera-state__dot {
+  background-color: var(--vera-state-alert);
+}
+.vera-state--untouched {
+  color: var(--vera-text-tertiary);
+}
+.vera-state--untouched .vera-state__dot {
+  background-color: var(--vera-state-untouched);
+}
+
+/* Skeleton */
+.vera-skeleton {
+  display: block;
+  background-color: var(--vera-bg-card);
+  border-radius: var(--vera-radius-md);
+  animation: vera-skeleton-pulse 1.4s ease-in-out infinite;
+}
+@keyframes vera-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Empty state */
+.vera-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 24px;
+  border: 1px dashed var(--vera-border-default);
+  border-radius: var(--vera-radius-card);
+  color: var(--vera-text-secondary);
+}
+.vera-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--vera-text-primary);
+}
+.vera-empty__desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--vera-text-secondary);
+  max-width: 42ch;
+}
+
+/* Error + retry */
+.vera-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 32px 24px;
+  border: 1px solid var(--vera-state-alert);
+  border-radius: var(--vera-radius-card);
+  background-color: var(--vera-bg-card);
+}
+.vera-error__msg {
+  margin: 0;
+  font-size: 13px;
+  color: var(--vera-state-alert-text);
+  max-width: 48ch;
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Field, Input, Select, Textarea } from "@rh/ui";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
@@ -51,48 +52,33 @@ export function CreateForm({ endpoint, fields, submitLabel = "Criar" }: CreateFo
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4"
+      className="flex flex-col gap-3 rounded-card border border-line bg-card p-4"
     >
-      {fields.map((f) => (
-        <label key={f.name} className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">{f.label}</span>
-          {f.type === "textarea" ? (
-            <textarea
-              name={f.name}
-              required={f.required ?? true}
-              rows={3}
-              className="rounded border border-neutral-300 px-2 py-1"
-            />
-          ) : f.type === "select" ? (
-            <select
-              name={f.name}
-              required={f.required ?? true}
-              className="rounded border border-neutral-300 px-2 py-1"
-            >
-              <option value="">—</option>
-              {(f.options ?? []).map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              name={f.name}
-              required={f.required ?? true}
-              className="rounded border border-neutral-300 px-2 py-1"
-            />
-          )}
-        </label>
-      ))}
-      <button
-        type="submit"
-        disabled={busy}
-        className="self-start rounded bg-violet-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-      >
+      {fields.map((f) => {
+        const required = f.required ?? true;
+        return (
+          <Field key={f.name} label={f.label}>
+            {f.type === "textarea" ? (
+              <Textarea name={f.name} required={required} />
+            ) : f.type === "select" ? (
+              <Select name={f.name} required={required} defaultValue="">
+                <option value="">—</option>
+                {(f.options ?? []).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Input name={f.name} required={required} />
+            )}
+          </Field>
+        );
+      })}
+      <Button type="submit" disabled={busy} className="self-start">
         {busy ? "A criar…" : submitLabel}
-      </button>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      </Button>
+      {error ? <p className="text-alert text-sm">{error}</p> : null}
     </form>
   );
 }

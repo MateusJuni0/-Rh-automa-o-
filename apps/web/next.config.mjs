@@ -11,7 +11,7 @@ const nextConfig = {
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   outputFileTracingRoot: path.join(dirname, "../../"),
   // packages TS-source (sem build) → Next transpila.
-  transpilePackages: ["@rh/core", "@rh/db", "@rh/ai", "@rh/knowledge"],
+  transpilePackages: ["@rh/core", "@rh/db", "@rh/ai", "@rh/knowledge", "@rh/ui"],
 };
 
 export default nextConfig;

@@ -1,3 +1,4 @@
+import { EmptyState } from "@rh/ui";
 import { CreateForm } from "@/components/CreateForm";
 import { listClientes } from "@/lib/clientes";
 import { getDb } from "@/lib/db";
@@ -10,19 +11,22 @@ export default async function ClientesPage() {
   const rows = await listClientes(getDb(), agencyId);
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-semibold text-xl">Clientes</h1>
+      <h1 className="font-semibold text-ink text-xl">Clientes</h1>
       <CreateForm endpoint="/api/clientes" fields={[{ name: "name", label: "Nome do cliente" }]} />
-      <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
-        {rows.length === 0 ? (
-          <li className="px-4 py-3 text-neutral-400 text-sm">Sem clientes ainda.</li>
-        ) : (
-          rows.map((r) => (
-            <li key={r.id} className="px-4 py-3 text-sm">
+      {rows.length === 0 ? (
+        <EmptyState
+          title="Sem clientes ainda"
+          description="Cria o primeiro cliente no formulário acima."
+        />
+      ) : (
+        <ul className="divide-y divide-line-subtle rounded-card border border-line bg-card">
+          {rows.map((r) => (
+            <li key={r.id} className="px-4 py-3 text-ink text-sm">
               {r.name}
             </li>
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
