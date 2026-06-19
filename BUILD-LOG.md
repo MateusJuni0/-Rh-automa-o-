@@ -9,6 +9,25 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~21:26] iteração 58 — 🚧 FASE N (4/N): purga RGPD em cascata (direito ao esquecimento)
+
+**Feito (`apps/web/lib/rgpd.ts`, TDD DB):** `purgeCandidate(db, agencyId, candidateId)` — HARD delete em CASCATA, numa transação, **isolado por agência** (cross-agency = no-op). Apaga a subárvore PII filhos→pais: process → interview → [tick, gap, participant, report, transcript_chunk(+embedding cascade), contradiction-por-chunk] ; process-children [client_verdict, placement_outcome, agenda_event, contradiction] ; candidate_memory_fact(+embedding), source_doc(+embedding), document (null do self-ref `based_on` antes) ; **PII polimórfica sem FK**: proactive_task (por target candidate/process/interview) + intake_message (por alvo/entity). Devolve `{removed: {tabela:n}}`.
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **86 testes** (+2: cenário completo→tudo removido incl. proactive_task+intake_message; cross-agency intacto) · `pnpm -r` (desktop 44 + realtime 2 + web 86) · Biome ✅.
+
+**Code-review DEDICADO (database-reviewer, completude da cascata):** confirmou os 3 `onDelete:cascade` (embeddings), isolamento, transação. **Encontrou GAPS de PII órfã → CORRIGIDOS:** proactive_task (CRITICAL) + intake_message (CRITICAL) agora apagados; contradiction-por-chunk apagada ANTES dos chunks (evita violação FK).
+
+**⚠️ GAPS DE COMPLETUDE RGPD DEFERIDOS (precisam de schema/Ω — fechar antes de PII real):**
+1. `async_job.args` (JSONB com refs do candidato, sem coluna `candidate_id`) → adicionar coluna `candidate_id` no insert dos jobs candidate-bound, ou apagar por predicado JSONB.
+2. `assistant_message.content` (texto livre que mencione o candidato) → scrub fino = Ω (assistente real).
+3. Entrevistas órfãs (`process_id IS NULL`) — sem `candidate_id` na `interview`, não são atribuíveis ao candidato (limitação de schema; ponderar coluna `candidate_id` em `interview`).
+
+**Próximo (FASE N):** Tela 12 Definições + tabelas biometria (mock); endurecimento DB (CHECK + índices + UNIQUE); entrypoint ws + refresh/replay; seed Inês; CI.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~21:02] iteração 57 — 🚧 FASE N (3/N): validador de upload (CV) + signed URLs (stub)
 
 **Feito (`apps/web/lib`, puro/TDD):**
