@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~13:00] iteração 31 — ✅ FASE F COMPLETA: bots stub (`@rh/intake-bots`)
+
+**Feito:** novo package `@rh/intake-bots`:
+- `source.ts` — `MessageSource` interface + `IntakeBotMessage` ({source, externalId, text}) + `createManualMessageSource` (push manual; real = Telegram/WhatsApp c/ chave, inerte).
+- `bridge.ts` — `runIntakeBridge(source, onMessage)` liga a fonte ao handler de ingestão (a app fecha o circuito com `ingerirMensagem`); fire-and-forget; devolve cancelamento.
+
+**Verde:** typecheck ✅ · **1/1 teste** (entrega + cancelamento) · Biome ✅. Tudo mock — zero custo.
+
+🎉 **FASE F ("Ingestão") COMPLETA** — intake tipado (classifica→confirma→cria) + fonte de bots reutilizável.
+
+**A fazer:** G services Python (FastAPI esqueleto + contrato) · H auth (Supabase local + ws + substituir DEV ids). **2 fases para o fim.**
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:56] iteração 30 — Fase F1+F2: ingestão (intake classifica→confirma→cria)
 
 **Feito:**
