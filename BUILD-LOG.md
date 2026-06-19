@@ -9,6 +9,36 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## 🏁 RESUMO DA NOITE (STOP FINAL — 2026-06-19 ~02:50, ~1h20 de loop)
+
+**12 commits em `phase3/build` (pushed), monorepo todo verde — 86 testes, typecheck/Biome limpos.** Camada de contratos + fundação testável da P0.1 **completa**.
+
+**Construído (todos verdes, com TDD + code-review):**
+- **`@rh/db`** — schema Drizzle das **35 tabelas** na forma canónica FINAL (famílias A–M), migração `0000_init.sql` (+pgvector), contrato GUC `withAgencySession` (isolamento de tenant). 25 testes.
+- **`@rh/core`** — contratos: envelope `ApiResponse`, protocolo WS (frames+fiabilidade seq/ack, close 44xx), 22 enums canónicos, paginação, idempotência, skill (J); **AI shapes completos**: EstadoVivo/Suggestion (frame §9), RoleProfile/Rubric, MatchResult, IntakeEnvelope, Parecer. 31 testes.
+- **`@rh/ai`** — registry de modelos + **gate ZDR fail-closed** (§3/§7), runner com **fallback por slot** (§5, salta não-ZDR), transporte OpenRouter (status→transient/permanent). 19 testes.
+- **`apps/web`** — Next.js 15 (App Router, Tailwind v4) a compilar; `/api/health` consome `@rh/core`. (standalone gated por env p/ Linux.)
+- **`apps/ws`** — codec de frames + **servidor WS real** com handshake auth (close 4401/4403). 11 testes.
+
+**⏳ SPIKES / PENDENTE para o Mateus (por ordem):**
+1. **Docker Desktop está DOWN nesta máquina** → bloqueou TODA a camada de DB viva. Quando ligares o Docker: `supabase start` (Postgres+pgvector+Auth+Storage local) + aplicar `packages/db/migrations/0000_init.sql` (ou `drizzle-kit migrate`). A migração está validada por `drizzle-kit generate` + 25 testes de introspeção, mas **ainda não foi aplicada a um Postgres real**.
+2. Depois do Docker: `createDb` real (driver `pg`), `docker-compose.dev.yml` (web/ws/realtime/agent/face/redis), `seeds` (1 agência IRIS + Filipa/Inês + 1 cliente/vaga/candidato), mocks Soniox/OpenRouter/LiveKit.
+3. **Não construído ainda** (carris seguintes): `packages/knowledge` (RAG pgvector — DB-gated), `apps/realtime` (LiveKit+Soniox), `apps/bot` (Telegram/WhatsApp), `apps/desktop` (Electron overlay), `services/agent`+`services/face` (Python, vendorizar clones REUSE-MAP). Supabase Auth real (o WS usa hook injetável stub). WS replay-on-reconnect (fonte = interview_tick, DB-gated).
+
+**Como retomar:** `git checkout phase3/build` → `pnpm install` → `pnpm -r test` (deve dar 86 verdes). Próxima fatia natural assim que o Docker estiver up: aplicar a migração + `createDb` + seeds (desbloqueia o carril "antes": vaga→RoleProfile→briefing).
+
+---
+
+## [2026-06-19 ~02:50] iteração 12 — `@rh/ai`: transporte OpenRouter (status→falha)
+
+**Feito:** `packages/ai/src/transport.ts` — `createOpenRouterTransport({apiKey, baseUrl?, fetchImpl?})` (chave via `process.env`, NUNCA hardcoded; `fetchImpl` injetável p/ testes). POST a `/chat/completions`, valida a resposta (Zod), mapeia HTTP → falha que o `runSlot` entende: **429/5xx/rede → `transient`** (desce na lista, §5); **4xx≠429 → `permanent`**; formato inesperado → `permanent`.
+
+**Verde:** typecheck ✅ · **19/19 testes @rh/ai** (+6 transport, fetch mockado — sucesso, 429/500/503 transient, 400 permanent, rede transient, malformado permanent) · `pnpm -r test` = **86 verdes** · Biome (71 fich.) ✅. Zero chamadas de rede reais.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~02:47] iteração 11 — `@rh/ai`: runner com fallback por slot (§5)
 
 **Feito:** `packages/ai/src/runner.ts` + refactor `registry.ts`:
