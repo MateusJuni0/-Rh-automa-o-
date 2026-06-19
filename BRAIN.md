@@ -24,7 +24,7 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 - `CAMADA-CONHECIMENTO.md` — Role Profile JSON, 3 sub-camadas, caching, migração progressiva web→interno
 - `ACESSO-E-CONHECIMENTO.md` — base 3 canais de ingestão de docs
 - `PLANO-CONSTRUCAO.md` — 14 passos (P0–P4) com entrada/saída/garantia verificável
-- `MODELO-DADOS.md` — 16 tabelas SQL + DDL completo + RLS + índices
+- `MODELO-DADOS.md` — 28 tabelas SQL + DDL completo + RGPD + índices
 - `DECISOES-ABERTAS.md` — 5 decisões com recomendação técnica (D1-D5)
 - `TESTES-ACEITACAO.md` — critérios de aceitação por passo + 4 regras anti-achismo como testes
 
@@ -52,6 +52,27 @@ Docs escritos na 1ª iteração (commits `a819a9a` + `5ccce44`):
 | D5 | WhatsApp Canal C | **Telegram + WhatsApp em paralelo** |
 
 **Próximo passo imediato:** dispatchar subagentes. **Agente 1 (Fundação: `packages/db` + `packages/core` + scaffold + docker + Auth/RLS) vai PRIMEIRO**; depois 2–6 em paralelo (ver `ARQUITETURA-INTEGRACAO.md §5`).
+
+## Evolução de design — 2026-06-17 (validada, ANTES de qualquer código)
+
+11. **Memória 2 camadas:** A = captura sem perdas (Camada A, `transcript_chunk`); B = compreensão semântica (mata "gatilhos"). `ARQUITETURA-TEMPO-REAL.md §8–§9`.
+12. **Frame de avaliação ao vivo:** estado por requisito + escada de prioridade + rede de segurança + ritmo/rapport + PORQUÊ por sugestão.
+13. **Candidato GLOBAL** (talent pool) + **`process`** (candidato × vaga); cliente = mandato multi-vaga. `MODELO-DADOS.md`.
+14. **Relatório anti-ping-pong:** critério-a-critério vs `client_criteria`, citação+timestamp, 2 versões. `RELATORIO-CLIENTE.md` (NOVO).
+15. **Q&A bilingue** Filipa↔bot (RAG citado) + **input tipado** (alvo+intenção, `corrigido_pela_filipa`).
+16. **Resto do recrutador:** motivação/logística/venda + `placement_outcome` → calibração. **RGPD:** pessoal etiquetado, fora do score.
+> ⚠️ Estas mudanças tocam o schema (candidato global + process) e a Camada A — quem dispatchar o Agente 1 deve ler a secção "Evolução 2026-06-17" do `MODELO-DADOS.md` ANTES. Gaps abertos: `REVISAO-360-2026-06-17.md`.
+
+## Evolução de design — 2026-06-17 (ronda 2)
+
+17. **App DESKTOP de secretária** (Electron/Tauri) = overlay ao vivo **+ captura de áudio local**; always-on-top, sem moldura, 1 sugestão auto-dismiss. **Web app mantém-se** para o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
+18. **STT multi-idioma** PT-PT/PT-BR/EN/FR (Filipa fala inglês; saída PT).
+19. **Assistente PROATIVO** (`ASSISTENTE-PROATIVO.md` NOVO): agenda (resumo de preparação) + deteção de lacunas. **Calendário = Google Calendar (OAuth), decidido**; manual é fallback.
+20. **Diarização:** falante ativo da plataforma (bot na call) + fallback voz/enrollment Filipa; 3+ vozes (cliente→prefs ao vivo); correção por toque; sugestões **privadas**.
+21. **Chat ao vivo** no overlay; **desambiguação** sempre confirma alvo; **pesos must/nice + compensação holística**.
+22. **RGPD fechado:** reutilização entre clientes **permitida** (consent = Filipa); consent manual; apagamento soft **recuperável** (`purge_after`); **v1 SINGLE-TENANT (só IRIS, sem RLS por agência)**.
+23. **Calibração:** override da Filipa treina; arranque a frio apoia-se em Role Profile + critérios.
+> ⚠️ **REVISAO-360 ronda 2:** 4/6 bloqueadores resolvidos; sobram **auth do desktop/WS** + **validar com a Filipa**. Novos: distribuição desktop + permissão de microfone do SO, enrollment de voz, janela `purge_after`.
 
 ## Crux de engenharia
 

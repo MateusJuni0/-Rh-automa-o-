@@ -28,9 +28,13 @@ Tabelas base:
 agency, recruiter (liga a auth.users), job, candidate, document
 ```
 
-### P0.2 — Multi-tenant desde o dia 1
-**O que fazemos:** RLS no Supabase por `agency_id` em todas as tabelas  
-**Garantia:** usuário da Agência A não vê dados da Agência B (testar com 2 contas)
+### P0.2 — Acesso (SINGLE-TENANT na v1)
+**Decisão 2026-06-17:** a v1 é **single-tenant (só IRIS)** — **sem RLS por agência**.
+Acesso interno total (o recrutador vê tudo). O `agency_id` fica no schema como costura
+para a v2 (multi-agência), mas não isola na v1.
+**O que fazemos:** auth de recrutador (login) + acesso interno aos dados da IRIS.
+**Garantia:** recrutador autenticado entra e vê os clientes/candidatos da IRIS; RLS
+por agência fica documentado para v2 (`MODELO-DADOS.md §RLS`), não implementado agora.
 
 ---
 
@@ -74,10 +78,13 @@ agency, recruiter (liga a auth.users), job, candidate, document
 
 ## Fase 2 — Durante: copiloto ao vivo
 
-### P2.1 — Captura de áudio (bot online)
+### P2.1 — Captura de áudio (app desktop + bot online)
 **Depende de:** P1.5 (briefing pronto)  
-**O que fazemos:** bot "entra" na call como participante (LiveKit headless ou Recall.ai)  
-**Garantia:** bot recebe stream de áudio de uma call de teste com 2 participantes
+**O que fazemos:** **app desktop** (`apps/desktop`, Electron; Tauri a avaliar) que (a)
+capta o áudio local (presencial) e (b) no online o **bot entra na call** (LiveKit
+headless) — a plataforma dá o falante ativo. O app desktop é também o overlay (P2.4).  
+**Garantia:** app desktop capta áudio de uma call de teste com 2 participantes e o
+stream chega ao `realtime`.
 
 ### P2.2 — Transcrição + diarização ao vivo
 **Depende de:** P2.1  
@@ -93,10 +100,14 @@ agency, recruiter (liga a auth.users), job, candidate, document
 ```
 **Garantia:** numa call de 15 min, o estado muda ≥10 vezes; a sugestão aparece em <3s após frase relevante
 
-### P2.4 — UI copiloto (painel lateral)
+### P2.4 — UI copiloto (overlay desktop, always-on-top)
 **Depende de:** P2.3  
-**O que fazemos:** WebSocket → painel lateral no browser com sugestão em destaque + semáforo  
-**Garantia:** Filipa usa em call de teste real; consegue ler a sugestão sem interromper a conversa
+**O que fazemos:** WebSocket → **overlay do app desktop** (always-on-top, sem moldura,
+arrastável) com sugestão em destaque (auto-desaparece ~30s ou quando perguntada/
+respondida), semáforo de estados, correção de falante num toque, e **caixa de chat ao
+vivo**. As sugestões são privadas (só a Filipa vê). Ver `UI-DESIGN.md` Tela 6.  
+**Garantia:** Filipa usa em call de teste real; lê a sugestão por cima do Meet/Zoom sem
+interromper a conversa.
 
 ---
 

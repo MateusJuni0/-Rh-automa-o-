@@ -108,7 +108,7 @@ Confirmado contra a referência atual da Anthropic (jun/2026):
 | Estruturar vaga (colar → campos) | Haiku 4.5 | `claude-haiku-4-5-20251001` | extração simples, barato e rápido |
 | Triagem / match de CVs | Sonnet 4.6 | `claude-sonnet-4-6` | volume (N CVs) com bom julgamento; custo controlado |
 | Gerar o **roteiro** (briefing) | Opus 4.8 | `claude-opus-4-8` | é o "uau" de qualidade; vale o custo, é 1× por vaga |
-| Relatório pós-entrevista | Sonnet 4.6 | `claude-sonnet-4-6` | bom resumo + score, custo razoável |
+| Relatório pós-entrevista | ~~Sonnet 4.6~~ → **Opus 4.8** | `claude-opus-4-8` | **reclassificado 2026-06-17:** é o entregável ao cliente, sem pressão de tempo → qualidade. Ver `MODELOS-E-API.md §2` |
 | Copiloto ao vivo (Fase 2) | Sonnet 4.6 | `claude-sonnet-4-6` | latência manda no tempo real |
 
 Princípio: **Opus onde a qualidade é o produto** (roteiro), **Sonnet no grosso**,
@@ -211,5 +211,227 @@ Registo das decisões à medida que as fechamos com o Mateus.
 - [x] **2026-06-16 — D2 Bot na call:** **LiveKit próprio desde já** (reusa cmtec-voice-platform; ~3–5 sem → carril "antes" entrega valor primeiro).
 - [x] **2026-06-16 — D5 Ingestão:** **Telegram + WhatsApp em paralelo** (não esperar validação do Telegram; mesmo motor de ingestão, WhatsApp via Evolution API).
 - [x] **2026-06-16 — D3 Embeddings:** pgvector no Supabase self-hosted (confirmado).
-- ✅ **Todas as decisões fechadas → spec build-ready.** Próximo: scaffold P0.1. Ver `BUILD-READY.md`.
+- ✅ **Todas as decisões D1–D5 fechadas → spec build-ready (2026-06-16).** Ver `BUILD-READY.md`.
+
+### Evolução de design — 2026-06-17 (validadas hoje)
+- [x] **Memória em duas camadas (mata "gatilhos"):** Camada A = captura **sem perdas** (transcrição completa diarizada + chunks/embeddings, nada descartado); Camada B = **compreensão semântica** (interpreta significado, não casa palavras). Ver `ARQUITETURA-TEMPO-REAL.md §8`.
+- [x] **Frame de avaliação ao vivo:** estado por requisito (não-tocado→raso→coberto-com-prova/contradito) + **escada de prioridade** da sugestão + rede de segurança no fim + limiar de silêncio/rapport + PORQUÊ por sugestão. `ARQUITETURA-TEMPO-REAL.md §9`.
+- [x] **Candidato = entidade GLOBAL** (talent pool, cross-cliente); cliente = mandato (multi-vaga); **`process` = candidato × vaga**. `MODELO-DADOS.md` (Evolução).
+- [x] **Relatório contra os critérios do cliente** (anti-ping-pong): critério-a-critério com citação+timestamp; assinala o não-coberto; **duas versões** (interna/cliente). `RELATORIO-CLIENTE.md`.
+- [x] **Q&A Filipa↔bot bilingue** (tech↔recrutador↔cliente), RAG citado; segundo travão ao ping-pong (responde sem recontactar o candidato). `CAMADA-CONHECIMENTO.md`.
+- [x] **Input da Filipa tipado** (alvo + intenção); confirmação antes de escrita durável; correções marcam o facto `corrigido_pela_filipa`. `INTAKE-E-JULGAMENTO.md` Parte A.
+- [x] **Cobrir o resto do recrutador:** motivação/drivers + logística (salário/aviso/contraproposta) + bot ajuda a **vender** a vaga + **resultado da colocação** (ficou/saiu na garantia) volta para calibração. `INTAKE-E-JULGAMENTO.md` Parte E.
+- [x] **RGPD:** factos pessoais etiquetados, **nunca entram no score** (só recall), retenção curta; transcrição crua com janela de retenção. `MODELO-DADOS.md §RGPD`.
+- ✅ **Revisão 360°** do ciclo completo → `REVISAO-360-2026-06-17.md` (gaps priorizados).
+
+### Evolução de design — 2026-06-17 (ronda 2)
+- [x] **App desktop de secretária** (Electron; Tauri alt.) para o overlay ao vivo: always-on-top, sem moldura, arrastável, cara do bot, 1 sugestão de cada vez que **auto-desaparece** (~30s ou quando já perguntada/respondida). **Também capta o áudio local.** A **web app mantém-se** para todo o resto. Mesmo backend. `ARQUITETURA-INTEGRACAO`, `UI-DESIGN`.
+- [x] **STT multi-idioma:** PT-PT, PT-BR, inglês e francês (+ misturas); a Filipa fala inglês; saída em PT. `ARQUITETURA-TEMPO-REAL §2`.
+- [x] **Assistente proativo** (além do RAG): consciência da **agenda** (resumo de preparação antes das reuniões) + **deteção de lacunas** no mandato. **Calendário = Google Calendar (OAuth), decidido 2026-06-17**; manual é fallback. `ASSISTENTE-PROATIVO.md` (NOVO).
+- [x] **Diarização:** caminho principal = **falante ativo da plataforma** (bot na call); fallback = voz + **enrollment da Filipa**; suporta **3+ vozes** (cliente na call → preferências reveladas ao vivo); **correção de falante num toque**. Sugestões/avaliação **privadas** no overlay. `ARQUITETURA-TEMPO-REAL §2/§6`.
+- [x] **Chat com o bot AO VIVO** no overlay (responde do estado/transcrição corrente sem parar a captura).
+- [x] **Desambiguação:** o bot **nunca adivinha** o alvo — confirma sempre (web: escolhe cliente→vaga; chat: propõe match + contexto ativo). `INTAKE` desambiguação.
+- [x] **Pesos + compensação holística:** requisito **obrigatório vs desejável**; **nunca eliminar por um desejável**; bot mostra o trade-off, a Filipa decide. `INTAKE` Parte F, `MODELO-DADOS` (peso).
+- [x] **Reutilização de factos do candidato ENTRE clientes = permitida** (consentimento é responsabilidade da Filipa). Cai o bloqueador de limitação de finalidade.
+- [x] **Consentimento manual da Filipa** (não in-app) + **apagamento por ordem dela** = soft-delete **com recuperação** (`purge_after`).
+- [x] **v1 single-tenant (só IRIS):** acesso interno total; **sem RLS por agência** (adiado p/ v2). `MODELO-DADOS §RLS`.
+- [x] **Override da Filipa ao veredito alimenta a calibração**; **arranque a frio** apoia-se no Role Profile + critérios declarados. `INTAKE` Parte D.
+- ✅ **REVISAO-360 atualizada:** 4 dos 6 bloqueadores resolvidos; sobram auth do desktop/WS + validação com a Filipa.
+
+### Decisões — 2026-06-17 (ronda 3: autenticação)
+- [x] **Auth (LOCKED) — biometria facial primeiro, email+senha alternativa.** Reusa o **engine/código** do `cmtec-face` (YuNet+SFace+liveness FSM; veredito single-use → sessão Supabase via `generateLink`) **CLONADO numa instância própria do RH** — **não** partilha o serviço do painel (regra do Mateus: não misturar projetos). Identidade/sessão = **Supabase Auth (JWT)** nos dois caminhos. Magic-link (GoTrue/SMTP VPS) = device-binding + recuperação. **Fecha o bloqueador #5.** Desenho + adaptador desktop + caveats em [`AUTENTICACAO.md`](./AUTENTICACAO.md).
+- [x] **Auth do WebSocket:** JWT na 1ª mensagem (não em query-string) → servidor WS valida assinatura Supabase + extrai `recruiter_id` + **verifica posse da `interview_id`**. Refresh silencioso a meio das 2h.
+- [ ] **A resolver ANTES de clonar (outro dia, na origem — não nesta fase de spec):** bug de enroll/flash liveness do `cmtec-face` (cadastra rápido demais, sem tela colorida). `AUTENTICACAO.md §6 C1`; memória `project_cmtec_face_enroll_bug_2026_06_17`.
+
+### Parte 1 (o cérebro) — refinamentos validados 2026-06-17 (FECHAR antes da embalagem)
+- [x] **O FOSSO = aprofundamento reativo ao vivo** (não a pergunta de topo, que recrutadora+ChatGPT já geram). Validado no caso #1 (Filipa fez quase as mesmas 🟢; C2 ela falhou = valor nosso). O bot decompõe a afirmação dita em follow-ups de prova ancorados no que foi DITO. `ARQUITETURA-TEMPO-REAL §9` ("Aprofundamento reativo") + `validacao-caso-01-mateus-securegpt.md`.
+- [x] **Pesquisa AO VIVO** quando o candidato dá link/projeto/repo: o bot pesquisa (D1 Exa+Brave, agora também ao vivo) + lê o link/código e ancora os probes/veredito no que VIU. Compensa a falta de contexto da empresa-cliente. Indício, não veredito; marca incerteza. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Veredito de resposta ao vivo** (forte/rasa/atenção) para a Filipa, quase em tempo real, em linguagem simples, citando evidência (anti-achismo). Surfacing da máquina de estados+rubric, não juízo novo. Visual (pulso/semáforo/animação) = criatividade na embalagem (`UI-DESIGN` Tela 6); aqui fixa-se o comportamento. `ARQUITETURA-TEMPO-REAL §9`.
+- ⚠️ **REGRA DO MATEUS:** **não avançar para a spec da embalagem antes de fechar TODA a Parte 1.**
+
+### Parte 1 — fecho de gaps do cérebro (2026-06-17, ronda profunda)
+Mapa do cérebro revisto (Antes/Durante/Depois) → 7 gaps encontrados. Fechados:
+- [x] **Nicho-agnóstico:** o bot serve QUALQUER área (enfermeiro, comercial, advogado…), não só tech. `role_type_slug` livre, Role Profile é molde neutro, `linguagem_filipa` traduz qualquer jargão, lente "técnica"→"da função/competência". Exemplo não-tech (Enfermeiro UCI) na spec. `CAMADA-CONHECIMENTO`.
+- [x] **Ciclo de vida da pesquisa:** o que o bot faz com o conteúdo da web/repo → ① guarda o cru (`source_doc`+embedding, rastreável/RAG) ② destila em factos COM proveniência+confiança → role_profile / candidate_memory_fact (`'a_confirmar'`, fora do score até o candidato confirmar) / client_memory_fact ③ fica citável. Web=indício, não veredito. `CAMADA-CONHECIMENTO` + `MODELO-DADOS §7`.
+- [x] **CONFLITO resolvido:** "sem web search ao vivo" (antigo) vs pesquisa ao vivo (novo) → Role Profile no Antes; pesquisa pontual ao vivo event-triggered/assíncrona/indício. `CAMADA-CONHECIMENTO`.
+- [x] **Cérebro do chatbot (NOVO doc `ASSISTENTE-CONVERSA.md`):** RAG ancorado (cita sempre fonte, nunca inventa, "não foi dito" é resposta válida), Opus. 4 modos: A=Q&A candidato, B=Q&A cliente, **C=COMPARAR candidatos** (matriz critério-a-critério vs client_criteria+pesos, trade-off honesto, nunca elimina por nice, Filipa decide), D=chat ao vivo. RGPD: pessoal só recall, fora do juízo.
+- [x] **Confiança por requisito:** frame carrega `alta/média/baixa`; parecer di-la ("forte mas confiança baixa — só 1 menção"); apanha inflação sem acusar. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Compilação do rubric (G3):** rubric = fusão `role_profile.competencias` + `client_criteria` (peso do cliente manda); cada linha guarda `origem`. `CAMADA-CONHECIMENTO`.
+- [x] **Parecer puxa da pesquisa/código visto** com selo de origem (✅ provado / 🔎 verificado na fonte / 🔎 indício a confirmar); só-pesquisa não conta como capacidade provada. `RELATORIO-CLIENTE §5`.
+- [x] **Métrica de calibração (D.1):** precisão = % de acerto de `bot_predicted` vs `client_verdict` e vs `placement_outcome` (ground-truth), por cliente/role; erro recorrente por `reason_type`→regra explícita; alimenta migração web→interno; mostrada à Filipa. `INTAKE` Parte D.1.
+- ✅ **PARTE 1 (o cérebro) FECHADA — 7/7 gaps resolvidos.** Pronto para, quando o Mateus quiser, atacar a **embalagem** (app desktop/WS/overlay/captura áudio/clone biometria) dispatch-ready.
+
+### Modelos & API — AGNÓSTICA ao fornecedor + produto-para-vender (2026-06-17) — NOVO doc `MODELOS-E-API.md`
+- [x] **Agnóstico ao modelo (correção do Mateus):** o sistema chama **CAPACIDADES (slots)**, não "Claude". Slots: `EXTRACTOR`/`ARCHITECT`/`LIVE`/`EMBEDDER`/`STT`, cada um config (`model_id`), trocável por OpenRouter ou direto. O comprador pode pôr Gemini/Voyage/Deepgram/etc. **Defaults = nossa recomendação** (Haiku/Opus/Sonnet/text-embedding-3-small/Soniox), NÃO requisito.
+- [x] **3 amarras ao trocar (não partir):** (1) EMBEDDER muda dimensão pgvector → re-index (escolher no arranque); (2) LIVE tem de ser baixa-latência (avisa se passa 1-3s); (3) JSON/tool-use obrigatório em LIVE+ARCHITECT.
+- [x] **Via OpenRouter** (chave única; Mateus paga enquanto connosco; vender = trocar chaves+modelos+host, zero reescrita; interface fina por capacidade = adapter por fornecedor). Chaves por deployment (sops+age). Custo dominante = STT/hora + ticks LIVE.
+- [x] **Produto para VENDER ("sair de nós"):** pronto a apresentar **já com APIs ligadas**; multi-tenant v2 (agency_id na costura); futura VPS do comprador (Docker Compose portável).
+- [x] **Comportamentos ao vivo afinados (`ARQUITETURA-TEMPO-REAL §9`):** pesquisa ao vivo = **varredura em 2º plano da ESTRUTURA do projeto**; **progresso de cobertura** ("riscar até fechar tudo", X/Y cobertos, fecha a checklist antes do fim).
+- ✅ **Calendário/proativo já no escopo** (`ASSISTENTE-PROATIVO.md` — Google Calendar OAuth, `agenda_event`): o bot tem acesso à agenda da Filipa + resumo de preparação antes das reuniões + deteção de lacunas.
+
+### Re-exame honesto "fechámos a Parte 1?" (2026-06-17) — +4 itens fechados
+Mateus desafiou ("tem certeza?"). Não estava 100%. Fechados agora:
+- [x] **Atribuição fora de ordem:** candidato responde tópico 5 enquanto no 1 → Camada B roteia o significado ao requisito certo, risca esse, atualiza memória ao vivo; Camada A guarda tudo na hora. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Disciplina de tokens** (regra dura "não chupar token à toa"): nunca reenviar as 2h; prompt caching do fixo; Camada A guardada≠reenviada (RAG sob procura); Haiku nos ticks banais; sem chamada sem motivo; output estruturado curto. `ARQUITETURA-TEMPO-REAL §3`.
+- [x] **v1 só OpenRouter (chat) + Filipa troca o modelo na app** (seletor com catálogo+preço por slot); embedder/STT fora do OpenRouter. `MODELOS-E-API §2`.
+- [x] **Robustez de input:** STT de baixa confiança NÃO vira prova → re-sonda (reconexão de áudio = embalagem; a regra de juízo = cérebro). `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Re-entrevista (H3):** factos gerais reutilizam-se; específicos-do-process só contexto; memória velha re-validada ao vivo. `ASSISTENTE-CONVERSA §4.1`.
+- ⏸️ **(revisto abaixo — vários destes foram fechados na ronda do assistente)**
+
+### Ronda /loop — refundar a secretária + varrer mais gaps (2026-06-17)
+Mateus: "para de propor parte 2", "a secretária está fraca — é o ChatGPT dela, software à medida tipo Hermes que aprende", "/loop até resolver todos os gaps". Fechados:
+- [x] **Assistente Pessoal refundado (NOVO `ASSISTENTE-PESSOAL.md`):** não é bot limitado — é o **ChatGPT dela**: ① conversa geral ② conhece o mundo dela (RAG) ③ **age** (gera planilhas, CVs, pareceres, emails, anúncios, shortlists; agenda; comms; exportações; web). **Estrutura agêntica tipo Lince Brain** (grafo+tools+estado+auditoria+kill switch+porta de confirmação p/ ações externas). **APRENDE** (estilo/preferências da Filipa → rascunhos na voz dela; correções treinam). Tabelas: `recruiter_memory_fact`(+emb) + `assistant_action` (auditoria tool-calls). É UMA mente com facetas (conversa/proativo/ao-vivo são facetas).
+- [x] **OpenRouter (resposta ao Mateus):** 1 chave = trocar entre TODOS os modelos do catálogo, por slot, na app; seletor **filtrado por slot** (LIVE só mostra rápidos). `MODELOS-E-API §2`.
+- [x] **Entrada de candidato sourced (A1):** encaminha CV/cola LinkedIn + "é p/ vaga X" → `intencao='novo_candidato'`, dedup (candidato global, nunca duplica), cria `process`, porta de confirmação. `INTAKE`.
+- [x] **Versionamento de requisitos (H4):** `rubric.version`; muda a meio→recompila+avisa, frame adota nova versão, parecer diz "avaliado contra v2", comparação assinala réguas diferentes. `CAMADA-CONHECIMENTO` + `MODELO-DADOS §8`.
+- [x] **Fecha A5 (feedback ao candidato):** agora é capacidade do assistente (gera o rascunho). A2 (agendar call+bot entra) = embalagem, anotado.
+- ⏸️ **Honesto, fica p/ embalagem/config:** canal+antecedência lembretes; A2 sala LiveKit; ecrãs/UI.
+
+### Migração completa + anatomia do agente (2026-06-17)
+- [x] **Migração = CÓDIGO determinístico, não o agente a improvisar** (repetível/auditável/reversível; o agente executa+verifica, não inventa passos). `INFRA-E-MIGRACAO §0`.
+- [x] **Spec de migração COMPLETA** (`INFRA-E-MIGRACAO.md` reescrito): reusa a receita PROVADA do Cronos (`playbook_vercel_to_vps_migration`); empacotar/**compactar** = bundle portável (docker-compose + imagens `docker save`/GHCR + pg_dump + storage tar + secrets sops + models ONNX + `bootstrap.sh` + RUNBOOK); runbook 14 passos (DB/embeddings/storage/segredos/biometria/agente/túnel/DNS/crons/OAuth/auto-deploy); cutover+verificação(contagens origem==destino)+rollback(origem intacta 1-2sem); gotchas Cronos + novos RH (pgvector dim, ONNX pesados, role Postgres, OAuth re-consent, estado do agente migra com DB); desktop=distribuir instalador; comprador recebe via nós-migramos OU bundle auto-instalável.
+- [x] **Anatomia do agente desenhada** (`ASSISTENTE-PESSOAL §2.1`): grafo ReAct (Roteador→Planeador→Executor→Verificador→Respondedor), tool registry com `efeito` (leitura livre / escrita_externa = confirmação), estado persistido (recupera após queda), salvaguardas (kill switch, auditoria, orçamento por pedido, escopo RGPD), ferramentas longas assíncronas com progresso, slots de modelo por nó, deploy FastAPI+LangGraph no bundle.
+
+### Ronda 360° — motor, confirmação, multi-dispositivo, memória long-term (2026-06-17)
+- [x] **MOTOR = core do Hermes; AGENTE = nosso e limpo.** Reusar o *core* provado do Lince Brain (grafo/loop/estado/auditoria/kill switch) como fundação; NÃO forkar o bot de ops (tralha interna); construir agente próprio do RH (código limpo, vendável). `ASSISTENTE-PESSOAL §2`.
+- [x] **Confirmação NÃO chateia** (Mateus): livre = ler/rascunhar/**gerar** (docs/CV/parecer/email sem enviar); confirma SÓ = `gravar` durável (salvar doc, criar/editar candidato/cliente/vaga, gravar facto) + `enviar_fora` (enviar/marcar/publicar/pôr-se na call). `ASSISTENTE-PESSOAL §2.1`.
+- [x] **"Falta algo?" pelo overlay** (estilo Apollo): responde da checklist de cobertura; rede de segurança sob pedido. `ARQUITETURA-TEMPO-REAL §9`.
+- [x] **Distribuição/multi-dispositivo/segurança** (`AUTENTICACAO §8`): cliente fino + estado na VPS → PC novo = baixa app + login (biometria/email) + continua de onde estava (memória na VPS). Desktop guarda só a sessão cifrada (safeStorage). Perdeu PC → revoga device, dados intactos. Re-auth facial 24h.
+- [x] **Memória que se escreve sozinha + NÃO trava long-term** (`ASSISTENTE-PESSOAL §4`): auto-escrita contínua; 2 camadas (captura+curada); **⚠️ lição claude-mem: health check da consolidação (alerta se PARAR, nunca falha calado), crescimento limitado (consolida factos antigos p/ não inchar/abrandar — o "6 meses depois trava"), sem ponto único de falha silenciosa, recall fiável>esperto**; segurança (isolada, encriptada, auditável, RGPD). É o produto: valor compõe-se com o tempo.
+
+### Ronda — instância independente + concorrência + onboarding + sourcing Apify (2026-06-17)
+- [x] **Instância vendida = INDEPENDENTE** (Mateus): ao vender, monta-se um Hermes/agente fresco na VPS do comprador, *core* **vendorizado no bundle**, SEM cordão umbilical (não puxa do nosso repo/infra em runtime; não refém da nossa manutenção; não limitada). Updates = entrega limpa e opcional, não push automático. `ASSISTENTE-PESSOAL §2` + `INFRA-E-MIGRACAO §7`. **Fecha "updates a instâncias vendidas".**
+- [x] **Concorrência copiloto-ao-vivo + agente** (`ARQUITETURA-TEMPO-REAL §11`): processos separados; vivo=prioridade máxima + **escritor único** do estado; agente só LÊ durante a call; Q&A ao vivo servido pelo motor ao vivo (estado quente); tarefas do agente assíncronas; isolamento de falha; comunicam pela DB.
+- [x] **Onboarding ativo com LISTA** (`ASSISTENTE-PESSOAL §4.1`): no 1º uso apresenta lista de perguntas (estilo, clientes, como trabalha, **pessoal quanto mais melhor**)→`recruiter_memory_fact` explicit; conversa não formulário, editável, mostra o que guardou. **Fecha cold-start.**
+- [x] **Sourcing via APIFY (não browser)** (`ASSISTENTE-PESSOAL §3`): reaproveita skills `lead-scraper-apify`+`lead-enricher` JÁ no Hermes (5 tokens Apify + token broker em produção). **Resolve risco de ToS LinkedIn.**
+
+### Última varredura da Parte 1 (2026-06-17) — fechado antes da Fase 2
+- [x] **C3 — quem classifica pessoal/profissional:** LLM auto-classifica na destilação; Filipa reclassifica (corrigido_pela_filipa); auditável (score só lê professional+usar_no_score). `MODELO-DADOS §5`.
+- [x] **G7 — TESTES-ACEITACAO atualizado:** secção "fluxos novos" (Camada A, frame/checklist/fora-de-ordem, fosso, pesquisa ao vivo, veredito, relatório, agente, comparação, RGPD, calibração, memória long-term, custo). Corrigido P0.2 (single-tenant v1, RLS=v2).
+- [x] **A6/13 — envio email:** Resend (config, igual IRIS) ou GoTrue SMTP da VPS; ação enviar_fora c/ confirmação. `RELATORIO §8`. Pendência operacional: pôr a chave.
+- [x] **A5 feedback ao candidato:** confirmado = capacidade do assistente, não vive no parecer.
+- ⏸️ **Dispatch-cleanup (hygiene, não bloqueia):** coerência de schema (process_id canónico em interview/candidate_memory_fact; contagens de tabelas; diagrama da pasta) — G1/G2/G5; timeouts de no-show/sem-veredito (H6/H5). Anotado p/ a prep de dispatch.
+- ✅✅ **PARTE 1 (O CÉREBRO) DADA COMO SÓLIDA — última varredura feita.** Avançar para a **FASE 2 (embalagem + design)** com GO do Mateus.
+
+## FASE 2 — Embalagem & Design (arrancou 2026-06-17)
+- [x] **Integração atualizada (`ARQUITETURA-INTEGRACAO`):** monorepo agora inclui `services/agent` (assistente=motor Hermes clonado, vendorizado) + `services/face` (biometria clonada); +10 rotas API novas (assistant chat/action/onboarding, compare, sourcing, auth/face, settings/models, calendar, interviews/join); env atualizado (OpenRouter, Apify, Google OAuth, Resend, face S2S); **Agente 1 corrigido p/ SINGLE-TENANT** (sem RLS v1); +carris Agente 7 (agente) e 8 (biometria, pré-req: bug enroll).
+- [x] **UI-DESIGN completo:** +Tela 9 (assistente pessoal: chat+artefactos+confirmação), Tela 10 (comparar: matriz, trade-off, Filipa decide), Tela 11 (onboarding: lista conversacional), Tela 12 (definições: modelo por slot/calendário/dispositivos), Login biométrico+email (tela colorida liveness). Tom visual: dark no ao-vivo, glassmorphism HUD "Apollo", CMTec Linear/Stripe.
+- [x] ✅ **Direção visual LOCKED (de 3 mockups):** **HUD escuro "Apollo" em TODO o produto** (overlay + web app). Flat dark (sem gradiente/blur), barra de acento, teal sobre escuro, cara do bot, semáforo só p/ status. Nota de conforto: não preto puro (`#0E1116`), texto `#E6E8EB`, p/ telas de gestão não cansarem. `UI-DESIGN`.
+- [x] ✅ **NOME/MARCA: "VERA"** (2026-06-17). Marca pública que o cliente vê = **Vera** (latim "verdadeira" = juízo com prova, o anti-achismo). **Motor interno = Lince** (não se mistura, igual à biometria). Acento **teal** `#5DCAA5`. Mockups com "Lince RH" → ler "Vera".
+
+### ⚠️ REGRA DE FASES (Mateus, 2026-06-17) — NADA DE CÓDIGO até à Fase 3
+- **Fase 1 = o cérebro** (specs) ✅ · **Fase 2 = embalagem & design** (specs/mockups) — ATUAL · **Fase 3 = codar tudo** (build). **Só na Fase 3 se escreve código.** Até lá, tudo é spec.
+- [x] **Mockups dark (Vera):** overlay ao vivo ✅, assistente pessoal ✅, dashboard/pipeline ✅, comparar candidatos ✅. Validaram o HUD escuro p/ ao-vivo E telas de gestão.
+- [x] **Mockups COMPLETOS (6/6):** overlay ✅, assistente ✅, dashboard ✅, comparar ✅, briefing ✅, parecer ✅ — todos dark HUD / Vera.
+### Config & scope (2026-06-18, pré-código)
+- [x] **OpenRouter = chave NOSSA por agora** (Mateus paga depois — ainda não recebeu). Build arranca com a nossa chave.
+- [x] **Brave:** usar o free tier (fallback de D1). ⚠️ **NÃO localizei a chave guardada** (nem memória nem `workspace/.env`) → ao codar, localizar (token-broker Hermes?) ou tirar uma free nova.
+- [x] **LiveKit:** reusar o do `cmtec-voice-platform` **se funcionar** (confirmar no arranque do tempo-real).
+- [x] **Telegram DEFERIDO** (Mateus: "não sei se é interessante eles terem Telegram"). **A secretária/Vera vive no APP (desktop) + WEBSITE** — é aí que ela interage. Canal B (Telegram intake) passa a **opcional/depois**; intake principal = web app (e WhatsApp/Evolution se preciso, mais tarde). Reavaliar com a Filipa.
+- ⏳ **NÃO começar a codar ainda** — faltam estados de design do overlay (ex.: estado "a ouvir/transcrever/pensar" sem sugestão) + mais ecrãs. "Temos muitas coisas ainda" (Mateus).
+
+### Review do ChatGPT (GO/NO-GO) + prontidão Fase 3 (2026-06-18) — convergiu com a simulação
+ChatGPT: "GO só para Fundação (P0.1), NO-GO para build paralelo até fechar bloqueadores". Convergiu com a minha simulação. **Fechado a nível de SPEC (agora):**
+- [x] **Schema:** resumo stale de "16 tabelas" corrigido → **28** + Guia de consolidação no topo (`MODELO-DADOS`).
+- [x] **Campos de qualidade STT** no `transcript_chunk` (is_final/stt_confidence/speaker_confidence/audio_gap_ms/start_ms/...) + ⚠️ **diarização Soniox NÃO implementada** (REUSE-MAP) = trabalho NOVO; v1 usa bot-na-call (faixa por pessoa). `MODELO-DADOS §10`.
+- [x] **`REUSE-MAP.md`** (subagente, pointers REAIS): biometria=`painel-cmtec/services/cmtec-face`@72e3679; agente=**`lince-brain-local`**@a326e7e (NÃO hermes); LiveKit/Soniox=`cmtec-voice-platform/agents`@10c079a; +módulos manter/remover+smoke. (Achados: porta cmtec-face :18795 vs :18796; deps do agente por fixar.)
+- [x] **`AUTH-CONTRACT.md`** (claims recruiter_id/agency_id, validação WS+posse, S2S face=Ed25519/agent=token interno, matriz de permissões por efeito, re-auth 24h).
+- [x] **Fronteira TS/Python decidida** + **contratos de implementação** (envelope erro, status, Idempotency-Key, WS seq/ack/replay, lifecycle de job). `ARQUITETURA-INTEGRACAO §8`.
+- [x] **Registry de capacidades** de modelo + **embedder TRAVADO v1** (1536). `MODELOS-E-API`.
+- [x] **Constantes do tempo-real** completas (pausa 1500ms, fila ≤3, silêncio 8s, conf mín 0.6). `ARQUITETURA-TEMPO-REAL §3`.
+- [x] **Alvo v1 desktop FREEZE:** bot-online primário; overlay=v1; captura local=fast-follow (tira o risco macOS da v1). `APP-DESKTOP`.
+- [x] **Design tokens** já criados (`DESIGN-TOKENS.md`).
+- ⏭️ **É P0.1/Fase-3 (código, não spec — não são buracos):** `packages/db/schema.ts`+`001_init.sql`, prompts materializados em `packages/ai/prompts/*` (+output schemas), `docker-compose.local.yml`+seeds+mocks, `realtime-config.ts`, `tailwind.config`+componentes base. ChatGPT classificou-os como bloqueadores mas SÃO o trabalho da Fundação.
+- ⏸️ **Médios tracked (fechar quando lá chegar):** fixtures de teste (golden interview), artifact_contract (templates/storage/preview dos docs gerados), defaults concretos de retenção RGPD (decisão da agência), spec-freeze final (marcar todo "decido na implementação"/"[ABERTO]" residual).
+
+- ✅✅ **FASE 2 (EMBALAGEM & DESIGN) — essencialmente COMPLETA em spec.** Resta só o que é **implementação** (Fase 3): abertos D1-D8 do `APP-DESKTOP` (áudio macOS, code-signing, canal de updates…), frames de controlo WS → `packages/core`, e o bug de enroll da biometria a resolver na origem antes de clonar.
+
+### AUDITORIA 360° (3 subagentes paralelos, 2026-06-18) — Mateus: "tenho certeza que falta algo"
+**Falta(va) mesmo.** 3 lentes (coerência/schema · jornada · segurança/RGPD/long-term). **Corrigido já:**
+- **Coerência:** enum do EstadoVivo alinhado aos 4 estados canónicos (§2↔§9); campo JWT do WS = `accessToken` (era token/access_token em 3 docs); `voice_enrollment`→`voice_enrollment_path` (3 sítios); `BUILD-READY` D2/D4 antigos marcados SUPERSEDED; hardcodes "Claude Opus"→slot `ARCHITECT` (ACESSO/ASSISTENTE-CONVERSA); `rubric.criteria` ganhou `origem`+`origin_criteria_id` (G3); REVISAO-360 visibility_scope #3/#4→✅resolvido/v2.
+- **NOVO `JORNADA-POS-PARECER.md`:** fecha a cauda — transições `submitted→client_iv→offer→placed` (tool `mover_process`), `placement_outcome` recolhido por follow-up proativo da garantia, enviar parecer→`submitted` atómico, "Para a tua entrevista" no parecer cliente, no-show→reagenda, comparação por gatilho proativo. Áudio perdido (caso terminal)→intervalo `não-capturado` assinalado no parecer (`ARQ-TEMPO-REAL §9`).
+- **NOVO `LEGAL-E-RGPD.md`** — ⚠️ **REESCRITO 2026-06-18 (correção do Mateus): RGPD = 100% responsabilidade da AGÊNCIA (Filipa), NADA nosso.** Só precisamos de **1 cláusula** no contrato a dizê-lo (não DPA pesado, não obrigações de subcontratante para nós). O **produto OFERECE** alavancas p/ ela cumprir (consent_status, retenção configurável, apagamento, pessoal fora do score, juízo assistivo) — usar é decisão dela. **O que é nosso = segurança TÉCNICA** (cifra na migração, anti-spoof gate, auth) = qualidade, não compliance. Negócio 🟦 Mateus: IP/licença, code-signing no nome do comprador, limitação de responsabilidade, Apify=tokens do comprador.
+- **Técnicos corrigidos:** anti-spoof GATE (ON antes de venda/>1 user — `AUTENTICACAO C2`); classificação RGPD default CONSERVADOR (na dúvida sensível→fora do score — `MODELO-DADOS §5`); confirmação mostra payload+destinatário literais + anti prompt-injection (`ASSISTENTE-PESSOAL §2.1`); health-check da memória com destino no comprador + painel de saúde (`§4`).
+- ⏸️ **Tracked (BAIXO/hygiene):** contagens de tabelas, G1/G2 process_id no DDL-base, diagrama ACESSO §1, nome do bot Telegram→Vera, testes negativos de segurança no `TESTES`, placement_outcome órfão no apagamento (anonimizar vs perder sinal).
+- 🔴 **GATES antes da Fase 3 ENTREGAR (não planear):** DPA + consentimento + retenção + anti-spoof + cifra/purga migração. **Nada disto impede continuar a SPEC.**
+
+**Próxima fase = FASE 3 (codar tudo), quando o Mateus der GO.**
+
+### Arrumação pré-código (2026-06-18) — "arruma tudo antes de começar a codar"
+- [x] **README reescrito** = índice limpo da Fase 3: nome **Vera**, fases 1/2 ✅ + 3 ⏳, portas, **mapa dos 33 docs agrupado** (entrada/cérebro/embalagem/legal-validação-processo). Estava stale ("aguarda 4 decisões", sem Vera, faltavam ~13 docs).
+- [x] **Contagem de tabelas** 16→**28** (BRAIN, README, MODELO-DADOS; G5 ✅).
+- [x] **Nome do bot** RHCopiloto→**@VeraBot** (TELEGRAM, ACESSO).
+- [x] **ACESSO §1 diagrama** alinhado a candidato GLOBAL + `process` (G6 ✅).
+- [x] **`process_id` CANÓNICO decisivo** (G1/G2 ✅): build cria interview/client_verdict/placement_outcome já com `process_id NOT NULL`, SEM job_id/candidate_id; candidate_memory_fact.job_id→process_id.
+- [x] **Apagar candidato = ANONIMIZAR** (mantém placement_outcome/client_verdict sem PII → não perde o sinal de calibração). `MODELO-DADOS §6`.
+- [x] **Testes negativos de segurança/RGPD** adicionados (`TESTES`): WS sem posse, prompt-injection, ação sem confirmação, consentimento, purga, anti-spoof foto, re-auth 24h.
+- [x] **DECISOES-ABERTAS** com aviso claro: recomendações do corpo são histórico REVERTIDO (Vercel/Recall não valem).
+- ✅ **Spec ARRUMADA e coerente — pronta para a Fase 3.** Sobram só as portas conhecidas (biometria enroll/anti-spoof, cláusula RGPD, retenção, custo 2h) que se resolvem ao entregar, não ao codar.
+- ⏭️ **A seguir na Fase 2:** detalhar app desktop (Electron: always-on-top, captura áudio, distribuição/code-signing, permissão microfone SO), WebSocket auth, contratos finos do `services/agent` (tool registry executável), e o design visual a sério (mockups) quando a marca estiver locked.
+
+### 🔻 CORREÇÃO DE SCOPE + decisões do Mateus + reconciliação ChatGPT (2026-06-18, pós loop de segurança)
+
+**🟥 ADR-SCOPE (LOCKED, supersede tudo o que diga "produto para vender"):** a Vera é **SÓ para a
+IRIS Tech — NÃO se revende a terceiros.** Um **único deployment**, **2 utilizadoras** (Filipa +
+Inês, sócias da mesma empresa), numa **VPS dedicada**. Consequências:
+- **SUPERSEDED:** "produto para VENDER / sair de nós" (entradas 264, 268, 303), "instância do
+  comprador / multi-tenant comercial v2 / migração para VPS do comprador / custódia de chave ao
+  comprador / code-signing por comprador / SBOM de revenda". `agency_id` **fica** no schema como
+  **costura barata** para uma **expansão futura do uso** (Mateus: "no futuro podemos expandir"),
+  **não** como produto multi-tenant. `INFRA-E-MIGRACAO §7` (comprador) e `SEGURANCA §13.k/l`
+  (admin-comprador, multi-tenant ANN) ficam como **futuro-opcional, não gate**.
+- **Mantém-se** a disciplina de isolamento (`agency_id` em todo o acesso + GUC do agente) — é
+  defesa-em-profundidade barata e serve a expansão futura, não custa nada na v1.
+
+**As 8 decisões 🟦 — FECHADAS:**
+1. **Scope:** só IRIS, sem revenda (ADR acima). v2 multi-tenant comercial = **fora**.
+2. **Painel/admin:** não há "admin comprador". O **painel web da Vera** (UI-DESIGN Telas 1-12)
+   TEM de existir com as secções: **chat com a Vera** (Tela 9), **candidatos** (Tela 4),
+   **clientes/vagas** (Telas 2/8), pipeline (Tela 1), comparar (10), definições (12). Mockup
+   visual do painel inteiro feito 2026-06-18 (faltava — só o overlay estava mockado).
+3. **Identidade do candidato:** "sim" → v1 = **atestação da recrutadora** + selo *"identidade
+   não verificada pelo sistema"* no parecer (Regra 3); **biometria do candidato = futuro**, não
+   v1 (risco de fraude baixo: a Filipa faz headhunting de quem sourcing). 🟦 se quiseres
+   verificação forte já, dizes.
+4. **Backup + VPS:** **VPS dedicada** à Vera (Mateus: "vps mais fácil"); **chave de cifra do
+   backup off-VPS** (cold/offline, não na VPS de produção). + **memória auto-salva** (ponto novo
+   abaixo).
+5. **Data-policy Soniox/embedder (Mateus deferiu "não sei qual é melhor"):** **fail-closed,
+   retenção-zero/no-training obrigatório nos dois.** Default: Soniox em modo sem-retenção
+   (confirmar config da conta); embedder = OpenAI `text-embedding-3-small` (API OpenAI **não
+   treina** com dados de API por defeito) **ou** self-host (fallback) se a política não bastar.
+   `SEGURANCA §7`.
+6. **Auth (modelo do Mateus, substitui o "3 fatores"):** **email/senha OU biometria facial**;
+   a **biometria só se cadastra DEPOIS do 1º acesso** ao painel/app (login inicial por
+   email/senha → enroll facial) → daí em diante **biometria = login passwordless** (Filipa ou
+   Inês). **2 utilizadoras** (mesma empresa). NÃO é 2FA obrigatório. `AUTENTICACAO §2` reescrito.
+7. **Custódia/VPS:** "certo" — VPS dedicada nossa→IRIS; chave de backup off-VPS (ponto 4).
+8. **IP/licença:** **tudo da IRIS Tech.** O produto e o IP pertencem à IRIS Tech (sem licença de
+   revenda a terceiros; code-signing no nome da IRIS/CMTec conforme acordo).
+
+**Ponto novo — MEMÓRIA AUTO-SALVA (Mateus, reforço):** a Vera **salva sempre as mensagens
+automaticamente** → a memória **nunca fica desatualizada** e a Filipa **nunca tem de pedir
+"salva isto"**. Já é o desenho de `ASSISTENTE-PESSOAL §4` (auto-escrita contínua + destilação +
+camada curada + health-check anti-"travar 6 meses depois"). **Planear para MUITOS dados**
+(transcrições de 2h, destilação, pasta curada) — expansão futura do uso. Reforçado no §4.
+
+**Reconciliação do ChatGPT (GO P0.1, NO-GO PII/venda):**
+- **MOOT pelo scope (só IRIS):** multi-tenant partilhado, verificação biométrica do candidato
+  (→ futuro), migração-para-comprador, code-signing-por-comprador, SBOM-de-revenda, custódia de
+  chave ao comprador. (O isolamento por `agency_id` **mantém-se** como defesa, não como produto.)
+- **ACEITE como contrato de spec (P0.1 — congelar em `packages/core`/`authz`):** ① `agent_db_session(agency_id, actor_id)` (wrapper obrigatório: transação curta + `SET LOCAL app.agency_id` + reset garantido no pool) ② `search_knowledge(agency_id, scope, embedding, filters)` única (ninguém faz vector search manual) ③ `can_join_interview(actor, interview_id)` (cobre entrevista com `process` E cold-start `process_id` nulo) ④ `capture_session` (TTL curto, revoke-on-stop, renew, nega se `assertCaptureAllowed` falha) ⑤ `assistant_action` persiste `effect`/`needs_confirm`/`policy_version`/`input_hash`/`output_hash`/`provider`/`cost` ⑥ registry comum chat/STT/embedder com `zdr_required`/`stores_audio`/`stores_text`/`allowed_for_pii` (deploy falha se faltar) ⑦ hierarquia de identidade de falante (`speaker_source`/`speaker_confidence`/`speaker_label_locked`/`corrected_by`; active-speaker ≠ prova) ⑧ `save_memory_fact`: só factos explícitos da Filipa entram diretos; CV/web/email/inferido = `a_confirmar`. **Estes são P0.1, não buracos de spec** — anotados aqui para o construtor.
+- **NOVO doc criado:** `DATA-RETENTION.md` (matriz de retenção + purga em cascata incl. RAG/Storage/backups, job `purge_candidate`, monitor de frescura). Fecha a porta "números de retenção".
+- **Fase-3 SPIKES (validar cedo, antes de feature):** (a) Soniox real — diarização/`speaker_id`/2h/reconnect; (b) captura desktop Windows/macOS+LiveKit; (c) pgvector com filtro por `agency_id` + purge cascade; (d) ambiente local reprodutível (`make dev` sobe web/db/ws/agent/face/realtime-mock) antes do build paralelo.
+- **Concordâncias do ChatGPT já no nosso plano:** não começar pelo HUD; Python nunca com service-role/conexão global; sem ChromaDB global (→pgvector); active-speaker ≠ identidade; nada de PII a fornecedor sem ZDR; auto-update Electron assinado+pinado; capacidade simultânea (`MAX_CONCURRENT_INTERVIEWS` 1–3 na IRIS) como decisão de raiz.
+
+### 🧪 SIMULAÇÃO DE PROVA pré-código (Workflow multi-agente, 2026-06-18) — veredito CONDICIONAL→fechado
+Mateus: "simula o raciocínio de todas as partes em escala, prevê cascatas, prova que a spec é mesmo boa antes de codar; testa muitas vezes de várias formas". Corri um **Workflow** (12 lentes a traçar o sistema passo-a-passo: tempo real, tools, skills, pesquisa, avaliação, cascatas, concorrência, 1ª semana, nicho, casos-limite, forma-de-pensar) + verificação adversarial + crítico de completude + síntese. ⚠️ **11 das 12 lentes falharam por rate-limit transitório do servidor** (não o nosso limite) — re-corridas à parte. As que correram (cascata-diarização + 4 do crítico: parecer, multi-CV, proativo, calibração) deram **23 gaps confirmados → 19 deduplicados em 5 famílias**. Veredito: CONDICIONAL (codável, mas fechar schema/contrato ANTES da migração inicial). **TUDO FECHADO nesta ronda:**
+- **A — Proveniência/cascata diarização:** `candidate_memory_fact.source_chunk_id UUID[]`+`source_document_id`+`cv_version`; `interview_tick.derived_from_chunk_ids` (sem FK a rastreabilidade era irrealizável); **serviço de re-atribuição** + **reversão de estado** (a máquina §9 só ia p/ a frente) + **gate `SPEAKER_CONFIDENCE_MIN`** (espelha o do STT; default conservador não-corrigido). `MODELO §16 A`, `ARQ-TEMPO-REAL §2/§9`.
+- **B — Ciclo do parecer:** `report.status`('generating'|'ready'|'failed')+`invalidated_at`/`stale_reason`; **geração durável** (`async_job gen_parecer`)+**gatilho único de encerramento** (Filipa/assistente/reaper→`ended_at`+enfileira); guarda `ready` na transição→`submitted`; **fechar `interview_gap` aberto** no fim. `MODELO §16 B`, `JORNADA §1.1`.
+- **C — Multi-CV:** CHECK `is_current` só `uploaded`/`attested` (CV gerado pela Vera NUNCA alimenta o juízo); `contradiction.cv_document_id`+`divergence_origin` (divergência vs CV-gerado **não** vira misrepresentation); factos de CV não-corrente→`superseded`; selo "reformatado por IA". `MODELO §16 C`, `RELATORIO §5/§8`.
+- **D — Motor proativo (não existia):** NOVA tabela `proactive_task`+worker+**GUARD DE FRESCURA obrigatório** (re-ler alvo antes de disparar; cancela se anonimizado, suprime durante entrevista live, re-lê `process.stage`). `MODELO §16 D`, `ASSISTENTE-PROATIVO §1-bis`, `DATA-RETENTION` (purge cancela tasks).
+- **E — Calibração determinística:** hierarquia+contagem por process (1 amostra; placement>verdict>override); `rubric_version` em client_verdict/placement_outcome+segmentar; piso `CALIBRATION_MIN_N`+IC Wilson antes de exibir %. `MODELO §16 E`, `INTAKE §D.1`.
+- **Pontos do Mateus:** **acesso = app interno fechado** (só Filipa+Inês, sem externo/anónimo/auto-registo — `AUTH-CONTRACT §4`); **leitura avançada** (avaliação detalhada afirmação-a-afirmação→destila p/ memória c/ proveniência — `ARQ §9`, `ASSISTENTE-PESSOAL §4`). Schema **33→34 tabelas** (+`proactive_task`). Testes em `TESTES`.
+- **Provado SÓLIDO (não tocar):** resiliência ao vivo, Camada A/B, anti-achismo (5 regras), purga/anonimização, isolamento agency_id+GUC, consolidação canónica, resolução de entidade.
+- **PENDENTE:** re-correr as 11 lentes que o rate-limit derrubou (tempo-real/tools/skills/pesquisa/avaliação/etc.) contra a spec já melhorada → depois veredito final "pronto para Fase 3".
 

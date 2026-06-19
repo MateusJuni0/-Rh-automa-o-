@@ -1,9 +1,13 @@
 # Decisões Abertas — recomendação + critério de fecho
 
-> ✅ **FECHADAS TODAS (2026-06-16):** D4=Tudo na VPS · D1=Exa+Brave · D2=LiveKit próprio
-> · D5=Telegram+WhatsApp em paralelo · D3=pgvector. Detalhe e racional em
-> `BUILD-READY.md`; log em `DECISOES-E-MVP.md §11`. O texto abaixo fica como histórico
-> das opções consideradas.
+> ✅ **FECHADAS TODAS (2026-06-16):** D4=**Tudo na VPS** · D1=Exa+Brave · D2=**LiveKit
+> próprio** · D5=Telegram+WhatsApp em paralelo · D3=pgvector. Detalhe/racional em
+> `BUILD-READY.md`; log em `DECISOES-E-MVP.md §11`.
+>
+> ⚠️ **As "Recomendações" no corpo abaixo são HISTÓRICO e algumas foram REVERTIDAS**
+> (D4 recomendava Vercel → escolhido **VPS**; D2 recomendava Recall.ai → escolhido
+> **LiveKit próprio**; D5 recomendava "após Telegram" → escolhido **em paralelo**).
+> **Não seguir as recomendações abaixo** — valem as escolhas ✅ acima.
 
 > Estas 5 decisões foram identificadas em `PLANO-CONSTRUCAO.md`. Cada uma tem uma
 > recomendação técnica com razão. O Mateus fecha com SIM / NÃO / alternativa.

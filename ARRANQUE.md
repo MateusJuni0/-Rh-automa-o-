@@ -12,8 +12,10 @@
 - Todo o esquema da DB + migrations + RLS (`MODELO-DADOS.md`).
 - A pipeline "antes": criar vaga, Role Profile, match, briefing (`packages/ai`, `knowledge`).
 - O parecer, a memória RAG (candidato + cliente), o chat-com-bot por entidade.
-- Os bots de ingestão (Telegram + WhatsApp) e o painel ao vivo + servidor WebSocket.
-- A plumbing do tempo real (LiveKit + Soniox), contra os contratos.
+- Os bots de ingestão (Telegram + WhatsApp), o **app desktop** (overlay ao vivo +
+  captura de áudio local, Electron/Tauri) e o servidor WebSocket.
+- A plumbing do tempo real (LiveKit + Soniox, multi-idioma PT/EN/FR), contra os contratos.
+- O assistente proativo (agenda + deteção de lacunas) na web app.
 - **Em cada passo:** escrevo, corro o teste de aceitação (`TESTES-ACEITACAO.md`),
   corrijo erros até ficar verde, e só então commito. Erros acontecem — a função do
   loop é **detetá-los e corrigi-los**, não fingir que não existem.
@@ -46,7 +48,13 @@
 ### 2b. Confirmações operacionais (1 linha cada)
 - **VPS:** confirmo que deployo no `72.60.88.137` como nos outros projetos? (tenho SSH)
 - **Domínio:** que subdomínio para a app? (ex.: `rh.cmtecnologia.pt` via túnel CF)
-- **Reuso LiveKit/Soniox** do cmtec-voice-platform: sim?
+- **Reuso LiveKit/Soniox** do cmtec-voice-platform: sim? + **confirmar multi-idioma
+  (PT-PT/PT-BR/EN/FR) e 3+ falantes** no plano Soniox atual.
+- **App desktop:** distribuição é só interna (IRIS) → instalador simples chega; sem
+  code-signing/loja na v1? (a confirmar)
+- **Calendário do assistente proativo:** ✅ **Google Calendar (OAuth)** — decidido
+  (Mateus, 2026-06-17). Preciso de criar credenciais OAuth Google + consentimento da
+  Filipa. Input manual fica como fallback.
 
 ---
 

@@ -14,12 +14,16 @@ CLIENTE (empresa)                CANDIDATO (pessoa)
  ├─ o que valoriza (destilado)    ├─ perfil destilado (markdown)
  └─ histórico de SIM/NÃO  ◀──┐    ├─ memória das sessões (factos por competência, c/ timestamp)
                              │    └─ chat-com-bot (RAG só deste candidato)
-        VAGA ────────────────┴── liga cliente ↔ candidato + requisitos
+        VAGA ──┐
+               └── PROCESS (candidatura) ── liga candidato GLOBAL ↔ vaga
 ```
 
-- **Candidato:** uma pasta que **engorda** a cada entrevista (memória RAG).
+- **Candidato:** entidade **GLOBAL** (talent pool da agência) — uma pasta que **engorda**
+  a cada entrevista (memória RAG), reutilizável entre vagas/clientes. **Não** vive dentro
+  da vaga.
 - **Cliente:** uma pasta que engorda a cada vaga + a cada veredito (ver §6).
-- **Vaga:** o elo — junta o que o cliente pediu com os candidatos avaliados.
+- **Vaga:** o mandato do cliente. O elo candidato↔vaga é o **`process`** (candidatura =
+  candidato × vaga) — `MODELO-DADOS.md`.
 
 ---
 
@@ -102,7 +106,7 @@ em duas:
 | Memória / chat por entidade | **RAG** (embeddings + busca) sobre a pasta do candidato/cliente |
 | Bot de perguntas | **Claude** responde usando só a pasta daquela entidade |
 | Export | download **md/pdf**; a Filipa leva pra qualquer LLM se quiser |
-| Parecer | gerado por **Claude Opus** (qualidade), editável, exportável |
+| Parecer | gerado pelo slot **`ARCHITECT`** (default Opus — ver `MODELOS-E-API.md`), editável, exportável |
 
 ---
 
@@ -119,8 +123,8 @@ em duas:
 - Mais atrito que os outros canais, mas simples de construir e valida o fluxo completo.
 
 **Canal B — Telegram forward (MVP+, construir logo a seguir)**
-- Felipa recebe requisitos do cliente no WhatsApp/Telegram → encaminha para o nosso **Telegram bot** (@RHCopiloto_bot ou similar).
-- O bot deteta o tipo (requisitos de vaga, CV, feedback, ou áudio) e processa com Claude Haiku.
+- Filipa recebe requisitos do cliente no WhatsApp/Telegram → encaminha para o nosso **Telegram bot** (@VeraBot ou similar).
+- O bot deteta o tipo (requisitos de vaga, CV, feedback, ou áudio) e processa com o slot `EXTRACTOR` (default Haiku).
 - **Problema central resolvido:** quando Filipa encaminha, o bot não sabe de qual cliente veio. Solução: contexto de sessão 30 min + seleção por botão — ver `TELEGRAM-BOT-SPEC.md §4`.
 - **Mensagens de voz:** muito comuns no WhatsApp. O bot transcreve o áudio via Soniox antes de extrair. Ver `TELEGRAM-BOT-SPEC.md §6`.
 - **Multi-mensagem:** cliente que envia 5 mensagens sobre a mesma vaga. Filipa abre sessão com `/nova_vaga`, acumula, e fecha com `/fechar_vaga`. Ver `TELEGRAM-BOT-SPEC.md §7`.
