@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~17:14] iteração 42 — 🚧 FASE K (5/N): resiliência PURA (gap/teto-custo/timeout)
+
+**Feito (`apps/web/lib/resilience.ts`):** a degradação graciosa (§0: nenhuma falha encerra a sessão):
+- **`openGap`/`closeGap`** (`interview_gap`: start_ms/end_ms/cause `stt_reconnect|network|app_crash|pc_sleep|manual_pause|cost_cap`; CAS — só fecha se aberto, idempotente) + `readGaps` (para a secção "⬜ não-capturado" do parecer §14).
+- **`sumTickCostUsd`** (soma `cost_usd` dos ticks) + **`costCapTier`** (puro §4: ok/alert 70%/soft 90%/hard 100%).
+- **`runWithTimeout`** (tick que excede `ms` → `{timedOut:true}` → degrada com `degraded=true`, não bloqueia; erros propagam p/ o fallback de modelo §5). Constantes `TICK_DEGRADE_MS=60s`, `RECONNECT_AUDIO_MS=3s`.
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **28 testes** (+4: costCapTier limiares + runWithTimeout rápido/lento [puros]; openGap/closeGap CAS idempotente + readGaps; sumTickCostUsd [c/ DB]) · `pnpm -r test` = **223** · Biome ✅.
+
+**Self-review (fatia pequena; espelha o CAS/isolamento da K1/K2 já revisto):** CAS de fecho idempotente testado; isolamento por agency em todas as queries; `costCapTier` puro com limiares testados; `runWithTimeout` limpa o timer no finally; zero `as` cego. A composição (TickEngine + runWithTimeout→persistTick(degraded) + sumCost→openGap(cost_cap)) é wiring fino — os primitivos estão prontos.
+
+**A fazer (FASE K):** reconexão WS replay (`ack{lastSeq}`→reenviar via `readTicks`) + refresh JWT; decisão do frame da resposta do chat ao vivo. Depois L/M/N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~17:02] iteração 41 — 🚧 FASE K (4/N): `apps/ws` sai do stub — JWT mock + posse (segurança)
 
 **Feito (`apps/ws`):** o auth REAL do WebSocket (v1), substituindo o stub injetado:
