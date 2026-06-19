@@ -1,0 +1,37 @@
+# Ambiente de dev local da Vera (INFRA-E-MIGRACAO §8) — infra mínima: Postgres (pgvector) + Redis.
+# Os serviços de app (web/ws/realtime/agent/face) entram aqui à medida que ficam prontos.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm --filter @rh/db db:migrate
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm --filter @rh/db db:seed
+#
+# A password vem de env (POSTGRES_PASSWORD) com default de dev; .env é gitignored.
+name: vera
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: vera_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - vera-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vera_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - vera-redis-data:/data
+
+volumes:
+  vera-db-data:
+  vera-redis-data:

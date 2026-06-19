@@ -9,6 +9,16 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:06] iteração 15 — `docker-compose.dev.yml` (dev DB reprodutível) ✅ desbloqueado
+
+**Feito:** `docker-compose.dev.yml` (infra mínima: **Postgres pgvector + Redis**, volumes nomeados, bind 127.0.0.1, password via env com default de dev, healthcheck). Substitui o container ad-hoc por uma stack reprodutível (`name: vera`). Os serviços de app entram aqui à medida que ficam prontos.
+
+**Validado end-to-end:** `docker compose config` ✅ · `up -d` → `vera-db-1`+`vera-redis-1` healthy em ~3s ✅ · `db:migrate` → 35 tabelas ✅ · `db:seed` → IRIS+Filipa/Inês ✅ · **28/28 testes de integração vs a compose DB** ✅ · Biome ✅. Receita: `docker compose -f docker-compose.dev.yml up -d` + migrate + seed (no header do ficheiro).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:05] iteração 14 — `seeds` (IRIS + Filipa/Inês + cliente/vaga/candidato)
 
 **Feito:** `packages/db/src/seed.ts` + CLI `seed.cli.ts` (`db:seed` script, dep `tsx`):
@@ -41,6 +51,10 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 ---
 
 ## 🏁 RESUMO DA NOITE (STOP FINAL — 2026-06-19 ~02:50, ~1h20 de loop)
+
+> ⏩ **ATUALIZAÇÃO 2026-06-19 ~11:00 (Docker resolvido):** os spikes #1 e #2 abaixo (DB viva)
+> ficaram **RESOLVIDOS** — ver iterações 13–15 no topo. Migração aplicada a Postgres real,
+> `createDb`, seeds e `docker-compose.dev.yml` validados end-to-end (15 commits, 86 unit + 3 integração).
 
 **12 commits em `phase3/build` (pushed), monorepo todo verde — 86 testes, typecheck/Biome limpos.** Camada de contratos + fundação testável da P0.1 **completa**.
 
