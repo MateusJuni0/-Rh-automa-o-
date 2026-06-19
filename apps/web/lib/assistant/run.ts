@@ -1,0 +1,218 @@
+import { randomUUID } from "node:crypto";
+import type { DbHandle } from "@rh/db";
+import { schema } from "@rh/db";
+import { and, eq } from "drizzle-orm";
+import { type ChatContext, planResponse } from "./chat";
+import { createMemoryStore, executeToolCall } from "./gate";
+import { getTool } from "./tools";
+
+type Db = DbHandle["db"];
+
+export interface ActionView {
+  actionId: string;
+  tool: string;
+  efeito: string;
+  status: string;
+  summary?: string;
+  resultRef?: string;
+}
+
+export interface AssistantTurn {
+  threadId: string;
+  reply: string;
+  actions: ActionView[];
+}
+
+/** Narrowing seguro do JSONB `args` (após verificação de runtime, não cego). */
+function asArgs(v: unknown): Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : {};
+}
+
+async function ensureThread(
+  db: Db,
+  agencyId: string,
+  recruiterId: string,
+  threadId?: string,
+): Promise<string> {
+  if (threadId) {
+    const [t] = await db
+      .select({ id: schema.assistantThread.id })
+      .from(schema.assistantThread)
+      .where(
+        and(
+          eq(schema.assistantThread.id, threadId),
+          eq(schema.assistantThread.agencyId, agencyId),
+          eq(schema.assistantThread.recruiterId, recruiterId),
+        ),
+      );
+    if (t) {
+      return t.id;
+    }
+  }
+  const id = randomUUID();
+  await db.insert(schema.assistantThread).values({ id, agencyId, recruiterId });
+  return id;
+}
+
+/**
+ * Uma mensagem nova: persiste-a, planeia, corre as tools pela PORTA com `confirmed:false` (a
+ * confirmação só acontece em `confirmAction`). As `gravar`/`enviar_fora` ficam `pending_confirm`.
+ */
+export async function runMessage(
+  db: Db,
+  agencyId: string,
+  recruiterId: string,
+  params: { message: string; threadId?: string; ctx?: ChatContext },
+): Promise<AssistantTurn> {
+  const threadId = await ensureThread(db, agencyId, recruiterId, params.threadId);
+  await db.insert(schema.assistantMessage).values({
+    id: randomUUID(),
+    threadId,
+    agencyId,
+    role: "recruiter",
+    content: params.message,
+  });
+
+  const plan = planResponse(params.message, params.ctx ?? {});
+  const actions: ActionView[] = [];
+  const store = createMemoryStore();
+  for (const call of plan.toolCalls) {
+    const tool = getTool(call.tool);
+    if (!tool) {
+      continue;
+    }
+    const outcome = executeToolCall({ tool: call.tool, args: call.args, confirmed: false }, store);
+    const actionId = randomUUID();
+    if (outcome.status === "needs_confirm") {
+      await db.insert(schema.assistantAction).values({
+        id: actionId,
+        agencyId,
+        recruiterId,
+        threadId,
+        tool: call.tool,
+        efeito: tool.efeito,
+        args: call.args,
+        needsConfirm: true,
+        status: "pending_confirm",
+        idempotencyKey: actionId,
+      });
+      actions.push({ actionId, tool: call.tool, efeito: tool.efeito, status: "pending_confirm" });
+    } else if (outcome.status === "done") {
+      await db.insert(schema.assistantAction).values({
+        id: actionId,
+        agencyId,
+        recruiterId,
+        threadId,
+        tool: call.tool,
+        efeito: tool.efeito,
+        args: call.args,
+        needsConfirm: false,
+        status: "done",
+        resultRef: outcome.result.resultRef ?? null,
+      });
+      actions.push({
+        actionId,
+        tool: call.tool,
+        efeito: tool.efeito,
+        status: "done",
+        summary: outcome.result.summary,
+        ...(outcome.result.resultRef ? { resultRef: outcome.result.resultRef } : {}),
+      });
+    }
+  }
+
+  await db.insert(schema.assistantMessage).values({
+    id: randomUUID(),
+    threadId,
+    agencyId,
+    role: "assistant",
+    content: plan.reply,
+  });
+  return { threadId, reply: plan.reply, actions };
+}
+
+/**
+ * Confirma uma ação pendente (a Filipa aprovou). CAS no status (pending_confirm→done) → idempotente
+ * e à prova de duplo-clique: a tool só corre depois de RECLAMAR a ação.
+ */
+export async function confirmAction(
+  db: Db,
+  agencyId: string,
+  recruiterId: string,
+  actionId: string,
+): Promise<ActionView> {
+  const [action] = await db
+    .select({
+      tool: schema.assistantAction.tool,
+      efeito: schema.assistantAction.efeito,
+      args: schema.assistantAction.args,
+      status: schema.assistantAction.status,
+      idempotencyKey: schema.assistantAction.idempotencyKey,
+    })
+    .from(schema.assistantAction)
+    .where(
+      and(
+        eq(schema.assistantAction.id, actionId),
+        eq(schema.assistantAction.agencyId, agencyId),
+        eq(schema.assistantAction.recruiterId, recruiterId),
+      ),
+    );
+  if (!action) {
+    throw new Error("ação inexistente nesta agência");
+  }
+  if (action.status !== "pending_confirm") {
+    return { actionId, tool: action.tool, efeito: action.efeito, status: action.status };
+  }
+  // CAS com TODAS as colunas de isolamento (atómico) → à prova de corrida/duplo-clique.
+  const claimed = await db
+    .update(schema.assistantAction)
+    .set({ status: "done", confirmedBy: recruiterId })
+    .where(
+      and(
+        eq(schema.assistantAction.id, actionId),
+        eq(schema.assistantAction.agencyId, agencyId),
+        eq(schema.assistantAction.recruiterId, recruiterId),
+        eq(schema.assistantAction.status, "pending_confirm"),
+      ),
+    )
+    .returning({ id: schema.assistantAction.id });
+  if (claimed.length === 0) {
+    return { actionId, tool: action.tool, efeito: action.efeito, status: "done" };
+  }
+  // TODO(FASE Ω): validar `args` com o argsSchema da tool antes do adapter real.
+  const outcome = executeToolCall(
+    {
+      tool: action.tool,
+      args: asArgs(action.args),
+      confirmed: true,
+      idempotencyKey: action.idempotencyKey ?? undefined,
+    },
+    createMemoryStore(),
+  );
+  if (outcome.status === "failed") {
+    // Executor falhou DEPOIS do claim → marca 'failed' (não fica preso em 'done' sem efeito).
+    await db
+      .update(schema.assistantAction)
+      .set({ status: "failed" })
+      .where(eq(schema.assistantAction.id, actionId));
+    return { actionId, tool: action.tool, efeito: action.efeito, status: "failed" };
+  }
+  const summary = outcome.status === "done" ? outcome.result.summary : "executada";
+  const resultRef = outcome.status === "done" ? outcome.result.resultRef : undefined;
+  if (resultRef) {
+    await db
+      .update(schema.assistantAction)
+      .set({ resultRef })
+      .where(eq(schema.assistantAction.id, actionId));
+  }
+  return {
+    actionId,
+    tool: action.tool,
+    efeito: action.efeito,
+    status: "done",
+    summary,
+    ...(resultRef ? { resultRef } : {}),
+  };
+}

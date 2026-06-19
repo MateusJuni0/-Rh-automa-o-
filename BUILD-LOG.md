@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~18:58] iteração 50 — 🚧 FASE M (2/N): chat do assistente — planner + orquestrador + route (ENFORÇA a porta)
+
+**Feito (`apps/web`):** o backend do chat (a porta é ENFORÇADA aqui):
+- `lib/assistant/chat.ts` — **`planResponse`** (planner MOCK puro: intenção por palavras-chave → {reply, toolCalls}; comparar/enviar_email/rascunhar/planilha/sourcing/agenda; senão Q&A). SEM LLM (real = Ω).
+- `lib/assistant/run.ts` — **`runMessage`** (persiste msg, planeia, corre cada tool com `executeToolCall(confirmed:FALSE)` → leitura=done / gravar+enviar_fora=**pending_confirm** persistido) + **`confirmAction`** (CAS atómico pending→done com TODAS as colunas de isolamento; só DEPOIS corre a tool com `confirmed:true`; idempotente; trata `failed`).
+- `app/api/assistant/chat/route.ts` — POST `z.union([{confirmActionId},{message,threadId?}])`; **o body NÃO tem `confirmed`** → o modelo/cliente não o pode forjar; `confirmAction` é o ÚNICO caminho que corre uma tool `gravar`/`enviar_fora`.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**23 rotas**, +/api/assistant/chat) · web **49 testes** (+7: planner intenção; runMessage leitura→done / enviar_fora→pending; confirma idempotente) · `pnpm -r test` verde · Biome ✅.
+
+**Code-review** (code-reviewer, fatia SENSÍVEL): **1 CRITICAL + 2 HIGH.** **Corrigidos:** CRITICAL (executor a falhar após o claim → marca `failed`, não fica preso em `done`); HIGH `ensureThread` filtra `recruiterId` (anti-adoção de thread); +MEDIUM (CAS com agency+recruiter atómico; `idempotencyKey` passado ao executor) +LOW (route try/catch→404 sem stack). **Confirmado: SEM bypass da porta** (runMessage sempre confirmed:false; body sem `confirmed`; confirmAction é o único confirmed:true). **Deferidos com nota:** HIGH session-shim por cookie (é o shim da FASE H; auth real = **FASE N**; v1 single-tenant 2-user IRIS) + `argsSchema` Zod por tool (Ω).
+
+**A fazer (FASE M):** UI **Tela 9** (chat+artefactos+cartão de confirmação→re-POST confirm); Telas 8/10/11; memória durável; proativo.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~18:42] iteração 49 — 🚧 FASE M (1/N): núcleo seguro do assistente — tool registry + porta de confirmação
 
 **Feito (`apps/web/lib/assistant/`):** o núcleo seguro do assistente ("ChatGPT dela"), puro e mock:
