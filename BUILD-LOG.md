@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~16:38] iteração 39 — 🚧 FASE K (2/N): TickEngine→`interview_tick` (escritor único + CAS por tick_n)
+
+**Feito (`apps/web/lib/ticks.ts`):** a persistência do estado vivo (Camada B) — o **escritor único** (§11):
+- `nextTickN` (max+1, monótono); **`persistTick`** (insere `interview_tick`: live_state=estado, suggestion, custo/tokens/modelo/latência/degraded; **CAS por `tick_n`** — não duplica, idempotente); `readTicks` (ordenado por `tick_n`, isolado por agency — base do replay); **`createTickPersister`** = bridge type-compatível com `TickEngine.onTick` (`new TickEngine({ onTick: createTickPersister(db, ag, id) })`) com contador monótono.
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **21 testes** (+3 c/ DB: persiste+lê isolado por agency; CAS idempotente não duplica; persister escreve tick_n 0/1/2 monótono) · Biome ✅.
+
+**Self-review (fatia pequena ~120 linhas, espelha a K1 já revista):** CAS idempotente (testado); isolamento OK (existence-check keia no `interview_id` globalmente único; `readTicks` filtra agency; insert grava o agency certo); zero `as` cego (só `String(costUsd)` p/ numeric, justificado); imutável. **Deferido (FASE N, com o resto do endurecimento DB):** `UNIQUE(interview_id, tick_n)` como backstop forte do CAS — o escritor único + a verificação cobrem o v1.
+
+**A fazer (FASE K):** `apps/ws` sai do stub (JWT mock + posse `SELECT 1 FROM interview`); `/api/interviews/:id/join` + `/:id/report`; resiliência pura (timeout/degradar/`interview_gap`/teto custo); reconexão WS replay (usa `readTicks`); decisão do frame da resposta do chat.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~16:25] iteração 38 — 🚧 FASE K (1/N): REST `POST /api/interviews` + ciclo de vida (CAS)
 
 **Feito (`apps/web`):** primeira fatia da orquestração ao vivo — o ciclo de vida da entrevista:
