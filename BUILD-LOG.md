@@ -9,6 +9,29 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~22:24] iteração 61 — 🚧 FASE N (7/N): entrypoint do servidor WS (apps/ws arrancável)
+
+**Contexto:** `apps/ws` já tinha o `WsServer` (handshake auth, close 4401/4403, `FrameSession`), `createWsAuthenticate` (JWT HS256 real + posse), jwt/codec + **testes do handshake** (server.test.ts). Faltava SÓ o entrypoint executável.
+
+**Feito (`apps/ws`):**
+- `src/main.ts` (NOVO) — `resolveConfig(env)` (porta `WS_PORT` def 18792 + `WS_JWT_SECRET`, **sem segredo hardcoded**), `mockVerifyOwnership` (v1: par não-vazio → ok; o real liga ao @rh/db a montante), `startFromConfig` (liga `createWsAuthenticate`+`WsServer`, testável), `main()` (aborta se faltar segredo → exit 1; `127.0.0.1` only; logs; SIGINT/SIGTERM → close; **guard `import.meta` p/ não correr quando importado**).
+- `package.json` — script `start: tsx src/main.ts` (+tsx devDep, já no monorepo).
+- `test/main.test.ts` (+6) — resolveConfig; mockVerifyOwnership; **boot real** (JWT HS256 válido → auth.ok+interview.active; token inválido → 4401).
+
+**SIMULA/CORRE:** `tsx src/main.ts` arranca → `[ws] a ouvir em ws://127.0.0.1:PORT` ✅; sem `WS_JWT_SECRET` → aborta (exit 1) ✅.
+
+**Verde:** typecheck ✅ · ws **32 testes** (+6) · `pnpm -r` (ui 16 + knowledge 5 + realtime 2 + desktop 44 + web 91 + ws 32) · Biome ✅.
+
+**Self-review (wrapper de boot; core já revisto):** segredo via env (fail-closed), localhost-only, guard de import, posse mock documentada. → sem review dedicado (o auth/handshake/close-codes estão no `server.ts`/`auth.ts` já revistos + 32 testes).
+
+**DEFERIDOS p/ FASE Ω (com justificação — gold-plating no v1 mock):** WS replay/snapshot (protocolo congelado SEM `snapshot.request`; `seq` é por-ligação; v1 usa mock feed no desktop), `chat.answer` frame (o chat do assistente é HTTP no v1), refresh de JWT (token único no v1), posse real (liga @rh/db ao handshake).
+
+**FASE N — quase fechada.** Falta: seed Inês (2.º recrutador) + CI gates → depois STOP FINAL.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~22:04] iteração 60 — 🚧 FASE N (6/N): endurecimento DB (constraints + índices) — migração 0001
 
 **Feito (`packages/db`):** migração `0001_confused_weapon_omega.sql`:
