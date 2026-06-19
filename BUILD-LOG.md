@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~20:06] iteração 54 — 🚧 FASE M (6/N): Tela 10 — comparar (matriz requisitos×candidatos)
+
+**Feito (`apps/web`):**
+- `lib/comparar.ts` (NOVO) — `buildComparisonMatrix(db, agency, jobId, candidateIds?)` → {requisitos[], columns[{candidato, matchScore, cells[{requisito, status}]}]}. **Reusa `triageVaga`** (cobertos/faltantes) → coberto→`coberto-com-prova`, senão `não-tocado` (raso/contradito pedem prova real → Ω). Isolado por agency.
+- `app/comparar/page.tsx` (Tela 10) — matriz visual (linhas=requisitos, colunas=candidatos, células=Chip por `RequisitoStatus`); entra via `?job=<id>&c=id1,id2`; estados vazios (sem vaga / sem candidatos).
+- `app/vagas/[id]/triagem` — link "⊞ Comparar candidatos →" (quando há candidatos).
+
+**Verde:** typecheck ✅ · `next build` ✅ (+`/comparar`) · web **64 testes** (+2: matriz status por célula; vaga inexistente→vazia) · `pnpm -r` (desktop 44 + realtime 2 + web 64) · Biome ✅.
+
+**Self-review (read-only + UI):** `buildComparisonMatrix` reusa o `triageVaga`/`getVaga` (agency-scoped) → o `?c=` só mostra candidatos já devolvidos pela triagem da agência (sem fuga cross-agency); sem escrita/chamada externa → sem review dedicado.
+
+**FASE M:** núcleo ✅ + Tela 10 ✅. Telas 8 (Q&A) / 11 (onboarding) = opcionais (fora do STOP FINAL). **PRÓXIMO: ARRANCAR A FASE N** — login mock (gate final do demo) primeiro.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~19:50] iteração 53 — 🚧 FASE M (5/N): PROATIVO (mock) — aceitação "proativo→prep" ✅ · NÚCLEO DE M COMPLETO
 
 **Feito (`apps/web`):**

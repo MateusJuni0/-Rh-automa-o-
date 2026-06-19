@@ -60,6 +60,11 @@ export default async function TriagemPage({ params }: { params: Promise<{ id: st
         </Link>
         <h1 className="font-semibold text-ink text-xl">Triagem</h1>
         <p className="text-ink-2 text-sm">Candidatos ordenados por compatibilidade com a vaga.</p>
+        {rows.length > 0 ? (
+          <Link href={`/comparar?job=${id}`} className="text-accent-ink text-sm hover:underline">
+            ⊞ Comparar candidatos →
+          </Link>
+        ) : null}
       </div>
       {rows.length === 0 ? (
         <EmptyState
