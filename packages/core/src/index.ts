@@ -3,6 +3,7 @@
 export * from "./enums";
 export * from "./envelope";
 export * from "./evaluation";
+export * from "./extraction";
 export * from "./frame";
 export * from "./idempotency";
 export * from "./intake";

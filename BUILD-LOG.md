@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:36] iteração 18 — Fase A: extração (vaga + CV)
+
+**Feito:**
+- `@rh/core/src/extraction.ts` — shapes `jobRequirements` (P1.1: roleType/nivel/skills{must,nice}/contexto) + `candidateProfile` (P1.3: skillsDeclaradas/experienciaAnos/gapsCv/resumo). *(A spec descreve em prosa; fixei a forma Zod — registado.)*
+- `@rh/ai/src/features/extract.ts` — `extractJobRequirements` + `extractCandidateProfile` (slot EXTRACTOR, via `generate` + mock).
+
+**Verde:** typecheck ✅ · core **35/35** (+4) · ai **30/30** (+2) · Biome ✅. Tudo mock.
+
+**A fazer (resto da Fase A):** `buildRoleProfile`, `buildBriefing` (+shape `briefing`), `runTick` (EstadoVivo, keia por requisitoId dados no input).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:32] iteração 17 — Fase A (cérebro): features `matchCandidate`/`buildParecer`/`buildRubric`
 
 **Feito:** primeiras features de IA em `@rh/ai/src/features/` (slot ARCHITECT, via `generate` + mock):
