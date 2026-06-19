@@ -9,6 +9,24 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:55] iteração 21 — Fase C1: `apps/web` ligado à DB (clientes CRUD)
+
+**Mateus: "faz tudo, continua o /loop até ao fim" — loop retomado.**
+
+**Feito:** `apps/web` ↔ DB viva:
+- `lib/db.ts` — `getDb()` singleton (lazy; `DATABASE_URL` do env, nunca hardcoded) + `DEV_AGENCY_ID` (= agência IRIS do seed; substituído pela auth na Fase H).
+- `lib/clientes.ts` — `createCliente`/`listClientes` (lógica testável; `agency_id` predicado §15.1).
+- `app/api/clientes/route.ts` — GET (lista) + POST (cria, valida Zod, envelope `ok`/`err`).
+- next.config `transpilePackages` += @rh/db/@rh/ai/@rh/knowledge; +dep `drizzle-orm` (direta).
+
+**Verde:** typecheck ✅ · **`next build` ✅** (`/api/clientes` dynamic; @rh/db/pg compila no app) · **2/2 testes web** com DB (cria/lista/isola por agência) · Biome (104 fich.) ✅.
+
+**A fazer (resto Fase C):** vagas (+extração via @rh/ai) + candidatos (+CV) + match + briefing routes/lib; UI mínima (forms/listas). AI routes usam transporte real se `OPENROUTER_API_KEY`, senão stub demo (sem chaves).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:49] iteração 20 — Fase B: `@rh/knowledge` RAG pgvector (embedder mock)
 
 **Feito:** novo package `@rh/knowledge` (dep @rh/core+@rh/db+drizzle):

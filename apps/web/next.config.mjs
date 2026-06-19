@@ -10,8 +10,8 @@ const nextConfig = {
   // só no build Linux/CI (NEXT_OUTPUT=standalone). Em dev local fica desligado → build verde.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   outputFileTracingRoot: path.join(dirname, "../../"),
-  // @rh/core é TS-source (sem build) → Next transpila.
-  transpilePackages: ["@rh/core"],
+  // packages TS-source (sem build) → Next transpila.
+  transpilePackages: ["@rh/core", "@rh/db", "@rh/ai", "@rh/knowledge"],
 };
 
 export default nextConfig;

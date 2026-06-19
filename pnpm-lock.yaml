@@ -17,9 +17,21 @@ importers:
 
   apps/web:
     dependencies:
+      '@rh/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@rh/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@rh/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@rh/knowledge':
+        specifier: workspace:*
+        version: link:../../packages/knowledge
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.22.0)
       next:
         specifier: ^15.5.19
         version: 15.5.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -48,6 +60,9 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@types/node@25.9.3)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.22.4))
 
   apps/ws:
     dependencies:
