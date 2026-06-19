@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~17:02] iteração 41 — 🚧 FASE K (4/N): `apps/ws` sai do stub — JWT mock + posse (segurança)
+
+**Feito (`apps/ws`):** o auth REAL do WebSocket (v1), substituindo o stub injetado:
+- `src/jwt.ts` — JWT **HS256** sem dependências (`node:crypto`): `signJwt`/`verifyJwt` (assinatura `timingSafeEqual` tempo-constante + `exp`; `nowSec` injetável). **Guard anti-algorithm-confusion** (só `alg:HS256`).
+- `src/auth.ts` — `createWsAuthenticate({secret, verifyOwnership, now})` → o hook `WsServerHooks.authenticate`: sem segredo→**4401**; JWT inválido/expirado→**4401**; `verifyOwnership(interviewId, recruiterId)` **injetável** (a app fornece `SELECT 1 FROM interview WHERE id AND recruiter_id` — @rh/ws fica SEM @rh/db) falso→**4403**; erro na posse→4401 (fail-closed). O segredo vem do env `WS_JWT_SECRET` — NUNCA hardcoded.
+- `src/server.ts` — teto 8 KB anti-DoS pré-auth. index exporta jwt/auth.
+
+**Verde:** typecheck ✅ · **@rh/ws 27 testes** (+13: jwt round-trip/bad-sig/expirado/malformado/adulterado/alg-confusion; auth válido/sem-segredo/inválido/expirado/sem-posse/posse-throw + 4 socket-localhost: auth.ok, 4401, 4403, 8KB) · `pnpm -r test` = **219** · Biome ✅.
+
+**Security-review** (security-reviewer): **0 CRITICAL**. Aplicados: guard `alg` (MEDIUM — anti algorithm-confusion + future-proof p/ RS256); try/catch no `verifyOwnership` (fail-open→fail-closed); teto 8 KB pré-auth; comentário da comparação base64url. **Confirmado seguro:** sem alg-confusion bypass; posse confia na query (não nos claims do token); fail-closed sem segredo; sem segredos hardcoded. Gap Fase Ω (anotado): `nbf`/`iat`, RS256+JWKS.
+
+**A fazer (FASE K):** entrypoint do ws a correr com `verifyOwnership` real (via `getInterview`)+`WS_JWT_SECRET` — **NÃO no caminho do demo v1** (o desktop usa feed MOCK); resiliência pura (timeout/degradar/`interview_gap`/teto custo); reconexão WS replay (usa `readTicks`); decisão do frame do chat.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~16:50] iteração 40 — 🚧 FASE K (3/N): REST `/api/interviews/:id/join` + `/:id/report`
 
 **Feito (`apps/web`):** fecha o fluxo "durante→depois" do ciclo de entrevista (reusa K1+FASE E):

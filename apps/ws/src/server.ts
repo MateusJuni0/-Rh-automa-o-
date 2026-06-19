@@ -74,6 +74,11 @@ export class WsServer {
   }
 
   async #onMessage(sock: WebSocket, state: ConnState, raw: string): Promise<void> {
+    // Teto de tamanho (anti-DoS pré-auth): auth/ack são pequenos; nada legítimo passa de 8 KB.
+    if (raw.length > 8192) {
+      sock.close(4401, "mensagem demasiado grande");
+      return;
+    }
     const parsed = parseClientMessage(raw);
     if (!parsed.ok) {
       if (!state.authed) {
