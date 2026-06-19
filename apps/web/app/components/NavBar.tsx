@@ -9,6 +9,7 @@ const NAV = [
   { href: "/vagas", label: "Vagas" },
   { href: "/candidatos", label: "Candidatos" },
   { href: "/assistente", label: "Assistente" },
+  { href: "/definicoes", label: "Definições" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {

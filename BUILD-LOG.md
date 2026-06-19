@@ -9,6 +9,24 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~21:44] iteração 59 — 🚧 FASE N (5/N): Tela 12 — Definições (UI)
+
+**Feito (`apps/web`):**
+- `lib/definicoes.ts` (puro) — `RETENTION_DEFAULTS` (alavancas RGPD §3: 30/90/30 dias) + `appEnvironment(NODE_ENV)`.
+- `app/definicoes/page.tsx` (server) — 4 secções: **Conta** (nome do recrutador via getSession+query agency-scoped + `LogoutButton`), **Biometria** (estado mock "Rosto inscrito · sem câmara"), **Privacidade & Retenção (RGPD)** (prazos sugeridos, leitura), **Sobre** (versão+ambiente).
+- `app/definicoes/LogoutButton.tsx` (client) — POST logout → /login.
+- Link "Definições" na navbar.
+
+**Verde:** typecheck ✅ · `next build` ✅ (+`/definicoes`) · web **88 testes** (+2 `appEnvironment`/`RETENTION_DEFAULTS`) · `pnpm -r` (desktop 44 + realtime 2 + web 88) · Biome ✅.
+
+**Self-review (UI):** server-render, getSession (gated pelo middleware), nome do recrutador agency-scoped, alavancas RGPD só-leitura, biometria mock; LogoutButton espelha o padrão da navbar; sem escrita/segredo → sem review dedicado.
+
+**Próximo (FASE N):** endurecimento DB (CHECK status/capture_type + índices (agency_id,status)+(agency_id,recruiter_id) + UNIQUE(interview_id,tick_n) + tabelas biometria + colunas RGPD) — 1 migração, CUIDADO com cruft do dev-DB; entrypoint ws + refresh/replay; seed Inês; CI.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~21:26] iteração 58 — 🚧 FASE N (4/N): purga RGPD em cascata (direito ao esquecimento)
 
 **Feito (`apps/web/lib/rgpd.ts`, TDD DB):** `purgeCandidate(db, agencyId, candidateId)` — HARD delete em CASCATA, numa transação, **isolado por agência** (cross-agency = no-op). Apaga a subárvore PII filhos→pais: process → interview → [tick, gap, participant, report, transcript_chunk(+embedding cascade), contradiction-por-chunk] ; process-children [client_verdict, placement_outcome, agenda_event, contradiction] ; candidate_memory_fact(+embedding), source_doc(+embedding), document (null do self-ref `based_on` antes) ; **PII polimórfica sem FK**: proactive_task (por target candidate/process/interview) + intake_message (por alvo/entity). Devolve `{removed: {tabela:n}}`.
