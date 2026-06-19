@@ -9,6 +9,18 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:16] iteração 24 — Fase C4: match candidato×vaga (process + matchCandidate)
+
+**Feito:** `apps/web/lib/match.ts` `matchCandidatoVaga` — garante o `process` (candidatura, UNIQUE candidate×job, idempotente) + lê candidato/vaga + corre `matchCandidate` (stub sem chave) + devolve `{processId, match}`. Route `app/api/match/route.ts` POST. (roleProfile vazio até o carril knowledge o preencher.)
+
+**Verde:** typecheck ✅ · `next build` ✅ (5 rotas API) · **7/7 testes web** com DB (+2 match: cria process+MatchResult; idempotência do process) · Biome (115 fich.) ✅.
+
+**A fazer (fechar C):** briefing (buildRubric→guarda rubric→buildBriefing) + **UI mínima** (pages).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:11] iteração 23 — Fase C3: candidatos (CRUD + extração de CV)
 
 **Feito:** `apps/web/lib/candidatos.ts` (`createCandidato` extrai perfil do CV via `extractCandidateProfile`+aiOptions, `nameNormalized` p/ dedup §12, insere `candidate`; `listCandidatos`) + `app/api/candidatos/route.ts` (GET+POST).
