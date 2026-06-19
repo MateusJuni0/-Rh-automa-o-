@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:05] iteração 22 — Fase C2: `aiOptions` (real-ou-stub) + vagas com extração
+
+**Feito:**
+- `apps/web/lib/ai.ts` — **`aiOptions(stub)`**: com `OPENROUTER_API_KEY` → transporte OpenRouter real (registry/fallback dos `MODEL_*` env, zdr:true placeholder); **sem chave → stub determinístico** que a rota fornece (demo sem custo). `AI_ENABLED` flag. **Ponto único de troca mock→real.**
+- `apps/web/lib/vagas.ts` — `createVaga` (extrai requisitos via `extractJobRequirements` + `aiOptions`; insere `job` c/ requirements JSONB + roleType) + `listVagas`. `DEV_RECRUITER_ID` (Filipa seed).
+- `app/api/vagas/route.ts` — GET+POST (Zod, envelope).
+
+**Verde:** typecheck ✅ · `next build` ✅ (`/api/vagas`) · **4/4 testes web** com DB (clientes + aiOptions-stub + criar/listar vaga c/ extração) · Biome (109 fich.) ✅.
+
+**A fazer (resto C):** candidatos (+CV extração) + match + briefing routes/lib; UI mínima (pages).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:55] iteração 21 — Fase C1: `apps/web` ligado à DB (clientes CRUD)
 
 **Mateus: "faz tudo, continua o /loop até ao fim" — loop retomado.**
