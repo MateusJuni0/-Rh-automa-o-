@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@rh/ui";
+import Link from "next/link";
 import { useState } from "react";
 
 type State = "idle" | "busy" | "done" | "error";
@@ -9,6 +10,7 @@ type State = "idle" | "busy" | "done" | "error";
 export function StartInterviewButton() {
   const [state, setState] = useState<State>("idle");
   const [room, setRoom] = useState<string | null>(null);
+  const [interviewId, setInterviewId] = useState<string | null>(null);
 
   async function start(): Promise<void> {
     setState("busy");
@@ -18,12 +20,13 @@ export function StartInterviewButton() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({}),
       });
-      const json: { ok: boolean; data?: { room: string } } = await res.json();
+      const json: { ok: boolean; data?: { interviewId: string; room: string } } = await res.json();
       if (!res.ok || !json.ok || !json.data) {
         setState("error");
         return;
       }
       setRoom(json.data.room);
+      setInterviewId(json.data.interviewId);
       setState("done");
     } catch {
       setState("error");
@@ -32,9 +35,19 @@ export function StartInterviewButton() {
 
   if (state === "done") {
     return (
-      <p className="text-sm text-strong">
-        ✅ Entrevista iniciada (sala mock: {room}). Abre o copiloto no app desktop.
-      </p>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm text-strong">
+          ✅ Entrevista iniciada (sala mock: {room}). Abre o copiloto no app desktop.
+        </p>
+        {interviewId ? (
+          <Link
+            href={`/interviews/${interviewId}/parecer`}
+            className="text-accent-ink text-sm hover:underline"
+          >
+            Ver parecer (no fim) →
+          </Link>
+        ) : null}
+      </div>
     );
   }
   return (

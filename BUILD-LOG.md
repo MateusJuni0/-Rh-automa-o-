@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~18:16] iteração 47 — 🚧 FASE L (5/N): Tela 7 (parecer — abas Interna/Cliente + export md)
+
+**Feito (`apps/web`):** o "Depois" do ciclo (reusa `gerarParecer` da FASE E):
+- `app/interviews/[id]/parecer/ParecerTabs.tsx` (client) — **abas Interna/Cliente** (`@rh/ui` Tabs): renderiza o `Parecer` estruturado de `@rh/core` — veredito, **critérios com citação+timestamp** (ou "⬜ não confirmado — recomendo perguntar" quando null), forças, riscos (vista interna), logística/ângulo de venda/credenciais (vista cliente), fiabilidade (intervalos não-capturados), fontes.
+- `app/interviews/[id]/parecer/page.tsx` (server) — `getInterview` (isolamento+notFound) + `gerarParecer` + **export md** (`<a>` → GET /api/parecer?interviewId=).
+- `StartInterviewButton` agora mostra "Ver parecer →" após iniciar → o fluxo **briefing→iniciar→parecer** fica navegável no web.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**22 rotas**, +/interviews/[id]/parecer) · web **32 testes** (sem lib nova — reusa `gerarParecer`/`getParecerMd` já testados) · Biome ✅.
+
+**Self-review (fatia UI):** renderiza o Parecer já validado por Zod (buildParecer); citações honestas (assinala não-confirmado); export via GET seguro; `notFound`; zero `as` cego. write-on-GET idempotente (report.interview_id UNIQUE + onConflictDoUpdate) anotado como simplificação v1 (editar/preparar-email = follow-up).
+
+> 🎯 **Fluxo "Antes→Depois" v1 navegável no web:** vaga→triagem→candidato→briefing→▶iniciar→parecer (sem ecrã branco). Falta a **Tela 1 (dashboard/kanban)** para o "QG" e depois M/N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~18:04] iteração 46 — 🚧 FASE L (4/N): Tela 5 (briefing pré-entrevista) — liga "antes"→"durante"
 
 **Feito (`apps/web`):** o roteiro pré-entrevista (reusa `generateBriefing` da FASE C, já testado):
