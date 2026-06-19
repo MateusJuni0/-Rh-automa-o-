@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:42] iteração 28 — Fase E1: parecer ("Depois") + export markdown
+
+**Feito:** `apps/web/lib/parecer.ts`:
+- `renderParecerMd(name, Parecer)` — render markdown determinístico e PURO (7 secções + credenciais + fiabilidade; honesto em secções vazias).
+- `gerarParecer(db, agencyId, {interviewId})` — lê entrevista → processo → candidato + `candidate_memory_fact` → `buildParecer` (stub sem chave) → renderiza → **persiste `report`** (interview_id UNIQUE, `onConflictDoUpdate`, status 'ready'). Devolve {reportId, parecer, contentMd}.
+- `getParecerMd` — export do markdown guardado.
+- Route `app/api/parecer/route.ts`: **POST** gera/regera · **GET** `?interviewId=` exporta `.md` (Content-Disposition; PDF=TODO pós-chave).
+
+**Verde:** typecheck ✅ · `next build` ✅ (**10 rotas**) · **11/11 testes web** (+parecer-md unit, +parecer integração idempotente vs DB) · Biome ✅.
+
+**A fazer (fechar E):** destilar factos→RAG (`lib/destilar.ts` + `indexCandidateFact`) · calibração `lib/verdict.ts` (client_verdict). Depois F/G/H.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:32] iteração 27 — Fase D: copiloto ao vivo (`@rh/realtime` TickEngine)
 
 **Feito:** novo package `@rh/realtime` (dep @rh/core+@rh/ai+@rh/ws):
