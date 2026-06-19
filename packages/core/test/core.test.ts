@@ -99,18 +99,27 @@ describe("WS — cliente → servidor", () => {
 });
 
 describe("WS — servidor → cliente", () => {
-  it("todo o frame leva envelope v + seq", () => {
+  it("todo o frame leva envelope v + seq e um EstadoVivo válido", () => {
     const tick = {
       v: WS_PROTOCOL_VERSION,
       seq: 0,
       type: "tick.update",
       interviewId: UUID,
-      estado: { requisitos: {} },
+      estado: {
+        requisitos: [],
+        interessesCliente: [],
+        afirmacoesCandidato: [],
+        perguntasFeitas: [],
+        redFlags: [],
+        resumoCorrente: "ok",
+      },
     };
     expect(serverMessage.safeParse(tick).success).toBe(true);
     // sem seq → inválido
     const { seq: _omit, ...semSeq } = tick;
     expect(serverMessage.safeParse(semSeq).success).toBe(false);
+    // estado já não é um saco genérico: forma inválida é rejeitada
+    expect(serverMessage.safeParse({ ...tick, estado: { requisitos: {} } }).success).toBe(false);
   });
 
   it("suggestion.next keia o requisito por id (família F)", () => {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { lente } from "./enums";
+import { estadoVivo, suggestion } from "./frame";
 
 /**
  * Protocolo WebSocket painel↔overlay (ARQUITETURA-INTEGRACAO §2.4 + AGENTE-TOOLS-E-WS + AUTENTICACAO §4).
@@ -48,17 +48,14 @@ export const wsTickUpdate = z.object({
   ...env,
   type: z.literal("tick.update"),
   interviewId: z.uuid(),
-  // EstadoVivo — placeholder; aperta-se na fatia de AI shapes (ARQUITETURA-TEMPO-REAL §2).
-  estado: z.record(z.string(), z.unknown()),
+  estado: estadoVivo, // frame de avaliação (ARQUITETURA-TEMPO-REAL §2/§9)
 });
 
 export const wsSuggestionNext = z.object({
   ...env,
   type: z.literal("suggestion.next"),
   interviewId: z.uuid(),
-  pergunta: z.string(),
-  lente,
-  requisitoId: z.uuid().nullable(), // família F: keia por id, não texto
+  ...suggestion.shape, // pergunta + lente + requisitoId (família F: keia por id, não texto)
 });
 
 export const wsCoverageUpdate = z.object({
