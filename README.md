@@ -48,8 +48,10 @@ validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 
 ## Mapa dos documentos (42)
 
-> Além dos 42 docs de spec, há 2 **artefactos** (fora da contagem): `engagement-scope.yml`
-> (gate do Cyber Neo `--redteam`) e `PROMPT-CHATGPT-REVIEW.md` (prompt p/ revisão externa).
+> Além dos 42 docs de spec, há **artefactos** (fora da contagem): `engagement-scope.yml`
+> (gate Cyber Neo `--redteam`), `PROMPT-CHATGPT-REVIEW.md` (revisão externa),
+> **`PROMPT-FASE-3-LOOP.md`** (prompt do loop de construção nocturno) e **`BUILD-LOG.md`**
+> (diário do build — o loop preenche-o).
 
 **Visão & entrada**
 | Doc | O que é |
