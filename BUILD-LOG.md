@@ -9,6 +9,18 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~02:47] iteração 11 — `@rh/ai`: runner com fallback por slot (§5)
+
+**Feito:** `packages/ai/src/runner.ts` + refactor `registry.ts`:
+- Extraído `modelIssuesForSlot(model, slot)` (DRY entre `validateRegistry` e o runner).
+- `LlmTransport` (interface injetável), `LlmTransportError` (`transient` 429/timeout/5xx | `permanent` 4xx), `runSlot(slot, req, {registry, fallback, transport})` — tenta a lista ordenada do slot (§5), **salta modelos não-elegíveis sem os chamar** (fail-closed: nunca manda PII a provider sem ZDR, mesmo em fallback), desce em falha transitória, propaga permanente, `SlotExhaustedError` na lista esgotada.
+
+**Verde:** typecheck ✅ · **13/13 testes @rh/ai** ✅ (5 runner: primário ok; desce em 429; salta sem-ZDR sem chamar; permanente propaga; esgotada→SlotExhausted) · Biome (69 fich.) ✅. **80 testes no total.** Transporte OpenRouter real (fetch) = fatia seguinte.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~02:41] iteração 10 — `packages/ai`: registry de modelos + gate ZDR (§3/§7)
 
 **Feito:** `packages/ai` (@rh/ai, dep zod) — bootstrap + o contrato de segurança nomeado no §3:

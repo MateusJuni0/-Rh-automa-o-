@@ -57,6 +57,24 @@ export interface RegistryViolation {
 }
 
 /**
+ * Razões pelas quais um modelo (que JÁ existe no registry) NÃO é elegível para um slot.
+ * Vazio = elegível. Usado tanto pela validação de config como pelo runner (fallback fail-closed).
+ */
+export function modelIssuesForSlot(model: ModelEntry, s: Slot): ViolationReason[] {
+  const issues: ViolationReason[] = [];
+  if (!model.slots.includes(s)) {
+    issues.push("slot_nao_declarado");
+  }
+  if (!model.zdr) {
+    issues.push("sem_zdr");
+  }
+  if (!SLOT_REQUIREMENTS[s](model)) {
+    issues.push("capacidade_em_falta");
+  }
+  return issues;
+}
+
+/**
  * Valida a config de slots contra o registry. Cada slot que apontar a um modelo inexistente,
  * que não declara o slot, **sem `zdr:true`** (gate de PII), ou sem as capacidades do slot → violação.
  * Deploy só avança com zero violações.
@@ -75,14 +93,8 @@ export function validateRegistry(
       violations.push({ slot: s, modelId, reason: "modelo_inexistente" });
       continue;
     }
-    if (!model.slots.includes(s)) {
-      violations.push({ slot: s, modelId, reason: "slot_nao_declarado" });
-    }
-    if (!model.zdr) {
-      violations.push({ slot: s, modelId, reason: "sem_zdr" });
-    }
-    if (!SLOT_REQUIREMENTS[s](model)) {
-      violations.push({ slot: s, modelId, reason: "capacidade_em_falta" });
+    for (const reason of modelIssuesForSlot(model, s)) {
+      violations.push({ slot: s, modelId, reason });
     }
   }
 
