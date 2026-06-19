@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~16:50] iteração 40 — 🚧 FASE K (3/N): REST `/api/interviews/:id/join` + `/:id/report`
+
+**Feito (`apps/web`):** fecha o fluxo "durante→depois" do ciclo de entrevista (reusa K1+FASE E):
+- `lib/interviews.ts` += `joinInterview` ("vou para uma reunião": garante sala/token MOCK + transita→'live'; idempotente; 409 se já 'done'), `reportInterview` (o desktop chama ao encerrar: transita→'done' + `gerarParecer` da FASE E — funciona mesmo em entrevista órfã), `InterviewNotFoundError`.
+- Rotas dinâmicas Next 15 (`params: Promise`): `app/api/interviews/[id]/join/route.ts` (POST→200, 404/409/400) + `app/api/interviews/[id]/report/route.ts` (POST→201, 404/400).
+
+**Verde:** typecheck ✅ · `next build` ✅ (**17 rotas**, +/interviews/[id]/join +/report) · web **24 testes** (+3 c/ DB: join→live+sala, join inexistente→NotFound, report→done+parecer+idempotente mesmo órfã) · `pnpm -r test` = **203** · Biome ✅.
+
+**Self-review (fatia pequena; reusa `transitionInterview`+`gerarParecer` já testados):** mapeamento de erros correto (NotFound→404, InvalidTransition→409); isolamento por agency (getInterview/gerarParecer filtram); idempotência testada; zero `as` cego. O desktop (`endInterview`) já aponta a este `/report` (FASE J).
+
+**A fazer (FASE K):** `apps/ws` sai do stub (JWT mock + posse); resiliência pura (timeout/degradar/`interview_gap`/teto custo); reconexão WS replay (usa `readTicks`); decisão do frame da resposta do chat.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~16:38] iteração 39 — 🚧 FASE K (2/N): TickEngine→`interview_tick` (escritor único + CAS por tick_n)
 
 **Feito (`apps/web/lib/ticks.ts`):** a persistência do estado vivo (Camada B) — o **escritor único** (§11):

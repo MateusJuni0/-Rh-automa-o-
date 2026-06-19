@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, eq } from "drizzle-orm";
+import { gerarParecer } from "./parecer";
 
 type Db = DbHandle["db"];
 
@@ -135,4 +136,49 @@ export async function transitionInterview(
     throw new InvalidTransitionError(current.status, to);
   }
   return to;
+}
+
+export class InterviewNotFoundError extends Error {
+  constructor(readonly interviewId: string) {
+    super(`entrevista inexistente: ${interviewId}`);
+    this.name = "InterviewNotFoundError";
+  }
+}
+
+/**
+ * `POST /api/interviews/:id/join` — "vou para uma reunião": garante a sala/token (MOCK) e transita
+ * a entrevista para 'live'. Idempotente se já 'live'; lança `InvalidTransitionError` se já 'done'.
+ */
+export async function joinInterview(
+  db: Db,
+  agencyId: string,
+  interviewId: string,
+): Promise<CreatedInterview> {
+  const row = await getInterview(db, agencyId, interviewId);
+  if (!row) {
+    throw new InterviewNotFoundError(interviewId);
+  }
+  await transitionInterview(db, agencyId, interviewId, "live");
+  return {
+    interviewId,
+    room: row.livekitRoom ?? `mock-room-${interviewId}`,
+    token: `mock-token-${interviewId}`,
+  };
+}
+
+/**
+ * `POST /api/interviews/:id/report` — o desktop chama isto ao encerrar: transita p/ 'done' e gera o
+ * parecer no backend (FASE E `gerarParecer`). Idempotente (done→done; re-gera o parecer).
+ */
+export async function reportInterview(
+  db: Db,
+  agencyId: string,
+  interviewId: string,
+): Promise<Awaited<ReturnType<typeof gerarParecer>>> {
+  const row = await getInterview(db, agencyId, interviewId);
+  if (!row) {
+    throw new InterviewNotFoundError(interviewId);
+  }
+  await transitionInterview(db, agencyId, interviewId, "done");
+  return gerarParecer(db, agencyId, { interviewId });
 }

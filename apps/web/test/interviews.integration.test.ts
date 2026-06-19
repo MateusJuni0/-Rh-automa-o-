@@ -4,7 +4,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createInterview,
   getInterview,
+  InterviewNotFoundError,
   InvalidTransitionError,
+  joinInterview,
+  reportInterview,
   transitionInterview,
 } from "../lib/interviews";
 
@@ -55,5 +58,29 @@ describe.skipIf(!url)("integração — interviews lib (apps/web)", () => {
     await expect(transitionInterview(handle.db, AG, interviewId, "live")).rejects.toBeInstanceOf(
       InvalidTransitionError,
     );
+  });
+
+  it("joinInterview transita p/ live e devolve sala/token", async () => {
+    const { interviewId } = await createInterview(handle.db, AG, { recruiterId: REC });
+    const res = await joinInterview(handle.db, AG, interviewId);
+    expect(res.room).toContain("mock-room-");
+    expect((await getInterview(handle.db, AG, interviewId))?.status).toBe("live");
+  });
+
+  it("joinInterview falha em entrevista inexistente", async () => {
+    await expect(
+      joinInterview(handle.db, AG, "a4000000-0000-4000-8000-0000000000ee"),
+    ).rejects.toBeInstanceOf(InterviewNotFoundError);
+  });
+
+  it("reportInterview transita p/ done e gera parecer (mesmo órfã)", async () => {
+    const { interviewId } = await createInterview(handle.db, AG, { recruiterId: REC });
+    const res = await reportInterview(handle.db, AG, interviewId);
+    expect(res.reportId).not.toBe("");
+    expect(res.contentMd.length).toBeGreaterThan(0);
+    expect((await getInterview(handle.db, AG, interviewId))?.status).toBe("done");
+    // idempotente: re-gerar não rebenta
+    const again = await reportInterview(handle.db, AG, interviewId);
+    expect(again.reportId).toBe(res.reportId);
   });
 });
