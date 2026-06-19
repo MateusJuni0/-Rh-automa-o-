@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~02:41] iteração 10 — `packages/ai`: registry de modelos + gate ZDR (§3/§7)
+
+**Feito:** `packages/ai` (@rh/ai, dep zod) — bootstrap + o contrato de segurança nomeado no §3:
+- `slot` (EXTRACTOR/ARCHITECT/LIVE), `modelEntry` (id + capacidades declaradas: supportsJson/Tools/Streaming/PromptCache, maxContext, cost, **`zdr`**), `slotAssignment` (os 3 slots configurados).
+- **`validateRegistry(registry, slots)`** — devolve violações; **`assertRegistryValid`** lança (deploy fail-closed). Regras: todos os 3 slots veem PII → exigem `zdr:true` (§3/§7); capacidades por slot (LIVE=streaming+tools+json, ARCHITECT=json+tools, EXTRACTOR=json); modelo tem de existir + declarar o slot.
+
+**Verde:** typecheck ✅ · **8/8 testes** ✅ (config válida=0 violações; sem_zdr; capacidade_em_falta; modelo_inexistente; slot_nao_declarado; assert lança) · Biome (67 fich.) ✅. **75 testes no total.** Wrappers de chamada (OpenRouter) + fallback por slot (§5) ficam para fatia seguinte (precisam de chave/mock).
+
+**A fazer:** wrapper LLM com mock + fallback por slot (§5); WS replay/auth.refresh; services Python. GATED: docker-compose.dev, seeds, createDb (Docker down).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~02:35] iteração 9 — `apps/ws` servidor WS real (handshake auth)
 
 **Feito:** `apps/ws/src/server.ts` — `WsServer` (dep `ws`):
