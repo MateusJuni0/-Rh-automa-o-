@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { type RoleProfile, type Rubric, rubricCriterion } from "@rh/core";
+import {
+  type Briefing,
+  briefing,
+  type RoleProfile,
+  type Rubric,
+  roleProfile,
+  rubricCriterion,
+} from "@rh/core";
 import { z } from "zod";
 import { generate } from "../generate";
 import type { RunSlotOptions } from "../runner";
@@ -40,5 +47,61 @@ export async function buildRubric(input: RubricInput, opts: RunSlotOptions): Pro
   return {
     version: 1,
     criteria: draft.criteria.map((c) => ({ ...c, requisitoId: randomUUID() })),
+  };
+}
+
+export interface RoleProfileInput {
+  roleType: string;
+  /** Texto de pesquisa (vem da camada knowledge/search — aqui só se estrutura). */
+  pesquisa: string;
+}
+
+const ROLE_PROFILE_SYSTEM = [
+  "Estrutura o conhecimento de mercado de um role-type em Role Profile.",
+  "oQueEBom encoda SINAIS DE PROFUNDIDADE (não keywords); linguagemFilipa traduz jargão→simples.",
+  "Devolve APENAS JSON: { competencias:[{skill,nivel,obrigatorio?}], oQueEBom:{}, sinaisNivelErrado:[], linguagemFilipa:{}, perguntasChave:[], sources:[{url,acedidoEm?}] }.",
+].join("\n");
+
+/** Estrutura o resultado da pesquisa num Role Profile (CAMADA-CONHECIMENTO / P1.2). */
+export function buildRoleProfile(
+  input: RoleProfileInput,
+  opts: RunSlotOptions,
+): Promise<RoleProfile> {
+  return generate(
+    "ARCHITECT",
+    { system: ROLE_PROFILE_SYSTEM, user: JSON.stringify(input) },
+    roleProfile,
+    opts,
+  );
+}
+
+export interface BriefingInput {
+  roleProfile: RoleProfile;
+  /** Critérios da rubric com os ids canónicos — o briefing liga as perguntas a estes. */
+  rubric: Array<{ requisitoId: string; requisito: string }>;
+  ragCliente?: string[];
+}
+
+const BRIEFING_SYSTEM = [
+  "Gera o roteiro de perguntas (briefing) em 3 lentes: 'tecnica', 'cliente', 'gap'.",
+  "Para CADA pergunta dá a boaResposta esperada (do Role Profile, não genérica).",
+  "Se a pergunta visa um requisito da rubric, põe o requisitoId correspondente (dos ids dados); senão null.",
+  'Devolve APENAS JSON: { "perguntas": [ { "pergunta", "lente", "boaResposta", "requisitoId": uuid|null } ] }.',
+].join("\n");
+
+/** Gera o briefing (P1.5) e garante que cada requisitoId ∈ ids da rubric (senão null) — §16F. */
+export async function buildBriefing(input: BriefingInput, opts: RunSlotOptions): Promise<Briefing> {
+  const allowed = new Set(input.rubric.map((r) => r.requisitoId));
+  const out = await generate(
+    "ARCHITECT",
+    { system: BRIEFING_SYSTEM, user: JSON.stringify(input) },
+    briefing,
+    opts,
+  );
+  return {
+    perguntas: out.perguntas.map((q) => ({
+      ...q,
+      requisitoId: q.requisitoId !== null && allowed.has(q.requisitoId) ? q.requisitoId : null,
+    })),
   };
 }

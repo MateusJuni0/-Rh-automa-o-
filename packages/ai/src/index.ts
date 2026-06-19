@@ -2,6 +2,7 @@
 // + generate (output validado por Zod, base das features) + mock de teste + features (cérebro).
 export * from "./features/extract";
 export * from "./features/judge";
+export * from "./features/live";
 export * from "./features/prepare";
 export * from "./generate";
 export * from "./mock";

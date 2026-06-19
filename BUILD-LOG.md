@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:41] iteração 19 — ✅ FASE A COMPLETA (cérebro): RoleProfile + briefing + tick ao vivo
+
+**Feito:**
+- `@rh/core/src/briefing.ts` — shape `briefing` (P1.5: perguntas[{pergunta, lente, boaResposta, requisitoId}]).
+- `@rh/ai/src/features/prepare.ts` — `buildRoleProfile` (P1.2 → `RoleProfile`) + `buildBriefing` (P1.5 → `Briefing`; §16F: requisitoId fora da rubric → anulado).
+- `@rh/ai/src/features/live.ts` — **`runTick`** (P2.3 → `EstadoVivo`+`Suggestion`; **fail-safe §16F**: descarta requisitos com id fora da rubric, anula suggestion.requisitoId desconhecido).
+
+**🧠 Cérebro completo** (7 features, slot certo por tarefa): `extractJobRequirements`/`extractCandidateProfile` (EXTRACTOR) · `buildRoleProfile`/`buildRubric`/`matchCandidate`/`buildBriefing`/`buildParecer` (ARCHITECT) · `runTick` (LIVE). Todas via `generate` (Zod-validado, 1 retry) + `runSlot` (ZDR+fallback) + **mock** (zero chamadas pagas).
+
+**Verde:** typecheck ✅ · core **37/37** · ai **34/34** · Biome (91 fich.) ✅.
+
+**Próximo (Fase B):** `packages/knowledge` — search Exa/Brave (interface+mock) + **RAG pgvector** (embedder mock) contra a DB viva.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:36] iteração 18 — Fase A: extração (vaga + CV)
 
 **Feito:**
