@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:32] iteração 17 — Fase A (cérebro): features `matchCandidate`/`buildParecer`/`buildRubric`
+
+**Feito:** primeiras features de IA em `@rh/ai/src/features/` (slot ARCHITECT, via `generate` + mock):
+- `judge.ts` — `matchCandidate` (P1.4 → `MatchResult`) + `buildParecer` (P3.1 → `Parecer`, prompt encoda as regras anti-achismo do RELATORIO §3: critério não-coberto assinala-se, inconsistências c/ dois lados sem acusar, credenciais por documento, não-capturado).
+- `prepare.ts` — `buildRubric` (P1.5 → `Rubric`): **padrão §16F** — o LLM gera o CONTEÚDO dos critérios (schema = `rubricCriterion.omit({requisitoId})`), o **SISTEMA atribui o `requisitoId` canónico** (`randomUUID`), nunca o modelo.
+- `@rh/core` adicionado como dep de `@rh/ai`.
+
+**Verde:** typecheck ✅ · **28/28 testes @rh/ai** (+5: match válido/inválido, parecer, rubric id-atribuído/ids-distintos) · Biome (82 fich.) ✅. Tudo com transporte **mock** — zero chamadas pagas.
+
+**A fazer (resto da Fase A):** `extractJobRequirements`/`extractCandidateProfile` (precisam de shapes novos em `@rh/core`), `buildRoleProfile` (estrutura), `buildBriefing` (+shape briefing), `runTick` (EstadoVivo, keia por requisitoId).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:25] iteração 16 — `@rh/ai` `generate` + infra mock (base das features, SEM chaves)
 
 **Novo mandato (Mateus):** construir o **produto** o mais completo possível **sem chaves** (mocks atrás de interfaces); deixar `KEYS-TODO.md` para o wiring final. ZERO chamadas pagas. Fluxo decidido: A `@rh/ai` features → B `knowledge` (RAG) → C `apps/web` "Antes" → D realtime "Durante" → E "Depois" → F ingestão → G services → H auth.
