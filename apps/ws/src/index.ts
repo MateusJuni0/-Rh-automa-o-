@@ -1,3 +1,3 @@
-// @rh/ws — servidor WebSocket do painel/overlay. Por agora: o codec de frames (consome @rh/core).
-// O wiring do socket real (ws + upgrade HTTP + auth.refresh) entra numa fatia seguinte.
+// @rh/ws — servidor WebSocket do painel/overlay: codec de frames + servidor (handshake auth).
 export * from "./codec";
+export * from "./server";

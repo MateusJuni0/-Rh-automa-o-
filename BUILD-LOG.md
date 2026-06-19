@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~02:35] iteração 9 — `apps/ws` servidor WS real (handshake auth)
+
+**Feito:** `apps/ws/src/server.ts` — `WsServer` (dep `ws`):
+- 1ª mensagem TEM de ser `auth` (JWT no corpo, AUTENTICACAO §4); senão → close **4401**.
+- `WsServerHooks.authenticate(token, interviewId)` **injetável** (stub em dev; real = Supabase + `can_join_interview`). Recusa → close **4403** (sem posse) / **4401**.
+- Sucesso → cria `FrameSession`, envia `auth.ok` (seq 0) + `interview.active` (seq 1, arranca o overlay). `ack` do cliente guarda `lastSeq`. Bind a `127.0.0.1` (não exposto). `WsServer.start({port:0})` p/ porto efémero + `.close()`.
+
+**Verde:** typecheck ✅ · **11/11 testes** ✅ (4 novos de integração com **socket localhost real** via Vitest: auth.ok+interview.active com seq 0/1; close 4403 token recusado; close 4401 1ª-msg-não-auth; close 4401 token vazio) · Biome (61 fich.) ✅. **67 testes no total.** Sem Docker (sockets localhost). auth.refresh + replay-on-reconnect (last_seq) ficam para fatia seguinte.
+
+**A fazer:** replay/auth.refresh no WS; `services/agent`+`services/face` (estrutura Python). GATED: docker-compose.dev, seeds, createDb (Docker down).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~02:30] iteração 8 — `apps/ws` codec de frames (fiabilidade seq/ack)
 
 **Feito:** `apps/ws` (@rh/ws) — codec de frames WebSocket que consome `@rh/core`:

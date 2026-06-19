@@ -12,10 +12,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@rh/core": "workspace:*"
+    "@rh/core": "workspace:*",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
+    "@types/ws": "^8.18.1",
     "typescript": "5.9.3",
     "vitest": "^4.1.9"
   }
