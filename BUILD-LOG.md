@@ -9,6 +9,28 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~15:35] iteração 35 — 🚧 FASE J (parte 1/3): núcleo puro do `apps/desktop` (hardening R2 + cérebro do overlay + feed mock)
+
+> A FASE J (Electron + overlay HUD) é XL → partida em sub-fatias demonstráveis. Esta entrega o **núcleo puro e testável sem GUI** (não dá para abrir uma janela Electron neste ambiente headless; a verificação honesta é ao nível da lógica). As partes 2/3 (HUD React + Electron main/preload/tray) seguem.
+
+**Feito (`apps/desktop`, novo package `desktop`):**
+- **Hardening R2 (BLOQUEADOR de segurança — CONTRATO):**
+  - `shared/windowConfig.ts` `buildOverlayWindowOptions()` — opções da `BrowserWindow` do overlay: `frame:false`/`transparent`/`alwaysOnTop`/`skipTaskbar`/`focusable:false` + `webPreferences` **sandbox:true · contextIsolation:true · nodeIntegration:false · webSecurity:true**. `ALWAYS_ON_TOP_LEVEL="screen-saver"`.
+  - `shared/csp.ts` `buildCsp()` — CSP estrita (`script-src 'self'`, `object-src/base-uri/frame-ancestors 'none'`, `img-src 'self'`); `connect-src` recebe a origem do WS por config.
+  - `shared/navigation.ts` `isAllowedNavigationUrl()` — allowlist de navegação; nega `blob:`/`data:`/`javascript:` e credenciais embebidas; só `file:`+origens permitidas.
+- **Cérebro do overlay (puro, imutável):** `overlay/reducer.ts` `hudReduce(state, action)` — aplica o protocolo WS **congelado** de `@rh/core` (auth.ok/tick.update/suggestion.next/coverage.update/alert/interview.active/job.*) ao `HudState` (semáforo 4 estados, sugestão+porquê, fila, rede de segurança, gravação 🔴). **Auto-dismiss** da sugestão coberta + promoção da fila; **proteção de replay** (descarta seq repetido/fora de ordem); `derivePorque` deriva do estado real (não inventa). `overlay/types.ts`.
+- **Feed mock (`overlay/mockFeed.ts`):** `goldenInterviewFrames()`/`goldenInterviewScript()` — "entrevista golden" guionada, frames validados por `serverMessage`. Substituível pelo WS real só com a chave.
+
+**Verde:** typecheck ✅ · **desktop 24 testes** (hardening R2 asserido; reducer; **feed golden → reducer prova sugestão→semáforo→auto-dismiss→rede de segurança**) · `pnpm -r test` = **173** · Biome limpo.
+
+**Code-review** (code-reviewer): **0 CRITICAL, 3 HIGH — todos corrigidos:** (1) `isAllowedNavigationUrl` bypass via `blob:`/`data:` → guard + testes; (2) `applyCoverage` copy-then-mutate → reescrito 100% imutável; (3) `seq` fora de ordem revertia estado → drop de frames antigos (replay). +MEDIUM `img-src data:` removido; +test fidelity (`serverMessage.parse` no helper).
+
+**A fazer (fechar J):** parte 2 — HUD React (pílula↔expandido, reusa `@rh/ui`: sugestão+porquê, fila, `StateLight`, cronómetro, 🔴, Usei/Pular/★, chat ao vivo, rede de segurança) + player do feed mock. parte 3 — Electron `main`/`preload`(contextBridge)/`tray` + `electron-builder` Win/macOS + smoke do hardening. Depois K/L/M/N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~15:10] iteração 34 — ✅ FASE I COMPLETA: design system Apollo + `@rh/ui` + shell web dark
 
 > **Nova branch de build:** `phase3/product` (criada de `phase3/build`; merge via PR no fim — o `phase3/build` não foi tocado). Início do build do PRODUTO (Fases I–N do `PLANO-CONCLUSAO-V1.md`).
