@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:27] iteração 26 — ✅ FASE C COMPLETA: UI mínima ("Antes" navegável)
+
+**Feito:** `apps/web` UI: `layout.tsx` (nav Vera/Clientes/Vagas/Candidatos) + `page.tsx` (home cards) + `components/CreateForm.tsx` (client, genérico text/textarea/**select**, POST→`router.refresh`) + páginas server-component `/clientes` `/vagas` `/candidatos` (listam da DB + form criar; vagas tem select de clientes). Tailwind v4 sóbrio.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**9 rotas**: 3 pages + 6 API, todas dynamic) · Biome ✅.
+
+🎉 **FASE C ("Antes") COMPLETA com ecrãs** — a Filipa pode (no demo, sem chave): criar cliente → abrir vaga (extrai requisitos) → adicionar candidato (extrai CV) → /api/match → /api/briefing, tudo contra a DB real.
+
+**A fazer:** D realtime (copiloto ao vivo) · E parecer/memória · F ingestão · G services · H auth.
+
+**Commit:** (UI=2cdc7e6; este log no próximo)
+
+---
+
 ## [2026-06-19 ~12:21] iteração 25 — Fase C5: briefing (rubric→briefing) — fluxo "Antes" completo (lógica)
 
 **Feito:** `apps/web/lib/briefing.ts` `generateBriefing` — `buildRubric` (atribui requisitoId §16F) → **persiste `rubric`** (job_id UNIQUE) → `buildBriefing` ligado aos ids da rubric → devolve {rubric, briefing}. Route `app/api/briefing/route.ts` POST {jobId}.
