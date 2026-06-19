@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:49] iteração 20 — Fase B: `@rh/knowledge` RAG pgvector (embedder mock)
+
+**Feito:** novo package `@rh/knowledge` (dep @rh/core+@rh/db+drizzle):
+- `embedder.ts` — interface `Embedder` + **`mockEmbedder`** determinístico (LCG semeado pelo hash do texto → vetor dim 1536 normalizado; mesmo texto→mesmo vetor). Real (OpenAI) entra com a chave.
+- `rag.ts` — `indexCandidateFact` (embed+insert em `candidate_memory_embedding`) + `searchCandidateFacts` (cosine `<=>` na DB, **sempre filtrado por agency_id+candidate_id** §15.1).
+
+**Verde:** typecheck ✅ · sem DB 3 pass + 2 skip · **com DB real: 5/5** ✅ (indexa→recupera por cosine dist≈0; isolamento por agency confirmado) · Biome (99 fich.) ✅. RAG real a correr contra pgvector.
+
+**A fazer (resto Fase B):** `SearchProvider` (Exa/Brave) interface+mock → alimenta `buildRoleProfile`; `source_doc` ciclo de pesquisa; RAG de cliente/recruiter (mesma mecânica).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:41] iteração 19 — ✅ FASE A COMPLETA (cérebro): RoleProfile + briefing + tick ao vivo
 
 **Feito:**
