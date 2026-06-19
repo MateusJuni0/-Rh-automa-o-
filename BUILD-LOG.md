@@ -9,6 +9,33 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+# ═══ RESUMO FINAL — VERA v1 FASE 3 (build C–N) ═══
+**[2026-06-19] Fases I→N TODAS VERDES. Produto demonstrável ponta-a-ponta SÓ COM MOCKS. Branch `phase3/product`.**
+
+## O que foi construído (por fase)
+- **C–H** (fundação, pré-resumo): monorepo pnpm + Biome/TS strict + Vitest; `@rh/db` (35 tabelas, migração 0000) + seed IRIS; `@rh/core` (enums, envelope, protocolo WS congelado, frames); intake (classifica→confirma→cria) + bots stub; FastAPI esqueleto (contrato); auth/sessão shim.
+- **I** — `@rh/ui` (tokens "Apollo" + Card/Button/Chip/Tabs/Field/EmptyState/StateLight…) + shell web (NavBar, layout dark) + Telas 1–5/7 (pipeline, vaga, triagem, candidato, briefing, parecer).
+- **J** — Desktop Electron endurecido (sandbox/contextIsolation/CSP/nav-allowlist/IPC-validation) + HUD overlay (semáforo/sugestão/chat) + reducer + mockFeed.
+- **K** — `apps/realtime` (engine de ticks, frames, source) + libs web de entrevista (createInterview/transition CAS/join/report) + ticks (persistTick CAS) + resiliência (gaps, teto de custo, degrade).
+- **L** — `@rh/ai` (match mock determinístico) + triagem/pipeline/briefing/parecer (libs + Telas) — vaga→triagem→briefing→parecer→submitted.
+- **M** — Assistente (mock): tool registry + **porta de confirmação** (idempotência) → chat backend (planner+run, porta ENFORÇADA no route) → **Tela 9** (chat+artefactos+cartão de confirmação) → **memória durável** (recruiter_memory_fact) → **proativo** (prep/no-show/garantia/lacuna) → **Tela 10 comparar** (matriz).
+- **N** — Login mock (Filipa+Inês, face/liveness desenhada) + middleware gate + **isolamento agency_id auditado** + 401 uniforme + **validador de upload** (magic-bytes/anti-traversal) + storage stub (signed URLs) + **purga RGPD em cascata** + **Tela 12 Definições** + **endurecimento DB** (CHECK+índices+UNIQUE, migração 0001) + **entrypoint ws** (arrancável) + **CI gates**.
+
+## Testes (291, todos verdes) · `pnpm test` com DB local
+web 91 · desktop 44 · ai 35 · core 37 · db 28 · ws 32 · ui 16 · knowledge 5 · realtime 2 · intake-bots 1. typecheck ✅ · build ✅ · Biome ✅.
+
+## DEMONSTRÁVEL ponta-a-ponta SÓ COM MOCKS
+- **Desktop**: overlay pinta o feed mock → sugestão + semáforo + chat.
+- **Entrevista golden** (mock) → ticks → parecer.
+- **Web**: vaga → triagem → briefing → parecer → submitted (sem ecrã branco; 3 estados UX).
+- **Assistente**: Q&A · comparação · "envia email"→cartão de confirmação (só envia após OK) · facto→memória · proativo dispara prep.
+- **Login mock** entra (Filipa+Inês) · Definições · servidor WS arranca (`tsx apps/ws/src/main.ts`).
+
+## Handover (NÃO feito neste loop — é do Mateus)
+👉 **`KEYS-TODO.md`** — todas as chaves/serviços a ligar (Supabase auth+storage, STT/Soniox, LiveKit, biometria, LLM lince-brain) + a secção Ω/fast-follow dos itens deferidos. **Merge do PR só após o handover de chaves.**
+
+---
+
 ## [2026-06-19 ~22:44] iteração 62 — 🚧 FASE N (8/N): seed Inês (já feito) + CI gates → FASE N FECHADA
 
 **Seed Inês:** já estava completo — `packages/db/src/seed.ts` insere Filipa **e Inês** (`recruiterInes` = `22222222-…-002`, = `INES_RECRUITER_ID` em `auth.ts`) com `onConflictDoNothing`; **confirmado vivo no dev-DB** (`name: "Inês"`). O login da Inês funciona 100%. Sem alteração de código.
