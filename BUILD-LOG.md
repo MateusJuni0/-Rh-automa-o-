@@ -9,6 +9,25 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~15:50] iteração 36 — 🚧 FASE J (parte 2/3): HUD em React (overlay Tela 6) reutilizando `@rh/ui`
+
+**Feito (`apps/desktop/src/renderer/hud/`):** o overlay que pinta o `HudState` (cérebro da parte 1) — **dark Apollo, reutiliza `@rh/ui`**:
+- `Pill.tsx` — pílula compacta (~300×44, arrastável): estado num relance; sugestão em 1 linha (borda **teal só quando há sugestão**), contagem coberto/total, 🔴; clique→expande.
+- `ExpandedPanel.tsx` — painel ~360px (Tela 6 completa): header 🔴+contexto+**cronómetro mm:ss**; PRÓXIMA PERGUNTA grande + 💡porquê + **Usei/Pular/★** (`@rh/ui` Button); fila; **ESTADO DOS REQUISITOS via `StateLight`** (semáforo 4 estados de `@rh/ui`); **rede de segurança** (alerts âmbar); **"silêncio é feature"** (sem sugestão → estado calmo, não inventa pergunta); chat ao vivo.
+- `ChatPanel.tsx` — chat ao vivo (input + histórico por prop). `Hud.tsx` (raiz pílula↔painel). `format.ts` (formatElapsed/coverageCount). `player.ts` (`playScript` reproduz `goldenInterviewScript` com **scheduler injetável** + cancelador). `hud.css` (estilos do overlay + drag regions `-webkit-app-region`).
+
+**Verde:** typecheck ✅ · **desktop 33 testes** (+9: pílula/painel render via `renderToStaticMarkup`, semáforo, chat, calmo; `playScript` com agendador falso; cronómetro) · `pnpm -r test` = **182** · Biome ✅ (a11y incl.).
+
+**Code-review** (code-reviewer): **0 CRITICAL, 1 HIGH corrigido** (key da fila `pergunta`→`requisitoId`+composto); +MEDIUM (focus-ring WCAG no input do chat; cast do scheduler documentado); +LOW (emojis decorativos 💡/✅/⚠ com `aria-hidden`).
+
+**⚠️ Nota de contrato (para FASE K):** o protocolo WS congelado de `@rh/core` **não tem frame de resposta do chat ao vivo**. Decisão: o chat é **local** (histórico por prop, fora do reducer — não inventei frame WS). Na FASE K, ao tirar o `ws` do stub, decidir como a resposta do chat volta (provável: reusar `alert` OU adicionar um frame — decisão a registar, não inventar agora).
+
+**A fazer (fechar J):** parte 3/3 — Electron `main.ts` (BrowserWindow via `buildOverlayWindowOptions` + setAlwaysOnTop screen-saver + multi-monitor persist + setWindowOpenHandler deny + will-navigate allowlist + CSP nos headers da sessão), `preload.ts` (contextBridge mínimo), `tray.ts`, `index.html`+`main.tsx` (monta o `Hud` + corre o feed mock), `electron-builder.yml` (Win NSIS + macOS DMG), smoke do hardening. safeStorage (login bypass mock). encerramento→POST /api/interviews/:id/report.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~15:35] iteração 35 — 🚧 FASE J (parte 1/3): núcleo puro do `apps/desktop` (hardening R2 + cérebro do overlay + feed mock)
 
 > A FASE J (Electron + overlay HUD) é XL → partida em sub-fatias demonstráveis. Esta entrega o **núcleo puro e testável sem GUI** (não dá para abrir uma janela Electron neste ambiente headless; a verificação honesta é ao nível da lógica). As partes 2/3 (HUD React + Electron main/preload/tray) seguem.
