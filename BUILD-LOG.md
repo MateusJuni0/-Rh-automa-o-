@@ -9,6 +9,25 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~19:50] iteração 53 — 🚧 FASE M (5/N): PROATIVO (mock) — aceitação "proativo→prep" ✅ · NÚCLEO DE M COMPLETO
+
+**Feito (`apps/web`):**
+- `lib/assistant/proactive.ts` (NOVO, PURO) — `buildProactiveCards(events, now)` → cartões prep/no-show/garantia/lacuna. `now` é PARÂMETRO (sem Date.now() escondido). Janelas: prep <60min, garantia <7d (urgente <2d). Ordena por severidade (urgente 1.º).
+- `lib/assistant/proactive-feed.ts` (NOVO) — `mockProactiveEvents(now)` (feed determinístico, 4 eventos demo).
+- `app/page.tsx` (Home/Tela 1) — secção **"Sugestões proativas"** (server-render dos 4 cartões; vazio = "Tudo em dia ✓").
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **62 testes** (+7: cada regra dispara o cartão certo; fora-da-janela→nada; ordenação; feed mock→4 cartões) · `pnpm -r` (desktop 44 + realtime 2 + web 62) · Biome ✅.
+
+**Self-review (lógica pura + UI informativa):** `buildProactiveCards` puro/determinístico (`now` param, 7 testes); Home chama `Date.now()` 1× no render (app code); sem escrita DB / chamada externa → sem review dedicado.
+
+### ✅ NÚCLEO DE M (assistente+proativo) COMPLETO — aceitação cumprida:
+Q&A/comparação ✅ · envia→cartão de confirmação (só envia após OK) ✅ · facto novo→memória ✅ · **proativo dispara prep** ✅.
+**Telas 8 (Q&A por entidade) / 10 (comparar matriz) / 11 (onboarding)** = polimento opcional (NÃO no critério do STOP FINAL). **Próximo grande bloco: FASE N** (login mock — é o que falta para o demo ponta-a-ponta — + segurança/RGPD/endurecimento DB). Faço Tela 10 (comparar, mais valor de demo) e depois arranco a FASE N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~19:34] iteração 52 — 🚧 FASE M (4/N): memória durável do recrutador (`recruiter_memory_fact`) — aceitação "facto novo→memória" ✅
 
 **Feito (`apps/web/lib/assistant`):**
