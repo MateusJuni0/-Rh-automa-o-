@@ -1,4 +1,7 @@
 import { type SQL, sql } from "drizzle-orm";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
 
 /**
  * Isolamento de tenant na conexão (GUC) — contrato OBRIGATÓRIO (FASE-3-ARRANQUE §3,
@@ -37,4 +40,20 @@ export async function withAgencySession<Db extends TransactionalDb, T>(
     await tx.execute(setAgencyIdSql(agencyId));
     return fn(tx);
   });
+}
+
+/** Cliente Drizzle vivo (com schema tipado) + fecho do pool. */
+export interface DbHandle {
+  db: NodePgDatabase<typeof schema>;
+  close(): Promise<void>;
+}
+
+/**
+ * Cria o cliente Drizzle real sobre um pool `pg`. A `connectionString` vem do `DATABASE_URL`
+ * (NUNCA hardcoded). O `db` satisfaz `TransactionalDb` → usar SEMPRE com `withAgencySession`.
+ */
+export function createDb(connectionString: string): DbHandle {
+  const pool = new Pool({ connectionString });
+  const db = drizzle(pool, { schema });
+  return { db, close: () => pool.end() };
 }

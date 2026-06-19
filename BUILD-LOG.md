@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:00] iteração 13 — Docker resolvido → migração APLICADA a Postgres real + `createDb`
+
+**🔓 Spike #1 do RESUMO RESOLVIDO.** O Mateus corrigiu o Docker (crash-loop do Gordon AI: `EnableDockerAI=true` + socket `dockerInference` reparse-point WSL2 stale → matar procs + `wsl --shutdown` + renomear `run/` + `EnableDockerAI:false`; ver `feedback_docker_ai_socket_bug_2026_06_19`).
+
+**Feito:**
+- **Migração aplicada a um Postgres real** (pgvector pg16, container próprio isolado `vera-postgres` :5433) via **`drizzle-kit migrate`** (caminho da spec). **Verificação exaustiva no DB real:** 35 tabelas ✅ · `vector` 0.8.2 ✅ · `interview` só com `process_id` (sem job_id/candidate_id, nullable=órfã) ✅ · `candidate_memory_embedding.embedding`=`vector(1536)` ✅ · **58 FKs** ✅ · 4 CHECK nomeados (B/16C/L) ✅ · 4 índices ivfflat ✅ · journal drizzle=1 ✅. O schema deixou de ser só introspeção — **aplica-se limpo a Postgres real**.
+- **`createDb(connectionString)`** em `@rh/db` (driver `pg` + Drizzle, `DATABASE_URL` nunca hardcoded) → `DbHandle{db,close}`; `db` satisfaz `TransactionalDb` (usar com `withAgencySession`).
+- **Teste de integração GATED** (`TEST_DATABASE_URL`): sem DB salta (CI verde); com DB **prova o GUC end-to-end** — `withAgencySession` fixa `app.agency_id` na transação e o valor é vazio fora dela (local-à-transação).
+
+**Verde:** typecheck ✅ · sem DB: 25 pass + 2 skip · **com DB real: 27/27** ✅ · Biome ✅. Container reprodutível: `docker run -d --name vera-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=vera_dev -p 127.0.0.1:5433:5432 pgvector/pgvector:pg16` → `drizzle-kit migrate`.
+
+**Próximo (agora desbloqueado):** `seeds` (IRIS+Filipa/Inês+cliente/vaga/candidato) · `docker-compose.dev.yml` (Docker funciona → já validável) · carris knowledge/realtime.
+
+**Commit:** <hash>
+
+---
+
 ## 🏁 RESUMO DA NOITE (STOP FINAL — 2026-06-19 ~02:50, ~1h20 de loop)
 
 **12 commits em `phase3/build` (pushed), monorepo todo verde — 86 testes, typecheck/Biome limpos.** Camada de contratos + fundação testável da P0.1 **completa**.
