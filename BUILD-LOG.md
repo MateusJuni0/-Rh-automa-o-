@@ -9,6 +9,24 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~18:28] iteração 48 — ✅ FASE L COMPLETA: Tela 1 (dashboard/kanban) — painel Antes→Depois v1 inteiro
+
+**Feito (`apps/web`):** o "QG" da recrutadora — fecha a FASE L:
+- `lib/pipeline.ts` **`listPipeline`** (processos com nome do candidato + título da vaga via innerJoin; isolado por agency; exclui apagados).
+- `app/page.tsx` (home = Tela 1) — **kanban** por etapa (`processStage`: Novos→Triados→Entrevistar→Enviados→Entrevista cliente→Oferta→Colocado), cartões (`@rh/ui` Card/Chip) com candidato+vaga + link p/ detalhe; `EmptyState` com CTA se vazio.
+
+**Verde:** typecheck ✅ · `next build` ✅ (home dinâmica) · web **34 testes** (+2: listPipeline join+isolamento) · `pnpm -r test` verde · Biome ✅.
+
+🎉 **FASE L ("Painel web Antes→Depois") COMPLETA** — as 6 telas v1 (1 dashboard, 2 vaga, 3 triagem, 4 candidato, 5 briefing, 7 parecer) navegáveis em dark Apollo, reusando `@rh/ui`, com 3 estados UX. **Aceitação L cumprida:** percorrer dashboard→vaga→triagem→candidato→briefing→▶iniciar→parecer SEM ecrã branco. (Telas 8–12 = FASE M/N.)
+
+**Self-review (fatia UI+lib):** join + isolamento por agency testados; kanban agrupa pelo enum canónico; EmptyState; zero `as` cego.
+
+**A fazer:** **FASE M** — Assistente ("ChatGPT dela") + proativo (mock): motor ReAct em `services/agent` (esqueleto FastAPI já existe), porta de confirmação, tool registry+executor MOCK, memória, onboarding, proativo, UI Telas 8/9/10/11. Depois FASE N (auth/biometria/definições/segurança/RGPD + endurecimento DB deferido).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~18:16] iteração 47 — 🚧 FASE L (5/N): Tela 7 (parecer — abas Interna/Cliente + export md)
 
 **Feito (`apps/web`):** o "Depois" do ciclo (reusa `gerarParecer` da FASE E):
