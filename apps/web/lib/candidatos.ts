@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { extractCandidateProfile } from "@rh/ai";
-import type { CandidateProfile } from "@rh/core";
+import { type CandidateProfile, candidateProfile } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, desc, eq, isNull } from "drizzle-orm";
@@ -60,4 +60,51 @@ export function listCandidatos(db: Db, agencyId: string): Promise<CandidatoRow[]
     .from(schema.candidate)
     .where(and(eq(schema.candidate.agencyId, agencyId), isNull(schema.candidate.deletedAt)))
     .orderBy(desc(schema.candidate.createdAt));
+}
+
+export interface CandidatoDetail {
+  id: string;
+  name: string;
+  linkedinUrl: string | null;
+  profile: CandidateProfile;
+}
+
+const EMPTY_PROFILE: CandidateProfile = {
+  skillsDeclaradas: [],
+  experienciaAnos: null,
+  gapsCv: [],
+  resumo: "",
+};
+
+/** Detalhe do candidato (Tela 4): valida o perfil JSONB na fronteira (não confia no shape da DB). */
+export async function getCandidato(
+  db: Db,
+  agencyId: string,
+  id: string,
+): Promise<CandidatoDetail | null> {
+  const [row] = await db
+    .select({
+      id: schema.candidate.id,
+      name: schema.candidate.name,
+      linkedinUrl: schema.candidate.linkedinUrl,
+      profile: schema.candidate.profile,
+    })
+    .from(schema.candidate)
+    .where(
+      and(
+        eq(schema.candidate.id, id),
+        eq(schema.candidate.agencyId, agencyId),
+        isNull(schema.candidate.deletedAt),
+      ),
+    );
+  if (!row) {
+    return null;
+  }
+  const parsed = candidateProfile.safeParse(row.profile);
+  return {
+    id: row.id,
+    name: row.name,
+    linkedinUrl: row.linkedinUrl,
+    profile: parsed.success ? parsed.data : EMPTY_PROFILE,
+  };
 }

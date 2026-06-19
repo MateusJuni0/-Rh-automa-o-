@@ -1,4 +1,5 @@
 import { EmptyState } from "@rh/ui";
+import Link from "next/link";
 import { CreateForm } from "@/components/CreateForm";
 import { listCandidatos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
@@ -27,8 +28,13 @@ export default async function CandidatosPage() {
       ) : (
         <ul className="divide-y divide-line-subtle rounded-card border border-line bg-card">
           {rows.map((r) => (
-            <li key={r.id} className="px-4 py-3 text-ink text-sm">
-              {r.name}
+            <li key={r.id}>
+              <Link
+                href={`/candidatos/${r.id}`}
+                className="block px-4 py-3 text-ink text-sm hover:bg-raised"
+              >
+                {r.name}
+              </Link>
             </li>
           ))}
         </ul>

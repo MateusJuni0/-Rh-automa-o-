@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~17:52] iteração 45 — 🚧 FASE L (3/N): Tela 4 (candidato detalhe)
+
+**Feito (`apps/web`):** o CV destrinchado:
+- `lib/candidatos.ts` += **`getCandidato`** (valida `candidateProfile` na fronteira com `safeParse`; isolado por agency; null fora).
+- `app/candidatos/[id]/page.tsx` — Tela 4: resumo, **skills declaradas como chips** (`@rh/ui`), experiência-anos, lacunas do CV; `notFound`. Lista `/candidatos` liga a cada detalhe (a triagem 👁 já apontava para cá).
+
+**Verde:** typecheck ✅ · `next build` ✅ (**20 rotas**, +/candidatos/[id]) · web **32 testes** (+1: getCandidato detalhe+isolamento) · `pnpm -r test` verde · Biome ✅.
+
+**Self-review (fatia UI+lib, espelha getVaga/Tela 2):** validação na fronteira, isolamento agency, notFound, zero `as` cego. **O 👁 da triagem agora resolve** (vaga→triagem→candidato ligado).
+
+**A fazer (FASE L):** Tela 5 briefing UI (3 lentes + ▶ Iniciar→POST /api/interviews) · Tela 7 parecer (abas) · Tela 1 dashboard/kanban.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~17:40] iteração 44 — 🚧 FASE L (2/N): Tela 3 (triagem — ranking por match%)
 
 **Feito (`apps/web`):** a triagem (resolve a dor #1: 40 CVs em minutos):
