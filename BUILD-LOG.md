@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~13:06] iteração 32 — ✅ FASE G COMPLETA: serviços Python (FastAPI esqueleto)
+
+**Feito:** dois serviços FastAPI (só contrato; lógica depois):
+- `services/agent/` (assistente proativo): `/health` ✅ + `POST /proactive/suggest` e `/sourcing/search` em **501** (GOOGLE_OAUTH/APIFY, KEYS-TODO). pydantic models + README com contrato HTTP.
+- `services/face/` (biometria): `/health` ✅ + `POST /enroll` e `/verify` em **501**. **TODO duro: flash liveness é trabalho real; clonar do cmtec-face só após resolver o bug de enroll** (MEMORY `project_cmtec_face_enroll_bug`). README + contrato.
+
+**Verde:** **pytest agent 3/3 + face 3/3** (Python 3.14, FastAPI 0.136) · **ruff limpo**. Zero segredos, zero chamadas externas.
+
+🎉 **FASE G COMPLETA.** **Falta só H (auth).**
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~13:00] iteração 31 — ✅ FASE F COMPLETA: bots stub (`@rh/intake-bots`)
 
 **Feito:** novo package `@rh/intake-bots`:
