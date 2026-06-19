@@ -9,6 +9,18 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:11] iteração 23 — Fase C3: candidatos (CRUD + extração de CV)
+
+**Feito:** `apps/web/lib/candidatos.ts` (`createCandidato` extrai perfil do CV via `extractCandidateProfile`+aiOptions, `nameNormalized` p/ dedup §12, insere `candidate`; `listCandidatos`) + `app/api/candidatos/route.ts` (GET+POST).
+
+**Verde:** typecheck ✅ · `next build` ✅ (4 rotas: clientes/vagas/candidatos/health) · **5/5 testes web** com DB · Biome (112 fich.) ✅.
+
+**A fazer (resto C):** match (`process` candidate×job + `matchCandidate`) + briefing (buildRubric→buildBriefing) routes/lib; **UI mínima** (pages).
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:05] iteração 22 — Fase C2: `aiOptions` (real-ou-stub) + vagas com extração
 
 **Feito:**
