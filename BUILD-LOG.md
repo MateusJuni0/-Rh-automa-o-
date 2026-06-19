@@ -9,6 +9,26 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~19:14] iteração 51 — 🚧 FASE M (3/N): UI Tela 9 — assistente (chat + artefactos + cartão de confirmação)
+
+**Feito (`apps/web`):** a Tela 9 demonstrável:
+- `app/assistente/page.tsx` (server) + `AssistantChat.tsx` (client) — **chat** (histórico + input → POST `/api/assistant/chat`), **rail** com "Contexto ativo" (placeholder) + **Artefactos** (resultRef das ações done), e a porta na UI.
+- `ConfirmationCard.tsx` (puro) — para ações `pending_confirm`: [Confirmar]→POST `{confirmActionId}` / [Cancelar] (local, deixa a ação pendente, nunca executa). A UI **nunca** envia `confirmed` → não fura a porta.
+- `efeito-label.ts` — `efeitoVerbo` (linguagem humana do efeito), pura/testável.
+- Link "Assistente" na navbar. 3 estados UX (vazio com sugestões, a-pensar, erro).
+
+**Verde:** typecheck ✅ · `next build` ✅ (**24 rotas**, +`/assistente` ~105 kB) · web **52 testes** (+3 `efeitoVerbo`) · `pnpm -r test` (desktop 44 + realtime 2 + web 52) · Biome ✅.
+
+**Self-review (UI, §7):** confirm POSTa `{confirmActionId}` → o backend (`confirmAction`, revisto em M2) é que ENFORÇA a porta; a UI nunca seta `confirmed`. Cancelar = local, não executa. Estado imutável (spread). Espelha o padrão `StartInterviewButton`. → sem review dedicado.
+
+**⚠️ NOTA p/ próximas fatias de UI (Telas 8/10/11):** render-tests de `.tsx` **não correm** no `apps/web` (tsconfig Next = `jsx: preserve` → o bundler de teste não transforma JSX em node; `esbuild.tsconfigRaw`/`jsx:automatic` NÃO resolveram). **Padrão:** extrair a lógica pura para um `.ts` (sem JSX) e testar ESSE; o JSX é auto-revisto. (No `@rh/ui` os render-tests funcionam porque o tsconfig é `react-jsx`.)
+
+**A fazer (FASE M):** Tela 8 Q&A por entidade; Tela 10 comparar (matriz); Tela 11 onboarding; memória durável; proativo.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~18:58] iteração 50 — 🚧 FASE M (2/N): chat do assistente — planner + orquestrador + route (ENFORÇA a porta)
 
 **Feito (`apps/web`):** o backend do chat (a porta é ENFORÇADA aqui):
