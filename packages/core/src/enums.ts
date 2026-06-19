@@ -102,3 +102,11 @@ export type AsyncJobStatus = z.infer<typeof asyncJobStatus>;
 /** Veredito do cliente (calibração). */
 export const verdictValue = z.enum(["approved", "rejected", "pending"]);
 export type VerdictValue = z.infer<typeof verdictValue>;
+
+/** Origem de uma linha da rubric (CAMADA-CONHECIMENTO — de onde a linha veio). */
+export const criterioOrigem = z.enum(["role_profile", "client_criteria", "ambos"]);
+export type CriterioOrigem = z.infer<typeof criterioOrigem>;
+
+/** Tipo de critério: competência (prova-se por profundidade) vs credencial (por documento, §11). */
+export const criterioTipo = z.enum(["competencia", "credencial"]);
+export type CriterioTipo = z.infer<typeof criterioTipo>;
