@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
   { href: "/", label: "Início" },
@@ -18,7 +18,14 @@ function isActive(pathname: string, href: string): boolean {
 /** Navbar dark + contexto ativo + breadcrumb derivado do path. */
 export function NavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const current = [...NAV].reverse().find((n) => isActive(pathname, n.href));
+
+  async function logout(): Promise<void> {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <header className="border-line border-b bg-raised">
@@ -43,6 +50,13 @@ export function NavBar() {
             </Link>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={logout}
+          className="ml-auto text-ink-3 text-sm hover:text-ink"
+        >
+          Sair
+        </button>
       </nav>
       {current && current.href !== "/" ? (
         <div className="mx-auto max-w-5xl px-6 pb-2">

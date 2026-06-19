@@ -9,6 +9,27 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~20:24] iteração 55 — 🚧 FASE N (1/N): LOGIN MOCK + gate de sessão — "login mock entra" ✅
+
+**Feito (`apps/web`):** o gate final do demo:
+- `lib/auth.ts` (NOVO) — `verifyMockLogin({email,password})`: SEED_USERS IRIS (filipa@/ines@iris.tech → MESMA agência) — email seed + password não-vazia → utilizador; **zero segredos** (password real = Supabase Ω).
+- `app/api/auth/login/route.ts` (POST, Zod) — set cookies `vera_agency`/`vera_recruiter` (httpOnly, sameSite lax, secure-em-prod, **maxAge 8h**) **do utilizador resolvido no servidor** (o input só escolhe ENTRE os 2 seed; não forja agency/recruiter). `logout` (delete cookies).
+- `app/login/page.tsx` — login dark: **face mock** (SVG + pulse de liveness, SEM webcam) + email/senha; 3 estados UX.
+- `middleware.ts` — sem sessão → /login; com sessão em /login → /. **Gate de páginas** (matcher exclui /api+estáticos; 401 das /api = N2).
+- `NavBar` — botão "Sair" (logout).
+
+**Verde:** typecheck ✅ · `next build` ✅ (+`/login`, `/api/auth/login|logout`, **Middleware**) · web **68 testes** (+4 `verifyMockLogin`) · `pnpm -r` (desktop 44 + realtime 2 + web 68) · Biome ✅.
+
+**Security-review** (dedicado): **0 CRITICAL, 0 HIGH** · confirmado: identidade NÃO-forjável pelo input, ZERO segredos, middleware sem open-redirect/loop, Zod suficiente. **MEDIUM corrigido** (maxAge 8h → a sessão expira). LOW: hint de demo no DOM ("filipa@…") = **intencional** (aid do mock; remover no handover de auth real); CSRF logout coberto por sameSite=lax.
+
+**Notas:** (1) Inês (`INES_RECRUITER_ID`) precisa de uma linha `recruiter` no seed p/ login dela funcionar a 100% — **TODO seed** (o demo usa a Filipa, seeded). (2) cookie-trust (sessão sem assinatura) = limitação v1 aceite → auth real Supabase = Ω.
+
+**Próximo (FASE N):** agency_id audit (`withAgencySession` em TODAS as rotas) + **401 uniforme das /api** (N2); upload validator + URLs assinadas + purga RGPD; Tela 12 Definições + biometria (mock); endurecimento DB; ws entrypoint/refresh/replay.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~20:06] iteração 54 — 🚧 FASE M (6/N): Tela 10 — comparar (matriz requisitos×candidatos)
 
 **Feito (`apps/web`):**
