@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~22:44] iteração 62 — 🚧 FASE N (8/N): seed Inês (já feito) + CI gates → FASE N FECHADA
+
+**Seed Inês:** já estava completo — `packages/db/src/seed.ts` insere Filipa **e Inês** (`recruiterInes` = `22222222-…-002`, = `INES_RECRUITER_ID` em `auth.ts`) com `onConflictDoNothing`; **confirmado vivo no dev-DB** (`name: "Inês"`). O login da Inês funciona 100%. Sem alteração de código.
+
+**Feito — CI gates:** `.github/workflows/ci.yml` (push + PR) — checkout + pnpm@10.32.1 (auto do packageManager) + Node 24 + `install --frozen-lockfile` → `pnpm typecheck` · `pnpm lint` (Biome) · `pnpm build` · `pnpm test`. **ZERO segredos** no workflow.
+
+**SIMULA/CORRE (como o CI, SEM DB):** `pnpm test` sem `TEST_DATABASE_URL` → **50 passados / 41 saltados** no web (DB-integração saltam via `describe.skipIf`, NÃO falham) + ai 35 + ws 32 + desktop 44 + realtime 2 + knowledge 3/2-skip + ui 16. `pnpm typecheck` exit 0 · `pnpm lint` limpo (276 ficheiros) · `pnpm build` ✓ · YAML válido (sem tabs).
+
+**Self-review (CI/seed):** sem segredos no YAML; testes DB saltam (não falham); Inês já seedada. → sem review dedicado.
+
+### ✅ FASE N FECHADA (menos os Ω deferidos documentados). FASES I→N TODAS VERDES.
+**PRÓXIMA ITERAÇÃO = STOP FINAL:** RESUMO no topo + `KEYS-TODO.md` + memória + PR + PushNotification.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~22:24] iteração 61 — 🚧 FASE N (7/N): entrypoint do servidor WS (apps/ws arrancável)
 
 **Contexto:** `apps/ws` já tinha o `WsServer` (handshake auth, close 4401/4403, `FrameSession`), `createWsAuthenticate` (JWT HS256 real + posse), jwt/codec + **testes do handshake** (server.test.ts). Faltava SÓ o entrypoint executável.
