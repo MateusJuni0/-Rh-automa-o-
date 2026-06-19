@@ -9,6 +9,25 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~20:42] iteração 56 — 🚧 FASE N (2/N): auditoria de isolamento agency_id + 401 uniforme das /api
+
+**Auditoria (a):** as **17 rotas** `app/api/**/route.ts` obtêm `agencyId`/`recruiterId` SÓ via `getSession()` — **nenhuma** os aceita do body/query (confirmado por grep + security-review). Isolamento por agência: ✅ sem desvios.
+
+**Feito (b) — 401 uniforme centralizado:**
+- `lib/api.ts` (NOVO) — `sessionFromCookies(get)` puro/edge-safe (exige `vera_agency`+`vera_recruiter`; senão null).
+- `middleware.ts` — gate ÚNICO: `/api` sem sessão → **401 JSON** (envelope @rh/core inline) exceto `isPublicApi` (== `/api/health` OU == `/api/auth/login`); páginas → /login; matcher passa a incluir /api.
+- `lib/session.ts` — `getSession` reusa `sessionFromCookies` + fallback DEV (guardado: em produção sem sessão → erro, não silencia como Filipa).
+
+**Verde:** typecheck ✅ · `next build` ✅ (Middleware) · web **72 testes** (+4 `sessionFromCookies`) · `pnpm -r` (desktop 44 + realtime 2 + web 72) · Biome ✅.
+
+**Security-review** (dedicado): **0 CRITICAL/HIGH** · confirmado sem bypass (`/api/authxyz` não fura), envelope 401 correto, edge-safe, 17 rotas protegidas, sem server-actions, redirect sem open-redirect. **2 MEDIUM corrigidos:** (1) fallback DEV agora lança em produção; (2) `/api/auth/logout` deixa de ser público (evita forced-logout — exige sessão). LOW matcher `_next/*` = sem impacto (App Router).
+
+**Próximo (FASE N):** validador de upload + URLs assinadas (stub) + purga RGPD em cascata; Tela 12 Definições + biometria (mock); endurecimento DB (CHECK + índices + UNIQUE); entrypoint ws + refresh/replay; seed Inês.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~20:24] iteração 55 — 🚧 FASE N (1/N): LOGIN MOCK + gate de sessão — "login mock entra" ✅
 
 **Feito (`apps/web`):** o gate final do demo:
