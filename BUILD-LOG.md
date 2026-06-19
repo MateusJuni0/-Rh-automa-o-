@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:32] iteração 27 — Fase D: copiloto ao vivo (`@rh/realtime` TickEngine)
+
+**Feito:** novo package `@rh/realtime` (dep @rh/core+@rh/ai+@rh/ws):
+- `source.ts` — `TranscriptSource` interface + `createManualTranscriptSource` (push manual; real = LiveKit+Soniox c/ chave; diarização Soniox = trabalho NOVO, stub).
+- `engine.ts` — **`TickEngine`**: acumula janela (cap `maxWindow`), dispara um tick a cada `windowSize` falas do candidato → `runTick` (mock) → EstadoVivo+sugestão via `onTick`; mantém `estadoAnterior`. `attach(source)`.
+- `frames.ts` — `tickToFramePayloads` → `tick.update`+`suggestion.next` (o `apps/ws` injeta v+seq).
+
+**Verde:** typecheck ✅ · **2/2 testes** (tick dispara no Nº de falas + produz EstadoVivo; frames com seq via FrameSession) · Biome ✅. Tudo mock — zero custo.
+
+**A fazer:** E parecer/export/RAG/calibração · F ingestão · G services Python · H auth. (Falta wiring real do servidor realtime — só com LiveKit/Soniox chave.)
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:27] iteração 26 — ✅ FASE C COMPLETA: UI mínima ("Antes" navegável)
 
 **Feito:** `apps/web` UI: `layout.tsx` (nav Vera/Clientes/Vagas/Candidatos) + `page.tsx` (home cards) + `components/CreateForm.tsx` (client, genérico text/textarea/**select**, POST→`router.refresh`) + páginas server-component `/clientes` `/vagas` `/candidatos` (listam da DB + form criar; vagas tem select de clientes). Tailwind v4 sóbrio.
