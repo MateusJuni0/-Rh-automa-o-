@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { extractJobRequirements } from "@rh/ai";
-import type { JobRequirements } from "@rh/core";
+import { type JobRequirements, jobRequirements } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, desc, eq, isNull } from "drizzle-orm";
@@ -65,4 +65,47 @@ export function listVagas(db: Db, agencyId: string): Promise<VagaRow[]> {
     .from(schema.job)
     .where(and(eq(schema.job.agencyId, agencyId), isNull(schema.job.deletedAt)))
     .orderBy(desc(schema.job.createdAt));
+}
+
+export interface VagaDetail {
+  id: string;
+  title: string;
+  roleTypeSlug: string;
+  clientName: string | null;
+  requirements: JobRequirements;
+}
+
+const EMPTY_REQUIREMENTS: JobRequirements = {
+  roleType: "",
+  nivel: "",
+  skills: { must: [], nice: [] },
+  contexto: "",
+};
+
+/** Detalhe da vaga (Tela 2): valida os requisitos JSONB na fronteira (não confia no shape da DB). */
+export async function getVaga(db: Db, agencyId: string, id: string): Promise<VagaDetail | null> {
+  const [row] = await db
+    .select({
+      id: schema.job.id,
+      title: schema.job.title,
+      roleTypeSlug: schema.job.roleTypeSlug,
+      requirements: schema.job.requirements,
+      clientName: schema.client.name,
+    })
+    .from(schema.job)
+    .leftJoin(schema.client, eq(schema.client.id, schema.job.clientId))
+    .where(
+      and(eq(schema.job.id, id), eq(schema.job.agencyId, agencyId), isNull(schema.job.deletedAt)),
+    );
+  if (!row) {
+    return null;
+  }
+  const parsed = jobRequirements.safeParse(row.requirements);
+  return {
+    id: row.id,
+    title: row.title,
+    roleTypeSlug: row.roleTypeSlug,
+    clientName: row.clientName,
+    requirements: parsed.success ? parsed.data : EMPTY_REQUIREMENTS,
+  };
 }

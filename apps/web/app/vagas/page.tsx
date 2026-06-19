@@ -1,4 +1,5 @@
 import { Chip, EmptyState } from "@rh/ui";
+import Link from "next/link";
 import { CreateForm } from "@/components/CreateForm";
 import { listClientes } from "@/lib/clientes";
 import { getDb } from "@/lib/db";
@@ -38,9 +39,14 @@ export default async function VagasPage() {
       ) : (
         <ul className="divide-y divide-line-subtle rounded-card border border-line bg-card">
           {vagas.map((v) => (
-            <li key={v.id} className="flex items-center justify-between px-4 py-3 text-ink text-sm">
-              <span>{v.title}</span>
-              <Chip tone="muted">{v.roleTypeSlug}</Chip>
+            <li key={v.id}>
+              <Link
+                href={`/vagas/${v.id}`}
+                className="flex items-center justify-between px-4 py-3 text-ink text-sm hover:bg-raised"
+              >
+                <span>{v.title}</span>
+                <Chip tone="muted">{v.roleTypeSlug}</Chip>
+              </Link>
             </li>
           ))}
         </ul>

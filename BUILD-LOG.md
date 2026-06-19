@@ -9,6 +9,31 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~17:26] iteração 43 — ✅ FASE K COMPLETA (v1) + 🚧 FASE L (1/N): Tela 2 (vaga detalhe)
+
+**🎉 FASE K ("durante") COMPLETA para v1** — o pipeline ao vivo funciona ponta-a-ponta com fonte MOCK:
+ciclo de vida (K1) · escritor único + CAS de ticks (K2) · REST join/report (K3) · **ws com JWT+posse** (K4) · **resiliência** gap/teto-custo/timeout (K5). Aceitação provada ao nível de lógica/integração+socket.
+
+**Duas decisões registadas (não-código):**
+1. **Frame do chat ao vivo:** v1 = resposta **MOCK local** (já no desktop J2/J3, fora do reducer/WS). O frame real `chat.answer` é uma **extensão versionada do protocolo `@rh/core` na FASE Ω** — **NÃO reusar `alert`** (semântica distinta). O protocolo congelado fica intacto agora.
+2. **WS replay-on-reconnect: DEFERIDO p/ FASE Ω** (não é gold-plating do v1). Razão: o `seq` é por-ligação (reinicia na reconexão) e o protocolo congelado **não tem** frame `snapshot.request` do cliente → um replay limpo exige uma extensão do protocolo (snapshot.request + seq do tick-stream). Além disso o **demo v1 usa o feed MOCK** (o desktop não abre ws real). Construir agora seria especular sobre um caminho não-exercido. Entra com o ws real + Supabase Auth (refresh JWT silencioso) na FASE Ω.
+
+---
+
+**FASE L (1/N) — Tela 2 (Vaga: requisitos):** primeira tela do painel "Antes→Depois", reusando `@rh/ui`:
+- `lib/vagas.ts` += **`getVaga`** (detalhe + nome do cliente via leftJoin; **valida os requisitos JSONB na fronteira** com `jobRequirements.safeParse` — não confia no shape da DB, sem `as` cego).
+- `app/vagas/[id]/page.tsx` — Tela 2: must-have (chips `strong`) / nice-to-have (chips `muted`) + contexto; `notFound()` para o estado não-encontrado; dark Apollo. A lista `/vagas` liga a cada detalhe.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**18 rotas**, +/vagas/[id]) · web **29 testes** (+1: getVaga detalhe+isolamento) · `pnpm -r test` verde · Biome ✅.
+
+**Self-review (fatia pequena de UI):** validação na fronteira (safeParse), isolamento por agency, `notFound` cobre o estado vazio, zero `as` cego. 
+
+**A fazer (FASE L):** Tela 3 triagem (ranking match% + chips + ✓/✗/👁) · Tela 4 candidato detalhe · Tela 5 briefing UI · Tela 7 parecer (abas Interna/Cliente) · Tela 1 dashboard/kanban. Uma tela de cada vez.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~17:14] iteração 42 — 🚧 FASE K (5/N): resiliência PURA (gap/teto-custo/timeout)
 
 **Feito (`apps/web/lib/resilience.ts`):** a degradação graciosa (§0: nenhuma falha encerra a sessão):
