@@ -1,0 +1,8 @@
+// @rh/core — contratos partilhados (Zod + tipos). Importado por todas as apps/packages.
+// "Constrói contra o contrato; nunca inventes uma junção." (ARQUITETURA-INTEGRACAO §6)
+export * from "./enums";
+export * from "./envelope";
+export * from "./idempotency";
+export * from "./pagination";
+export * from "./skill";
+export * from "./ws";
