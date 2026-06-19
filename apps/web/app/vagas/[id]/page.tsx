@@ -54,6 +54,12 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
           {vaga.clientName ?? "—"} · {vaga.roleTypeSlug}
           {nivel ? ` · ${nivel}` : ""}
         </p>
+        <Link
+          href={`/vagas/${vaga.id}/triagem`}
+          className="mt-2 inline-block text-accent-ink text-sm hover:underline"
+        >
+          ▶ Ver triagem de candidatos
+        </Link>
       </div>
       <Card title="Requisitos (extraídos pela Vera)">
         <div className="flex flex-col gap-4">

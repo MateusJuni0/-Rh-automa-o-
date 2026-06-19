@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~17:40] iteração 44 — 🚧 FASE L (2/N): Tela 3 (triagem — ranking por match%)
+
+**Feito (`apps/web`):** a triagem (resolve a dor #1: 40 CVs em minutos):
+- `lib/triagem.ts` **`triageVaga`** — lista candidatos da agência + ranking por **match%**; v1 = **mock determinístico** (score do hash de `candidatoId+roleType`, 40–95% → ranking demo-able sem chave) + **cobertura** dos must declarados (skills do perfil vs requisitos). Valida o perfil JSONB na fronteira (`candidateProfile.safeParse`); read-only; isolado por agency. (Match real por candidato + cache = FASE Ω.)
+- `app/vagas/[id]/triagem/page.tsx` — barra+match%, **chips cobertos (strong)/faltantes (muted)**, 1-linha resumo, 👁 ver perfil (→ `/candidatos/[id]`, Tela 4); `EmptyState` se sem candidatos. Link "▶ Ver triagem" na Tela 2.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**19 rotas**, +/vagas/[id]/triagem) · web **31 testes** (+2: ranking ordenado + cobertura dos must; vaga inexistente→[]) · `pnpm -r test` verde · Biome ✅.
+
+**Self-review (fatia UI+lib):** validação na fronteira; isolamento por agency; mock determinístico documentado; zero `as` cego. **Nota:** ao testar, apanhei dados-cruft pré-existentes na dev-DB (prefixo a7 de sessão anterior) → o teste passou a **IDs aleatórios por execução** (zero colisão). `triageVaga` é read-only (não criou nada).
+
+**A fazer (FASE L):** Tela 4 candidato detalhe (`/candidatos/[id]`) · Tela 5 briefing UI · Tela 7 parecer (abas) · Tela 1 dashboard/kanban.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~17:26] iteração 43 — ✅ FASE K COMPLETA (v1) + 🚧 FASE L (1/N): Tela 2 (vaga detalhe)
 
 **🎉 FASE K ("durante") COMPLETA para v1** — o pipeline ao vivo funciona ponta-a-ponta com fonte MOCK:
