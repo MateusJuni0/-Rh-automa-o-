@@ -9,6 +9,28 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~16:10] iteração 37 — ✅ FASE J COMPLETA (parte 3/3): casca Electron + hardening + distribuição
+
+**Feito (`apps/desktop`):** a casca Electron que monta o HUD e o endurece (hardening R2):
+- **`src/main/main.ts`** — entry: cria a `BrowserWindow` (via `buildOverlayWindowOptions` — sandbox/contextIsolation/nodeIntegration:false/webSecurity), `setAlwaysOnTop('screen-saver')`, `setVisibleOnAllWorkspaces`, **multi-monitor** (restaura/persiste posição por `display.id`), `setWindowOpenHandler`→deny, **`will-navigate`+`will-redirect`**→allowlist, **`app.enableSandbox()`** global, **`setPermissionRequestHandler`** nega mic/câmara/geo (v1 não capta áudio), CSP via `onHeadersReceived`, `openExternal` só http(s); IPC `vera:action`/`vera:end` validam **sender (file:)** + **payload Zod**. URLs públicas por env.
+- **`src/main/security.ts`** (puro) `navigationDecision`/`withCspHeader`; **`src/main/windowState.ts`** (puro) `pickWindowPosition` (clamp/fallback) + read/write JSON.
+- **`src/preload/preload.ts`** — `contextBridge` mínimo (`sendAction`/`onFrame`); **`src/shared/action.ts`** (Zod `veraAction`). **`src/main/tray.ts`**.
+- **`src/renderer/index.html`** (CSP `<meta>` estrita) + **`src/renderer/main.tsx`** (monta o `Hud`, corre `playScript(goldenInterviewScript)`→reducer, cronómetro `Date.now`, chat-resposta MOCK local). **`electron-builder.yml`** (Win NSIS + macOS DMG; signing = handover). `globals.d.ts` (`*.css`).
+
+**Verde:** typecheck ✅ (contra os tipos do `electron` — binário NÃO descarregado, `ELECTRON_SKIP_BINARY_DOWNLOAD=1`) · **desktop 44 testes** (hardening/nav/CSP, multi-monitor, schema IPC + render/reducer/player) · `pnpm -r test` = **193** · Biome ✅.
+
+**Security-review** (security-reviewer): 2 CRITICAL + 5 HIGH **todos corrigidos** — `will-redirect` em falta (C1); `javascript:` negado estruturalmente (C2); `app.enableSandbox()` (H4); `setPermissionRequestHandler` nega mic/câmara (H5); IPC valida sender+payload Zod (H2/H3); `openExternal` só http(s) (M5); CSP `file:` documentada (H1). Checklist R2 = PASS.
+
+> ⚠️ **Verificação honesta (headless):** não dá para LANÇAR o GUI Electron neste ambiente — provei tudo por **typecheck (tipos electron) + 44 testes (lógica pura/render/smoke do hardening)**. **Run local do Mateus (handover):** descarregar o binário electron (`pnpm rebuild electron` ou re-instalar sem `ELECTRON_SKIP_BINARY_DOWNLOAD`) + bundler do renderer/main (ex.: vite/esbuild → `dist-build/`) + `electron .`. Packaging assinado (Authenticode EV / Developer ID + notarização) = handover.
+
+🎉 **FASE J ("a ESTRELA") COMPLETA** — overlay desktop demonstrável (lógica/render/hardening provados; feed MOCK).
+
+**A fazer:** **FASE K** — orquestração da entrevista ao vivo (TickEngine↔TranscriptSource→interview_tick; ws sai do stub: JWT mock+posse; REST /api/interviews+/join+/:id/report; resiliência; reconexão WS replay; decidir o frame da resposta do chat ao vivo). Depois L/M/N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~15:50] iteração 36 — 🚧 FASE J (parte 2/3): HUD em React (overlay Tela 6) reutilizando `@rh/ui`
 
 **Feito (`apps/desktop/src/renderer/hud/`):** o overlay que pinta o `HudState` (cérebro da parte 1) — **dark Apollo, reutiliza `@rh/ui`**:

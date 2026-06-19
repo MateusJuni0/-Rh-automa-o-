@@ -4,11 +4,13 @@
  * Defesa contra navegação induzida (XSS → exfiltração/RCE).
  */
 
+/** Esquemas SEMPRE negados (carregam conteúdo arbitrário do renderer, mesmo com origem de confiança). */
+const DENIED_PROTOCOLS: ReadonlySet<string> = new Set(["blob:", "data:", "javascript:"]);
+
 /**
  * True se o renderer pode navegar para `rawUrl` dadas as origens permitidas.
- * `file:` (o app empacotado) é permitido; usar só em `will-navigate` (não em open-window
- * para ficheiros locais arbitrários). `blob:`/`data:`/`javascript:` são sempre negados
- * (podem carregar conteúdo arbitrário construído no renderer, mesmo com origem de confiança).
+ * `file:` (o app empacotado) é permitido; usar só em `will-navigate`/`will-redirect` (não em
+ * open-window para ficheiros locais arbitrários). Os esquemas em `DENIED_PROTOCOLS` são negados.
  */
 export function isAllowedNavigationUrl(rawUrl: string, allowedOrigins: readonly string[]): boolean {
   let url: URL;
@@ -17,7 +19,7 @@ export function isAllowedNavigationUrl(rawUrl: string, allowedOrigins: readonly 
   } catch {
     return false;
   }
-  if (url.protocol === "blob:" || url.protocol === "data:") {
+  if (DENIED_PROTOCOLS.has(url.protocol)) {
     return false;
   }
   if (url.protocol === "file:") {

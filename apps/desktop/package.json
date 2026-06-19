@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "dist-build/main/main.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -10,7 +11,8 @@
   },
   "dependencies": {
     "@rh/core": "workspace:*",
-    "@rh/ui": "workspace:*"
+    "@rh/ui": "workspace:*",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^18 || ^19",
@@ -20,6 +22,7 @@
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "electron": "^33.4.11",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "typescript": "5.9.3",
