@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:05] iteração 14 — `seeds` (IRIS + Filipa/Inês + cliente/vaga/candidato)
+
+**Feito:** `packages/db/src/seed.ts` + CLI `seed.cli.ts` (`db:seed` script, dep `tsx`):
+- Seed de dev (INFRA-E-MIGRACAO §8): agência **IRIS Tech** + recrutadoras **Filipa/Inês** + 1 cliente (TechCorp demo) + 1 vaga (Dev Frontend React Pleno) + 1 candidato (João) + o **`process`** que liga candidato↔vaga. UUIDs fixos + `onConflictDoNothing` → **idempotente**.
+- `DATABASE_URL` nunca hardcoded (CLI lê de env; lança se faltar).
+
+**Verde:** typecheck ✅ · sem DB 25 pass + 3 skip · **com DB real: 28/28** ✅ (teste de integração corre o seed 2× e confirma agência/recrutadoras/process + FK integrity) · CLI `db:seed` corre OK · DB confere `agency=1, recruiter=2, process=1` após 3 execuções (idempotência provada) · Biome ✅.
+
+**Reproduzir o dev DB:** `docker run -d --name vera-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=vera_dev -p 127.0.0.1:5433:5432 pgvector/pgvector:pg16` → `DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm --filter @rh/db db:migrate && pnpm --filter @rh/db db:seed`.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:00] iteração 13 — Docker resolvido → migração APLICADA a Postgres real + `createDb`
 
 **🔓 Spike #1 do RESUMO RESOLVIDO.** O Mateus corrigiu o Docker (crash-loop do Gordon AI: `EnableDockerAI=true` + socket `dockerInference` reparse-point WSL2 stale → matar procs + `wsl --shutdown` + renomear `run/` + `EnableDockerAI:false`; ver `feedback_docker_ai_socket_bug_2026_06_19`).

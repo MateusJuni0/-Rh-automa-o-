@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/seed.cli.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
@@ -22,6 +23,7 @@
     "@types/node": "^25.9.3",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
+    "tsx": "^4.22.4",
     "typescript": "5.9.3",
     "vitest": "^4.1.9"
   }
