@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~18:42] iteração 49 — 🚧 FASE M (1/N): núcleo seguro do assistente — tool registry + porta de confirmação
+
+**Feito (`apps/web/lib/assistant/`):** o núcleo seguro do assistente ("ChatGPT dela"), puro e mock:
+- `tools.ts` — **tool registry** (13 ferramentas com efeito canónico `@rh/core` + executor MOCK puro): `leitura` (search_knowledge/comparar_candidatos/ler_agenda/pesquisa_web/gen_spreadsheet/gerar_cv/rascunhar_email — gerar≠guardar), `gravar` (save_artifact/save_memory_fact/sourcing), `enviar_fora` (enviar_email/marcar_agenda/por_bot_na_call). `getTool`.
+- `gate.ts` — **porta de confirmação** `requiresConfirmation(efeito)` (= gravar|enviar_fora) + `executeToolCall(call, store)`: tool desconhecida→não executa; gravar/enviar_fora sem `confirmed`→`needs_confirm`; **idempotência** (gravar+enviar_fora) com a chave marcada **só após sucesso**; executor que lança→`failed` (chave não queimada→retry possível). `IdempotencyStore` (interface; mock=Set; real=DB).
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **42 testes** (+8: efeitos, registry, porta sem/com confirmação, idempotência gravar+enviar_fora) · Biome ✅.
+
+**Code-review** (code-reviewer, fatia sensível): **0 CRITICAL, 3 HIGH — todos corrigidos:** (1) idempotência alargada a `gravar` (criar 2× não duplica); (2) a chave só é "queimada" APÓS o executor ter sucesso (+arm `failed` no union — evita perder um envio num throw); (3) `confirmed` com aviso ⚠️ de fronteira de confiança (SÓ a route/UI a põe true, nunca o JSON do modelo). +MEDIUM (comentário do sourcing). Confirmado: **sem bypass** da porta (o efeito vem do registry, não do input); mapeamento dos 13 efeitos correto. Deferido (Ω): `argsSchema` Zod por tool (validação no adapter).
+
+**A fazer (FASE M):** assistant chat (mock ReAct intenção→resposta+tool-calls) + `/api/assistant/chat` (ENFORÇA a porta: `confirmed` só vem da UI) + UI Tela 9 (chat+artefactos+cartão de confirmação); Telas 8/10/11; memória durável; proativo.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~18:28] iteração 48 — ✅ FASE L COMPLETA: Tela 1 (dashboard/kanban) — painel Antes→Depois v1 inteiro
 
 **Feito (`apps/web`):** o "QG" da recrutadora — fecha a FASE L:
