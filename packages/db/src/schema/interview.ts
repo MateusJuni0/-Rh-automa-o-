@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -7,6 +9,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { agencyId, createdAt, pk } from "./_shared";
@@ -30,7 +33,15 @@ export const interview = pgTable(
     livekitRoom: text("livekit_room"),
     distilledAt: timestamp("distilled_at", { withTimezone: true }), // §16H set por distill_final=done
   },
-  (t) => [index("interview_status_idx").on(t.status)],
+  (t) => [
+    index("interview_agency_status_idx").on(t.agencyId, t.status),
+    index("interview_agency_recruiter_idx").on(t.agencyId, t.recruiterId),
+    check("interview_status_chk", sql`${t.status} IN ('scheduled','live','done','unstructured')`),
+    check(
+      "interview_capture_type_chk",
+      sql`${t.captureType} IS NULL OR ${t.captureType} IN ('bot_online','local_mic','none')`,
+    ),
+  ],
 );
 
 /** Tick do estado vivo (Camada B). Custo/tokens/modelo/latência = §14 (dashboard + teto). */
@@ -54,7 +65,7 @@ export const interviewTick = pgTable(
     derivedFromChunkIds: jsonb("derived_from_chunk_ids"), // §16A re-atribuição/auditoria
     createdAt: createdAt(),
   },
-  (t) => [index("interview_tick_interview_idx").on(t.interviewId, t.tickN)],
+  (t) => [uniqueIndex("interview_tick_interview_tickn_uidx").on(t.interviewId, t.tickN)],
 );
 
 /** Intervalo SEM captura — torna o buraco PROVÁVEL no parecer (§14, BLOQUEADOR). */

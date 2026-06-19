@@ -9,6 +9,25 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~22:04] iteração 60 — 🚧 FASE N (6/N): endurecimento DB (constraints + índices) — migração 0001
+
+**Feito (`packages/db`):** migração `0001_confused_weapon_omega.sql`:
+- **CHECK** `interview_status_chk` (status ∈ scheduled|live|done|unstructured) + `interview_capture_type_chk` (capture_type NULL ou ∈ bot_online|local_mic|none).
+- **Índices compostos**: `interview_agency_status_idx (agency_id,status)` + `interview_agency_recruiter_idx (agency_id,recruiter_id)` (substituem o `interview_status_idx` solto).
+- **UNIQUE(interview_id, tick_n)** em `interview_tick` (`interview_tick_interview_tickn_uidx`, substitui o índice não-único).
+
+**Processo seguro (sem forçar):** gerei → INSPECIONEI o SQL → **verifiquei o dev-DB** (243 ticks/388 entrevistas: **0 duplicados, 0 status inválidos, 0 capture_type inválidos**) → apliquei (`db:migrate`) → confirmei.
+
+**Verde:** typecheck (db+web) ✅ · web **91 testes** (+3: 2.º tick mesmo n→erro; status inválido→erro; capture_type inválido→erro / NULL ok) — provam as constraints VIVAS · `pnpm -r` (knowledge 5 + desktop 44 + realtime 2 + web 91) · Biome ✅.
+
+**Self-review (migração):** additiva (índices+checks, sem drop de coluna/dados); 0 violações verificadas ANTES de aplicar; valores das constraints batem com o schema/código; provada viva por testes. → sem review dedicado.
+
+**Próximo (FASE N):** entrypoint ws + refresh JWT + WS replay/snapshot + chat.answer frame; (tabelas biometria + colunas RGPD candidate_id = outra migração, opcional); seed Inês; CI gates. **Falta ws para fechar a FASE N.**
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~21:44] iteração 59 — 🚧 FASE N (5/N): Tela 12 — Definições (UI)
 
 **Feito (`apps/web`):**
