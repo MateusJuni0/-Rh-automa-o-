@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~11:25] iteração 16 — `@rh/ai` `generate` + infra mock (base das features, SEM chaves)
+
+**Novo mandato (Mateus):** construir o **produto** o mais completo possível **sem chaves** (mocks atrás de interfaces); deixar `KEYS-TODO.md` para o wiring final. ZERO chamadas pagas. Fluxo decidido: A `@rh/ai` features → B `knowledge` (RAG) → C `apps/web` "Antes" → D realtime "Durante" → E "Depois" → F ingestão → G services → H auth.
+
+**Feito:**
+- **`KEYS-TODO.md`** (raiz) — tabela de cada serviço externo, env var, onde liga, o que ativa, estado.
+- **`generate(slot, prompt, schema, opts)`** em `@rh/ai` — chama o slot, extrai JSON (tolera ```fences```), valida contra Zod, **1 retry** com erro realimentado; reusa `runSlot` (ZDR + fallback). É a base de TODAS as features de IA.
+- **`mock.ts`** — `MOCK_MODEL`/`mockRegistry`/`mockFallback`/`mockTransport`/`mockRunSlotOptions`: corre o cérebro sem chaves; troca-se pelo transporte real quando o `OPENROUTER_API_KEY` chegar.
+
+**Verde:** typecheck ✅ · **23/23 testes @rh/ai** (+4 generate: válido à 1ª, fences, retry, GenerateParseError) · Biome ✅.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~11:06] iteração 15 — `docker-compose.dev.yml` (dev DB reprodutível) ✅ desbloqueado
 
 **Feito:** `docker-compose.dev.yml` (infra mínima: **Postgres pgvector + Redis**, volumes nomeados, bind 127.0.0.1, password via env com default de dev, healthcheck). Substitui o container ad-hoc por uma stack reprodutível (`name: vera`). Os serviços de app entram aqui à medida que ficam prontos.
