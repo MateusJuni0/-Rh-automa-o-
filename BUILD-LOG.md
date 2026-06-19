@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:56] iteração 30 — Fase F1+F2: ingestão (intake classifica→confirma→cria)
+
+**Feito:**
+- `@rh/ai/features/intake.ts` `classifyIntake(text, opts)` → `intakeEnvelope` (alvo/intenção/conteúdo; slot EXTRACTOR; alvoId sempre null = não adivinha). Exportado no index.
+- `apps/web/lib/intake.ts`: `ingerirMensagem` (classifica stub → grava `intake_message` por confirmar, `confirmed_at` NULL) + `confirmarIntake` ('pergunta' não grava; 'novo_candidato' cria candidato via `createCandidato`; outras intenções marcam confirmado sem criar até resolver alvo de sessão; idempotente).
+- Routes `/api/intake` (POST ingest) + `/api/intake/confirm` (POST).
+
+**Verde:** typecheck (ai+web) ✅ · `next build` ✅ (**14 rotas API**) · `@rh/ai` **35 testes** (+intake) · web **14 testes** (+intake integração: ingere→confirma cria candidato, idempotente) · Biome ✅.
+
+**A fazer (fechar F):** F3 bots stub (`MessageSource` Telegram/WhatsApp mock → `ingerirMensagem`). Depois G services Python, H auth.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:48] iteração 29 — ✅ FASE E COMPLETA: destilar→RAG + calibração
 
 **Feito:** `apps/web`:
