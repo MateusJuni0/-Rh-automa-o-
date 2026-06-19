@@ -9,6 +9,22 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~16:25] iteração 38 — 🚧 FASE K (1/N): REST `POST /api/interviews` + ciclo de vida (CAS)
+
+**Feito (`apps/web`):** primeira fatia da orquestração ao vivo — o ciclo de vida da entrevista:
+- `lib/interviews.ts` — `createInterview` (insere `interview`: sem processo→**'unstructured'** órfã §12, com processo→**'live'**; `captureType:'none'` v1; devolve `{interviewId, room, token}` **MOCK** inertes — LiveKit real = handover); `getInterview` (filtrado por agency); **`transitionInterview`** (guarda de transições válidas + **CAS por status atual**: `UPDATE … WHERE status=<lido>` → 0 linhas = corrida; **recheck idempotente** se uma transição concorrente já levou ao mesmo destino); `InvalidTransitionError`.
+- `app/api/interviews/route.ts` — POST (Zod `{processId?}`, `getSession`→agency+recruiter, envelope).
+
+**Verde:** typecheck ✅ · `next build` ✅ (**15 rotas**, +/api/interviews) · web **18 testes** (+4 c/ DB: cria órfã+mock token, isolamento agency, unstructured→live→done idempotente, rejeita done→live) · Biome ✅.
+
+**Code-review** (database-reviewer): 2 CRITICAL + 3 HIGH. **Aplicados:** C1 (recheck idempotente pós-CAS sob concorrência); M2 (removida aresta incoerente `scheduled→unstructured`); H3 (documentado token mock efémero). **Deferidos com critério (não-bloqueante):** C2 (try/catch no `getSession` — o shim não lança; tratamento uniforme de auth fica para a **FASE N**, evita inconsistência com as outras 14 rotas); H1/H2/M4 (CHECK constraints de `status`/`capture_type` + índices compostos `(agency_id,status)` — **endurecimento DB para a FASE N/migração**; a guarda `isStatus` na app já cobre o risco realista). M1 mantido: `status:string`+`isStatus` (validar-na-fronteira é mais seguro que confiar no tipo da DB).
+
+**A fazer (FASE K):** TickEngine→`interview_tick` (escritor único + CAS, família G); `apps/ws` sai do stub (JWT mock + posse `SELECT 1 FROM interview`); `/api/interviews/:id/join` + `/:id/report`; resiliência pura (timeout/fallback/degradar/`interview_gap`/teto custo); reconexão WS replay; decisão do frame da resposta do chat ao vivo.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~16:10] iteração 37 — ✅ FASE J COMPLETA (parte 3/3): casca Electron + hardening + distribuição
 
 **Feito (`apps/desktop`):** a casca Electron que monta o HUD e o endurece (hardening R2):
