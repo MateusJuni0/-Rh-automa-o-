@@ -9,6 +9,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~12:21] iteração 25 — Fase C5: briefing (rubric→briefing) — fluxo "Antes" completo (lógica)
+
+**Feito:** `apps/web/lib/briefing.ts` `generateBriefing` — `buildRubric` (atribui requisitoId §16F) → **persiste `rubric`** (job_id UNIQUE) → `buildBriefing` ligado aos ids da rubric → devolve {rubric, briefing}. Route `app/api/briefing/route.ts` POST {jobId}.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**6 rotas API**) · **8/8 testes web** com DB (+briefing: rubric c/ id + persistida + briefing) · Biome ✅.
+
+🎉 **Fluxo "Antes" completo (lógica):** cliente → vaga(extrai) → candidato(extrai CV) → match → briefing. Tudo contra a DB real, cérebro com stub sem chave.
+
+**A fazer (fechar C):** **UI mínima** (pages server-component + form client). Depois D realtime.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~12:16] iteração 24 — Fase C4: match candidato×vaga (process + matchCandidate)
 
 **Feito:** `apps/web/lib/match.ts` `matchCandidatoVaga` — garante o `process` (candidatura, UNIQUE candidate×job, idempotente) + lê candidato/vaga + corre `matchCandidate` (stub sem chave) + devolve `{processId, match}`. Route `app/api/match/route.ts` POST. (roleProfile vazio até o carril knowledge o preencher.)
