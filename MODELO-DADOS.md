@@ -24,10 +24,10 @@
 9. **v1 single-tenant:** `agency_id` fica em todas as tabelas (costura p/ v2) mas **SEM RLS** na v1.
 10. **pgvector** em todos os `*_embedding` (dimensão = a do EMBEDDER escolhido; default 1536 — `MODELOS-E-API §3`).
 
-> **Total: 34 tabelas** (+ os campos `consent_*` em `process`). Inclui as 4 de embedding
+> **Total: 35 tabelas** (+ os campos `consent_*` em `process`). Inclui as 4 de embedding
 > (candidate/transcript/source/recruiter), o runtime do agente (`assistant_thread`/
-> `assistant_message`/`async_job` — §12), `contradiction` (§13), `interview_gap` (§14) e
-> `proactive_task` (§16).
+> `assistant_message`/`async_job` — §12), `contradiction` (§13), `interview_gap` (§14),
+> `proactive_task` (§16) e `interview_participant` (§16.M).
 > O DDL detalhado de cada uma está abaixo (base + Evolução); esta lista é o **mapa do que é canónico**.
 
 ## Diagrama de relações
@@ -1081,7 +1081,100 @@ ALTER TABLE assistant_action ADD COLUMN provider_message_id TEXT;  -- id do prov
   pode JÁ ter ocorrido" (resposta perdida) → estado **`unknown`**: **NÃO re-envia auto**; verifica
   pelo idempotency-key/Message-ID ou pergunta à Filipa. (`AGENTE-TOOLS-E-WS A.1/A.2`.)
 
-> **Contagem: 34 tabelas** (+`proactive_task`). As restantes adições (incl. H/I) são colunas à base canónica.
+### J — Contratos de SKILL (adapter agente↔skill) — sim skills 2026-06-18
+> Sem schema novo (usa `assistant_action.result_ref`/`status`). Contratos em `REUSE-MAP §4` / `AGENTE-TOOLS A.3`:
+> 1. **candidate-sourcing é trabalho NOVO, não reuso:** a skill `lead-pipeline` devolve **EMPRESAS/
+>    decisores** (venda B2B), **não candidatos** → precisa de prompt-pack próprio (actor Apify de
+>    **PESSOAS**/LinkedIn-Profile + schema de candidato: nome/linkedin/anos-exp/skills/CV).
+> 2. **Contrato de ENTRADA:** `buildSourcingInput(vaga, role_profile)`→`actorInput`;
+>    `buildDocInstruction(kind, refs, clientTemplate, tone)`→instrução (em `packages/core`); congelar
+>    o JSON de args (os prompts da skill têm placeholders a preencher).
+> 3. **Contrato de SAÍDA:** a skill/wrapper devolve **JSON** (`status: ok|empty|failed`,
+>    `artifact_path`, `items_count`, `cost`, `error`) — **não** prosa+CSV; o handler mapeia para
+>    `assistant_action.status` (sem sucesso falso, `A.3`). Ficheiros gerados → Storage path em `result_ref`.
+
+### K — Pesquisa ao vivo robusta (URL ditada, falha de fetch, cap) — sim pesquisa 2026-06-18
+```sql
+ALTER TABLE source_doc ADD COLUMN fetch_status   TEXT NOT NULL DEFAULT 'ok'; -- 'ok'|'not_found'|'forbidden'|'timeout'|'blocked_ssrf'|'unrenderable'|'cap_reached'
+ALTER TABLE source_doc ADD COLUMN fetched_error  TEXT;
+ALTER TABLE source_doc ADD COLUMN fetch_cost_usd NUMERIC(10,5);  -- soma p/ o cap de pesquisa-ao-vivo por entrevista
+```
+- **URL ditada por voz** (o candidato DIZ "github ponto com barra X", não cola): detector
+  **determinístico** no `apps/realtime` sobre o chunk final — regex de URL literal + normalizador de
+  URL-ditada ('ponto'→'.', 'barra'→'/', 'arroba'→'@', junta tokens) + extractor handle+plataforma;
+  referência ambígua ("vê o meu portfólio") **não dispara** → sugere à Filipa "pede o link". A URL
+  montada **re-valida** no cliente guardado (`SEGURANCA §2`). Contrato em `ARQUITETURA-TEMPO-REAL §9`.
+- **Falha de fetch** (privado/404/só-JS/timeout): grava `source_doc` com `fetch_status≠'ok'`
+  (referência registada, conteúdo não) → o parecer pode dizer *"referiu repo X (HH:MM) — não
+  acessível, não verificado"* (Regra 3, mesma filosofia do `interview_gap §14`).
+- **Cap de pesquisa-ao-vivo:** `LIVE_SEARCH_MAX_PER_INTERVIEW` + `LIVE_SEARCH_COST_CAP_USD`
+  (realtime-config, irmãs do `INTERVIEW_COST_CAP_USD`); medido por `Σ source_doc.fetch_cost_usd`;
+  atingido → nova ref vira `fetch_status='cap_reached'` + aviso. (`SEGURANCA §13.m`.)
+- **Serialização do facto-de-pesquisa para o tick (central):** o facto `source_type='research'` entra
+  no prompt do tick numa **secção SEPARADA e ROTULADA** *"indícios de pesquisa (a confirmar — NÃO são
+  prova)"*, distinta de *"afirmações do candidato"*; cada facto carrega `origem`+`estado_prova` no
+  **texto** que vai ao LLM (não só na DB). Factos `research` geram **probes**, **nunca** sobem um
+  requisito a `coberto-com-prova` nem entram no veredito ao vivo sem confirmação verbal. (`ARQ §9`.)
+
+### L — Veredito graduado DURÁVEL + decomposição da afirmação — sim avaliação 2026-06-18
+```sql
+ALTER TABLE candidate_memory_fact ADD COLUMN rubric_level     TEXT CHECK (rubric_level IN ('fraco','ok','forte')); -- o nível do juízo (§9), não só no live_state descartável
+ALTER TABLE candidate_memory_fact ADD COLUMN confianca        TEXT DEFAULT 'media' CHECK (confianca IN ('alta','media','baixa'));
+ALTER TABLE candidate_memory_fact ADD COLUMN confianca_motivo TEXT;
+ALTER TABLE candidate_memory_fact ADD COLUMN parent_fact_id   UUID REFERENCES candidate_memory_fact(id); -- afirmação-mãe → N partes verificáveis (decomposição do fosso, §9 passo 1)
+```
+- O **produto do juízo** (`rubric_level`+`confianca`) deixa de viver só no `interview_tick.live_state`
+  (descartável, `ARQ §8`) — carimba-se em `candidate_memory_fact` na destilação (live + `distill_final
+  §16H`) para o **parecer/comparação/calibração** lerem em vez de **re-derivar** (e o
+  `filipa_verdict_override` comparar a um `bot_verdict` persistido por facto). Ortogonal a
+  `source_chunk_id` (§16A) e `requisito_id` (§16F).
+- **Decomposição (o fosso):** uma afirmação composta ("liderei a equipa") gera a afirmação-mãe + **N
+  partes verificáveis filhas** (`parent_fact_id`), cada uma com o seu `rubric_level`/`confianca`/
+  `nao_sustentado` — para o parecer mostrar "liderou ✅, mas 'quantos' ⚠ não-sustentado" como UMA
+  leitura. (`ARQ §9` passo 1, `FILOSOFIA-DAS-PERGUNTAS`.)
+- **Classificação RGPD no tick:** a classificação pessoal/clínico (`§5`) corre **no mesmo tick** em que
+  o facto entra no frame vivo (não só no `distill_final`) → `usar_no_score` já governa a cobertura/
+  veredito **mostrados ao vivo** à Filipa; o `distill_final` apenas reconfirma. (Nicho clínico, Regra 3.)
+
+### M — Identidade de ROLE + entrevista órfã + voz nova — sim casos-limite 2026-06-18
+```sql
+CREATE TABLE interview_participant (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  interview_id  UUID NOT NULL REFERENCES interview(id),
+  agency_id     UUID NOT NULL,
+  track_id      TEXT,                 -- faixa LiveKit / cluster de voz
+  speaker_role  TEXT NOT NULL DEFAULT 'unknown', -- 'candidate'|'client'|'recruiter'|'other'|'unknown'
+  display_name  TEXT,                 -- nome na plataforma, se houver
+  bound_by      UUID REFERENCES recruiter(id),   -- quem CONFIRMOU o role (a Filipa)
+  bound_at      TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX ON interview_participant (interview_id);
+ALTER TABLE contradiction ALTER COLUMN process_id DROP NOT NULL;  -- entrevista órfã: process_id NULL até estruturar
+```
+- **ROLE-BINDING ≠ diarização (BLOQUEADOR):** separar vozes **não** diz qual é o candidato vs o
+  cliente. Só o `recruiter` tem `voice_enrollment` (§6). No bot-online, mapear `track→participante` e
+  **perguntar UMA vez à Filipa "quem é o candidato?"** (lista por display-name) → bind
+  `track_id→speaker_role` em `interview_participant`. O gate de `§9` passa a exigir **`speaker_role=
+  'candidate'` CONFIRMADO** (não só `speaker_confidence` alto) antes de creditar prova ao candidato;
+  role `unknown`/`client` → facto `a_confirmar`, **nunca** `coberto-com-prova`. A heurística "fala
+  avaliadora = avaliador" (§9) é só **prior** para sugerir o bind. (`ARQ §2/§13`.)
+- **Voz NOVA a meio** (cliente entra sem aviso): evento `participant-joined` (LiveKit) / novo cluster
+  (presencial) → **alerta WS no overlay "nova voz — quem é?"**; a faixa nasce `unknown`, não credita
+  prova a ninguém até classificada. (`ARQ §13`, `UI-DESIGN` Tela 6.)
+- **Entrevista ÓRFÃ (`process_id=NULL`, cold-start §12):** durante `unstructured`, factos/contradições
+  vivem num **balde provisório por `interview_id`** (`contradiction.process_id` nullable; frame keia por
+  texto até existir `requisito_id`); ao **estruturar** (§12.4), um passo idempotente **RE-DERIVA** os
+  factos da Camada A contra a rubric do `process` recém-ligado (atribui `requisito_id`) e migra
+  contradições/proveniência do balde — reusa o `distill_final §16H` com lock por `interview_id`. A
+  re-atribuição (§2) na fase órfã opera sobre o balde. (`ARQ §12`.)
+- **Evidência code-switch (PT+EN intra-frase):** o `evidence_quote` cita **sempre o original**
+  (code-switch incluído) + tradução PT adjacente **opcional** (a prova é o que foi dito);
+  `stt_confidence` ao nível do **troço** quando há fronteira de idioma intra-chunk (ou marca o chunk
+  `mixed_language`) → o gate de §9 não promove a `coberto-com-prova` um facto cuja parte decisiva caiu
+  no troço incerto. (`ARQ §2`, `RELATORIO §6`.)
+
+> **Contagem: 35 tabelas** (+`interview_participant`). As restantes adições (J/K/L) são colunas à base canónica.
 
 ## RLS — políticas chave
 
@@ -1128,7 +1221,9 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 
 ---
 
-## Migração de arranque (34 tabelas) — ordem de criação
+## Migração de arranque (35 tabelas) — ordem de criação
+<!-- +interview_participant (§16.M) criar após interview; colunas J/K/L são ALTERs. -->
+
 
 > ⚠️ **Aplica o "🧭 Guia de consolidação" do topo** (forma FINAL canónica). Esta é a
 > ordem por FKs das **34 tabelas** (a lista antiga de 16/28/29/33 estava stale — corrigida
@@ -1154,9 +1249,10 @@ CREATE INDEX ON intake_message (agency_id, confirmed_at) WHERE confirmed_at IS N
 `intake_message`.
 *(Contagem: 24 numeradas + 4 embeddings (candidate/transcript/source/recruiter) +
 `interview_gap` + `assistant_thread`/`assistant_message`/`async_job` + `contradiction` +
-`proactive_task` = **34 tabelas**. Nota de FK: `assistant_action.thread_id`→`assistant_thread`,
-criar `assistant_thread` no mesmo bloco; `contradiction` depois de `process`+`transcript_chunk`;
-`proactive_task` depois de `recruiter`.)*
+`proactive_task` + `interview_participant` = **35 tabelas**. Nota de FK:
+`assistant_action.thread_id`→`assistant_thread`, criar `assistant_thread` no mesmo bloco;
+`contradiction` depois de `process`+`transcript_chunk` (e `process_id` agora **nullable** — órfã);
+`proactive_task` depois de `recruiter`; `interview_participant` depois de `interview`.)*
 
 Extensões: **`pgvector`** (Supabase self-hosted). **v1 single-tenant: sem RLS** (agency_id
 fica como costura p/ v2).

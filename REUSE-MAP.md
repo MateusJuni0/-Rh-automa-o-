@@ -278,6 +278,8 @@ ELEVENLABS_API_KEY=... / ELEVENLABS_VOICE_ID_* / AZURE_SPEECH_KEY+REGION
 
 > **Para a Vera (RH):** adaptar os prompts §06 (LinkedIn) / §07 (Instagram) para **sourcing de candidatos** (não leads de venda). Reutiliza-se o motor + o cascade de enrichment; muda-se o nicho/critério.
 
+> ⚠️ **CORREÇÃO (sim skills 2026-06-18, família J): isto é trabalho NOVO, não "reuso".** Os prompts da `lead-pipeline` devolvem **EMPRESAS + decisores** (CEO/CMO, cold-email, "Site em 48h" → `madalena.leads`) — **nenhum** devolve um **candidato** (perfil/anos-exp/skills/CV). Reaproveita-se **só a mecânica Apify/MCP**; é preciso um **prompt-pack NOVO de candidate-sourcing** (actor Apify de **PESSOAS**/LinkedIn-Profile, não Company) + **schema de candidato** + **contrato de entrada/saída da skill** (a Vera mapeia `vaga+role_profile`→`actorInput`; a skill devolve **JSON** `status/items_count/cost/error`, **não** prosa+CSV no Desktop → mapeia a `assistant_action.status`, sem sucesso falso). Detalhe: **`MODELO-DADOS §16.J`**, contratos em `packages/core` (P0.1).
+
 ### 4b. Geração de ficheiros (xlsx / docx / pdf)
 | Opção | Onde | Como invocar | Quando usar na Vera |
 |---|---|---|---|

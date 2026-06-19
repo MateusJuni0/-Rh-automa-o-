@@ -394,6 +394,20 @@ nenhum termo.
       **não** corre sem `interview.distilled_at` (áudio nunca purgado sem destilação completa).
 - [ ] **(I) Idempotência de enviar_fora:** retry de `send_email` após resposta perdida **não**
       duplica (idempotency_key/Message-ID); estado ambíguo fica `unknown` → não re-envia auto.
+- [ ] **(J) Contrato de skill:** sourcing devolve **candidatos** (não empresas) via prompt-pack
+      próprio; a skill devolve **JSON** (`status/items_count/cost`) e 0-resultados ≠ falha; um erro
+      vira `assistant_action.status='failed'` (sem sucesso falso).
+- [ ] **(K) Pesquisa ao vivo:** URL **ditada por voz** ("github ponto com barra X") é reconstruída
+      e re-validada (SSRF); fetch falhado grava `source_doc.fetch_status≠'ok'` (parecer diz "referiu,
+      não acessível"); facto `research` entra no tick **rotulado** "indício a confirmar" e **não** sobe
+      requisito a `coberto-com-prova` sem confirmação verbal; cap de pesquisa por entrevista dispara.
+- [ ] **(L) Veredito graduado durável:** `rubric_level`+`confianca` persistem em
+      `candidate_memory_fact` (não só no `live_state`); o parecer/comparação **lêem** o que foi
+      decidido ao vivo; afirmação composta → afirmação-mãe + partes (`parent_fact_id`) com nível próprio.
+- [ ] **(M) Role + órfã + voz nova:** o sistema **não credita** fala do cliente como prova do
+      candidato (exige `role='candidate'` confirmado, não só diarização); entrevista órfã
+      (`process_id=NULL`) acumula factos num balde e RE-DERIVA ao estruturar; voz nova a meio →
+      alerta "quem é?", nasce `unknown`; `evidence_quote` code-switch cita o **original**.
 
 ---
 

@@ -73,7 +73,7 @@ validador de upload, bucket privado, cifra+backups cifrados, ZDR, rate-limit) ·
 | [`ASSISTENTE-PESSOAL.md`](./ASSISTENTE-PESSOAL.md) | O "ChatGPT dela": agente (motor Hermes), ferramentas, memória que aprende |
 | [`ASSISTENTE-PROATIVO.md`](./ASSISTENTE-PROATIVO.md) | Agenda + deteção de lacunas + follow-up |
 | [`JORNADA-POS-PARECER.md`](./JORNADA-POS-PARECER.md) | A cauda: oferta → colocado → garantia (calibração) |
-| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (34 tabelas) + DDL + RGPD |
+| [`MODELO-DADOS.md`](./MODELO-DADOS.md) | Schema completo (35 tabelas) + DDL + RGPD |
 | [`MODELOS-E-API.md`](./MODELOS-E-API.md) | Modelos por slot, agnósticos, via OpenRouter |
 
 **Fase 2 — embalagem & design**

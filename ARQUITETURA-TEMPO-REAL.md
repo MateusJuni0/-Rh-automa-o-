@@ -56,9 +56,16 @@ A interface e as sugestões saem em **PT** (Regra 4), mesmo quando a fala é nou
 idioma → tradução pelo LLM no tick.
 
 **Como sabemos quem fala (decisão 2026-06-17):**
-- **Caminho principal — identidade fiável pela plataforma:** quando o **bot entra na
-  call** (Meet/Zoom/Teams), a plataforma diz qual é o **falante ativo** → 1 faixa = 1
-  pessoa, identidade certa. **É a razão de pôr o bot na call.**
+- **Caminho principal — SEPARAÇÃO fiável pela plataforma:** quando o **bot entra na
+  call** (Meet/Zoom/Teams), a plataforma dá **1 faixa por participante** → separação de
+  vozes perfeita. **É a razão de pôr o bot na call.**
+  > ⚠️ **Correção (sim casos-limite 2026-06-18): faixa-separada ≠ ROLE conhecido.** A
+  > plataforma dá uma faixa (e talvez um display-name), **não** diz qual é o *candidato* vs
+  > o *cliente*. Sem isto, a fala avaliadora do cliente podia ser creditada como prova do
+  > candidato. **A identificação de ROLE é um passo À PARTE da diarização** — `role-binding`
+  > (a Filipa confirma "quem é o candidato?" 1×; faixa nova nasce `unknown`; o gate de §9
+  > exige `role='candidate'` confirmado). Tabela `interview_participant` + contrato em
+  > **`MODELO-DADOS §16.M`**.
 - **Fallback — diarização por voz** (presencial / áudio misturado): separa por
   características de voz. Para etiquetar a Filipa de forma estável, fazemos
   **enrollment da voz dela 1×** (grava uma amostra → `recruiter.voice_enrollment_path`).

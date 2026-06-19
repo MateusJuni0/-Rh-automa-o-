@@ -60,8 +60,17 @@ Não são "o modelo decide" — são contratos a materializar **antes** de const
   não texto. `MODELO §16.F`.
 - **Registry de modelos com ZDR** (`zdr`/`stores_audio`/`stores_text`/`allowed_for_pii`) — deploy
   falha se um slot com PII apontar a provider sem retenção-zero. `SEGURANCA §7`, `MODELOS-E-API §3`.
-- **Hierarquia de identidade de falante** (`speaker_source`/`speaker_confidence`/`corrected_by`;
-  active-speaker ≠ prova). `MODELO §16.A`.
+- **Role-binding ≠ diarização (família M)** — `interview_participant` (track→role); a Filipa confirma
+  "quem é o candidato?"; gate de §9 exige `role='candidate'` confirmado; voz nova nasce `unknown`;
+  entrevista órfã (`process_id=NULL`) acumula num balde e RE-DERIVA ao estruturar. `MODELO §16.M`.
+- **Contratos de skill (família J)** — `buildSourcingInput`/`buildDocInstruction` + a skill devolve
+  **JSON** (`status/artifact/items/cost/error`); **candidate-sourcing é prompt-pack NOVO** (actor de
+  PESSOAS), não reuso da `lead-pipeline` (que é venda B2B). `MODELO §16.J`, `REUSE-MAP §4`.
+- **Pesquisa ao vivo robusta (família K)** — normalização de URL ditada por voz; `source_doc.fetch_status`;
+  facto `research` entra no tick **rotulado** "indício a confirmar"; cap nomeado. `MODELO §16.K`.
+- **Veredito graduado durável (família L)** — `candidate_memory_fact` ganha `rubric_level`/`confianca`/
+  `parent_fact_id`; o juízo (nível+confiança+decomposição) aterra em coluna durável, não só no
+  `live_state` descartável. `MODELO §16.L`.
 
 ---
 
