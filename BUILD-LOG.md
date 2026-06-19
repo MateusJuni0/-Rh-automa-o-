@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~21:02] iteração 57 — 🚧 FASE N (3/N): validador de upload (CV) + signed URLs (stub)
+
+**Feito (`apps/web/lib`, puro/TDD):**
+- `upload.ts` — `validateUpload({filename, mime, sizeBytes, header})`: tamanho inteiro finito ∈ (0,10MB]; MIME allowlist ESTRITA (pdf/docx/doc; SVG/HTML/exe bloqueados); extensão === mime; **magic-bytes OBRIGATÓRIOS** (o conteúdo manda — apanha `cv.exe.pdf` com bytes de .exe); `storageKey = UUID.ext` gerado no servidor (anti path-traversal); `displayName` saneado (basename).
+- `storage.ts` — `StorageProvider` (signedUpload/DownloadUrl) + `createMockStorage(now)` stub: `mock://vera-private/<key>?exp&sig` (sig fake não-secreta, `now` injetado, TTL 300s). Real Supabase/S3 (bucket privado por agência) = Ω atrás da interface.
+- (Sem rota de upload ainda → libs prontas p/ ligar; o intake v1 é texto.)
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **84 testes** (+12: pdf ok; .exe/mismatch/dupla-ext/sem-magic/NaN/>MAX/vazio rejeitam; path-traversal→UUID; signed URL ttl/sig) · `pnpm -r` (desktop 44 + realtime 2 + web 84) · Biome ✅.
+
+**Security-review** (dedicado, olho de atacante): **0 CRITICAL/HIGH** · path-traversal estruturalmente impossível (UUID), ReDoS nil, storage stub sem injeção/segredo. **3 MEDIUM corrigidos:** magic-bytes passam a OBRIGATÓRIOS (fecha dupla-extensão `cv.exe.pdf` + content-spoofing); guarda `Number.isInteger` (NaN/decimal); JSDoc Content-Disposition + zip-bomb(Ω). +regressões (maiúsculas, sem-magic, NaN).
+
+**Próximo (FASE N):** purga RGPD em cascata (TDD DB); Tela 12 Definições + biometria (mock); endurecimento DB (CHECK + índices + UNIQUE); entrypoint ws + refresh/replay; seed Inês; CI.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~20:42] iteração 56 — 🚧 FASE N (2/N): auditoria de isolamento agency_id + 401 uniforme das /api
 
 **Auditoria (a):** as **17 rotas** `app/api/**/route.ts` obtêm `agencyId`/`recruiterId` SÓ via `getSession()` — **nenhuma** os aceita do body/query (confirmado por grep + security-review). Isolamento por agência: ✅ sem desvios.
