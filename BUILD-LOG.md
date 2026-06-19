@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~19:34] iteração 52 — 🚧 FASE M (4/N): memória durável do recrutador (`recruiter_memory_fact`) — aceitação "facto novo→memória" ✅
+
+**Feito (`apps/web/lib/assistant`):**
+- `memory.ts` (NOVO) — `saveMemoryFact` (valida texto 1–2000 + `kind` ∈ enum; isolado agency+recruiter) · `listMemoryFacts` · `searchMemoryFacts` (recall por `ILIKE`, valor parametrizado; SEM vetorial — isso é Ω).
+- `chat.ts` — intent `save_memory_fact` ("anota/lembra-te/regista/memoriza/guarda que…") com `extractFact` → o texto do facto vai nos args.
+- `run.ts` — `confirmAction`: a tool `save_memory_fact` (efeito `gravar`, já passa pela porta) **persiste mesmo** o facto na confirmação; se a gravação falhar → marca `failed` (a UI não finge sucesso).
+
+**Verde:** typecheck ✅ · `next build` ✅ · web **55 testes** (+3: planner memória; save/list/search isolado; "anota que X"→pending→confirma→recall) · `pnpm -r` (desktop 44 + realtime 2 + web 55) · Biome ✅.
+
+**Code-review** (dados do recrutador → isolamento): **0 CRITICAL, 3 HIGH** → **corrigidos:** (1) gravação silenciosa de texto vazio → agora `saveMemoryFact` valida e `confirmAction` marca `failed`; (2) sem `.max` no `factText` → bound 2000 na fronteira; (3) two-phase write (CAS done→insert) → try/catch marca `failed` (transação atómica = nota Ω). +MEDIUM `kind` validado contra o enum. **Confirmado: isolamento agency+recruiter em save/list/search; só grava via porta.** LOW índice `(agency_id,recruiter_id)` → **FASE N** (lote de endurecimento DB).
+
+**A fazer (FASE M):** proativo (prep/no-show/guarantee/lacunas — mock); Tela 8 Q&A; Tela 10 comparar; Tela 11 onboarding. (Recall na conversa Q&A = nota: passar factos no `ctx` numa próxima fatia.)
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~19:14] iteração 51 — 🚧 FASE M (3/N): UI Tela 9 — assistente (chat + artefactos + cartão de confirmação)
 
 **Feito (`apps/web`):** a Tela 9 demonstrável:

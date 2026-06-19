@@ -4,6 +4,7 @@ import { schema } from "@rh/db";
 import { and, eq } from "drizzle-orm";
 import { type ChatContext, planResponse } from "./chat";
 import { createMemoryStore, executeToolCall } from "./gate";
+import { saveMemoryFact } from "./memory";
 import { getTool } from "./tools";
 
 type Db = DbHandle["db"];
@@ -198,6 +199,24 @@ export async function confirmAction(
       .set({ status: "failed" })
       .where(eq(schema.assistantAction.id, actionId));
     return { actionId, tool: action.tool, efeito: action.efeito, status: "failed" };
+  }
+  // Efeito real da tool `gravar` de memória: persiste mesmo o facto durável (isolado agency+recruiter).
+  if (action.tool === "save_memory_fact") {
+    const t = asArgs(action.args).text;
+    try {
+      await saveMemoryFact(db, agencyId, recruiterId, {
+        text: typeof t === "string" ? t : "",
+        sourceType: "explicit",
+      });
+    } catch {
+      // Falhou a gravação (texto vazio/grande demais, DB) → marca 'failed' (a UI não finge sucesso).
+      // TODO(FASE Ω): tornar o CAS+insert atómico (transação) quando o executor for real.
+      await db
+        .update(schema.assistantAction)
+        .set({ status: "failed" })
+        .where(eq(schema.assistantAction.id, actionId));
+      return { actionId, tool: action.tool, efeito: action.efeito, status: "failed" };
+    }
   }
   const summary = outcome.status === "done" ? outcome.result.summary : "executada";
   const resultRef = outcome.status === "done" ? outcome.result.resultRef : undefined;

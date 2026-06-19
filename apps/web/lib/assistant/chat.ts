@@ -23,10 +23,24 @@ interface Intent {
   test: RegExp;
   tool: string;
   reply: string;
+  /** Args específicos da tool (default: `{ message }`). Ex.: a memória extrai o texto do facto. */
+  buildArgs?: (message: string) => Record<string, unknown>;
 }
 
-// Ordem = prioridade (o 1.º match ganha). enviar_email/sourcing/marcar_agenda têm efeito que pede confirmação.
+/** Extrai o facto a guardar de "anota/lembra-te que X" → "X" (fallback: a mensagem inteira). */
+function extractFact(message: string): string {
+  const match = message.trim().match(/\b(?:que|disto:|isto:)\s+(.+)$/i);
+  return match?.[1]?.trim() || message.trim();
+}
+
+// Ordem = prioridade (o 1.º match ganha). enviar_email/sourcing/marcar_agenda/save_memory_fact pedem confirmação.
 const INTENTS: ReadonlyArray<Intent> = [
+  {
+    test: /\b(anota|lembra-te|regista|memoriza|guarda que)\b/,
+    tool: "save_memory_fact",
+    reply: "Queres que eu guarde isto na tua memória?",
+    buildArgs: (m) => ({ text: extractFact(m) }),
+  },
   { test: /compar/, tool: "comparar_candidatos", reply: "Preparei a comparação dos candidatos." },
   {
     test: /(envi|mand).*(email|e-mail|mensagem|cliente)/,
@@ -70,7 +84,8 @@ export function planResponse(message: string, ctx: ChatContext = {}): ChatPlan {
   const m = message.toLowerCase();
   for (const intent of INTENTS) {
     if (intent.test.test(m)) {
-      return { reply: intent.reply, toolCalls: [{ tool: intent.tool, args: { message } }] };
+      const args = intent.buildArgs ? intent.buildArgs(message) : { message };
+      return { reply: intent.reply, toolCalls: [{ tool: intent.tool, args }] };
     }
   }
   return { reply: qaReply(message, ctx), toolCalls: [] };
