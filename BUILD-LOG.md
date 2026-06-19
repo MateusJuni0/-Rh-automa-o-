@@ -9,6 +9,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~18:04] iteração 46 — 🚧 FASE L (4/N): Tela 5 (briefing pré-entrevista) — liga "antes"→"durante"
+
+**Feito (`apps/web`):** o roteiro pré-entrevista (reusa `generateBriefing` da FASE C, já testado):
+- `app/vagas/[id]/briefing/page.tsx` — Tela 5: perguntas agrupadas pelas **3 lentes canónicas** (`@rh/core` enum `lente`: tecnica/cliente/gap → "Técnicas"/"Interesses do cliente"/"Lacunas") via `Card`; cada pergunta com **"boa resposta" recolhível** (`<details>`); `notFound`.
+- `StartInterviewButton.tsx` (client) — **▶ Iniciar entrevista**: `POST /api/interviews` → mostra a sala mock (estados idle/busy/done/error). **Liga o "antes" ao "durante"** (cria a entrevista do pipeline da FASE K).
+- Links "▶ Ver triagem" + "▶ Briefing pré-entrevista" na Tela 2.
+
+**Verde:** typecheck ✅ · `next build` ✅ (**21 rotas**, +/vagas/[id]/briefing) · web **32 testes** (sem lib nova — reusa `generateBriefing` já testado) · Biome ✅.
+
+**Self-review (fatia UI):** usa o enum `lente` canónico (não re-decide); 3 estados no botão; `notFound`; zero `as` cego. **Simplificação v1 anotada:** a página gera o briefing no render (write-on-GET, mas **idempotente** — rubric.job_id UNIQUE + onConflictDoNothing + stub sem custo). Produção: gerar via POST explícito + cache.
+
+**A fazer (FASE L):** Tela 7 parecer (abas Interna/Cliente + export md) · Tela 1 dashboard/kanban. Depois M, N.
+
+**Commit:** <hash>
+
+---
+
 ## [2026-06-19 ~17:52] iteração 45 — 🚧 FASE L (3/N): Tela 4 (candidato detalhe)
 
 **Feito (`apps/web`):** o CV destrinchado:
