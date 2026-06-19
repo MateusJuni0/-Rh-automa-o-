@@ -1,7 +1,8 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { matchCandidatoVaga } from "@/lib/match";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function POST(req: Request): Promise<Response> {
       status: 400,
     });
   }
-  const res = await matchCandidatoVaga(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await matchCandidatoVaga(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }

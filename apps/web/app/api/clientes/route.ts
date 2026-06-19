@@ -1,12 +1,14 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
 import { createCliente, listClientes } from "@/lib/clientes";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  const rows = await listClientes(getDb(), DEV_AGENCY_ID);
+  const { agencyId } = await getSession();
+  const rows = await listClientes(getDb(), agencyId);
   return Response.json(ok(rows));
 }
 
@@ -17,6 +19,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json(err("validation", "nome do cliente é obrigatório"), { status: 400 });
   }
-  const res = await createCliente(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await createCliente(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }

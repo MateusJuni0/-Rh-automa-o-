@@ -1,11 +1,13 @@
 import { CreateForm } from "@/components/CreateForm";
 import { listCandidatos } from "@/lib/candidatos";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function CandidatosPage() {
-  const rows = await listCandidatos(getDb(), DEV_AGENCY_ID);
+  const { agencyId } = await getSession();
+  const rows = await listCandidatos(getDb(), agencyId);
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-semibold text-xl">Candidatos</h1>

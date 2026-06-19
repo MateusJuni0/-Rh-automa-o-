@@ -1,15 +1,17 @@
 import { CreateForm } from "@/components/CreateForm";
 import { listClientes } from "@/lib/clientes";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/session";
 import { listVagas } from "@/lib/vagas";
 
 export const dynamic = "force-dynamic";
 
 export default async function VagasPage() {
+  const { agencyId } = await getSession();
   const db = getDb();
   const [vagas, clientes] = await Promise.all([
-    listVagas(db, DEV_AGENCY_ID),
-    listClientes(db, DEV_AGENCY_ID),
+    listVagas(db, agencyId),
+    listClientes(db, agencyId),
   ]);
   return (
     <div className="flex flex-col gap-6">

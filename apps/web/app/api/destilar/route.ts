@@ -1,7 +1,8 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { destilarFacto } from "@/lib/destilar";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json(err("validation", "campos inválidos"), { status: 400 });
   }
-  const res = await destilarFacto(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await destilarFacto(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }

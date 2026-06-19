@@ -1,12 +1,14 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
 import { createCandidato, listCandidatos } from "@/lib/candidatos";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  return Response.json(ok(await listCandidatos(getDb(), DEV_AGENCY_ID)));
+  const { agencyId } = await getSession();
+  return Response.json(ok(await listCandidatos(getDb(), agencyId)));
 }
 
 const bodySchema = z.object({
@@ -20,6 +22,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json(err("validation", "name e cvText são obrigatórios"), { status: 400 });
   }
-  const res = await createCandidato(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await createCandidato(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }

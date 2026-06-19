@@ -1,7 +1,8 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
 import { generateBriefing } from "@/lib/briefing";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json(err("validation", "jobId é obrigatório"), { status: 400 });
   }
-  const res = await generateBriefing(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await generateBriefing(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }

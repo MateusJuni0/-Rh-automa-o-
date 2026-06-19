@@ -1,7 +1,8 @@
 import { err, ok } from "@rh/core";
 import { z } from "zod";
-import { DEV_AGENCY_ID, getDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { gerarParecer, getParecerMd } from "@/lib/parecer";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,8 @@ export async function POST(req: Request): Promise<Response> {
   if (!parsed.success) {
     return Response.json(err("validation", "interviewId é obrigatório"), { status: 400 });
   }
-  const res = await gerarParecer(getDb(), DEV_AGENCY_ID, parsed.data);
+  const { agencyId } = await getSession();
+  const res = await gerarParecer(getDb(), agencyId, parsed.data);
   return Response.json(ok(res), { status: 201 });
 }
 
@@ -23,7 +25,8 @@ export async function GET(req: Request): Promise<Response> {
   if (!z.uuid().safeParse(interviewId).success) {
     return Response.json(err("validation", "interviewId inválido"), { status: 400 });
   }
-  const md = await getParecerMd(getDb(), DEV_AGENCY_ID, interviewId);
+  const { agencyId } = await getSession();
+  const md = await getParecerMd(getDb(), agencyId, interviewId);
   if (md === null) {
     return Response.json(err("not_found", "parecer ainda não gerado"), { status: 404 });
   }

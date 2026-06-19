@@ -17,6 +17,7 @@
 | **Resend** (email) | `RESEND_API_KEY` | envio do parecer ao cliente | email do parecer | ⬜ |
 | **Google Calendar** | `GOOGLE_OAUTH_CLIENT_ID/SECRET` | `services/agent` | assistente proativo (agenda) | ⬜ |
 | **Apify** (sourcing) | `APIFY_TOKEN` | `services/agent` | sourcing de candidatos | ⬜ |
-| **Supabase** (DB/Auth/Storage) | self-hosted local (`docker-compose.dev` / `supabase start`) — **sem chave externa em dev** | toda a app | DB + Auth + Storage | ✅ DB local viva |
+| **Supabase** (DB/Auth/Storage) | self-hosted local (`docker-compose.dev` / `supabase start`) — **sem chave externa em dev** | toda a app | DB + Auth + Storage | DB ✅ local viva · Auth 🟡 shim de sessão (`apps/web/lib/session.ts`, single-tenant IRIS) até `@supabase/ssr` · Storage ⬜ |
+| **Auth biométrica** (login da Filipa/Inês) | — (motor em `services/face`) | `apps/web` login → `services/face` enroll/verify | email/senha OU biometria (enroll pós-1º login → passwordless) | ⬜ (contrato pronto; motor + flash liveness por implementar) |
 
 **Como ligar (no fim):** preencher o `.env` (a partir do `.env.example`), `sops -e` → `.env.enc`, e trocar o factory do serviço de `mock*` para o adapter real (cada um documentado no seu package). Nada de chaves em código (sempre `process.env`).

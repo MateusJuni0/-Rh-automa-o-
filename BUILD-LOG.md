@@ -9,6 +9,32 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+## [2026-06-19 ~13:14] iteração 33 — ✅ FASE H COMPLETA: auth/sessão — 🏁 BUILD C–H COMPLETO
+
+**Feito:** `apps/web/lib/session.ts` `getSession()` → `{agencyId, recruiterId}` (lê cookies `vera_agency`/`vera_recruiter`; senão o seed fixo IRIS/Filipa). **Refactor:** todos os **10 routes + 3 pages** passam a obter a identidade do shim (`DEV_AGENCY_ID` agora só em `db.ts`+`session.ts`); as libs continuam a receber `agencyId` por parâmetro (testes intactos). TODO(KEYS): `@supabase/ssr` (Auth) — login email/senha OU biometria (`services/face`). KEYS-TODO atualizado.
+
+**Verde:** typecheck ✅ · `next build` ✅ · **`pnpm -r test` TODO verde** (core 37 · db 25 · ai 35 · ws 11 · knowledge 3 · realtime 2 · intake-bots 1 · web 14 c/DB) · Biome ✅.
+
+---
+
+# 🏁 RESUMO FINAL — Vera Fase 3 (build C–H completo, ~34 commits)
+
+**O produto está construído de ponta a ponta, tudo a correr com MOCKS (zero chaves, zero custo).** Falta só o Mateus ligar as chaves (`KEYS-TODO.md`) para trocar cada mock pelo adapter real.
+
+- **Fundação+DB:** monorepo pnpm (Biome, TS strict, Vitest), 35 tabelas canónicas (Drizzle+pgvector) vivas na DB `vera_dev` :5433 (migração+seed+GUC tenant).
+- **Cérebro `@rh/ai`:** slots EXTRACTOR/ARCHITECT/LIVE + gate ZDR + `generate` (Zod) + 8 features (extract vaga/CV, intake, rubric/roleProfile/briefing, match, tick, parecer) + mock transport.
+- **RAG `@rh/knowledge`:** pgvector + embedder mock (cosine).
+- **C — "Antes":** `apps/web` (clientes/vagas/candidatos/match/briefing) + UI navegável.
+- **D — "Durante":** `@rh/realtime` TickEngine (transcrição→EstadoVivo→frames WS).
+- **E — "Depois":** parecer+export md, destilar→RAG, calibração (client_verdict).
+- **F — Ingestão:** intake (classifica→confirma→cria) + `@rh/intake-bots` (Telegram/WhatsApp stub).
+- **G — Serviços Python:** `services/agent` + `services/face` FastAPI esqueleto (contrato + 501).
+- **H — Auth:** shim de sessão (single-tenant IRIS) + refactor.
+
+**Pendente (só Mateus, no fim):** ligar chaves — OpenRouter (LLM), Embedder, Exa/Brave, LiveKit+Soniox, Telegram/WhatsApp, Resend, Google/Apify, Supabase Auth. Ver `KEYS-TODO.md`. Implementar a lógica real dos serviços Python (incl. flash liveness, após o bug do cmtec-face).
+
+---
+
 ## [2026-06-19 ~13:06] iteração 32 — ✅ FASE G COMPLETA: serviços Python (FastAPI esqueleto)
 
 **Feito:** dois serviços FastAPI (só contrato; lógica depois):
