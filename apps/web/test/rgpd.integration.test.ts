@@ -72,15 +72,13 @@ async function seedScenario(db: DbHandle["db"], agencyId: string): Promise<Scena
     candidateId,
     status: "unstructured",
   });
-  await db
-    .insert(s.interviewTick)
-    .values({
-      id: randomUUID(),
-      agencyId,
-      interviewId: orphanInterviewId,
-      tickN: 1,
-      liveState: {},
-    });
+  await db.insert(s.interviewTick).values({
+    id: randomUUID(),
+    agencyId,
+    interviewId: orphanInterviewId,
+    tickN: 1,
+    liveState: {},
+  });
   // Thread do assistente ligada ao candidato (active_context.candidate_id) + mensagem + ação — Ω-1.
   await db.insert(s.assistantThread).values({
     id: threadId,

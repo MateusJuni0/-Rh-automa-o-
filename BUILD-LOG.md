@@ -12,6 +12,13 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~13:35] Ω-4 — Motor facial (services/face) + login por rosto (flash liveness)
+- **`services/face` (FastAPI + numpy):** motor LEVE (sem dlib/mediapipe pesados — instalável) — `embedding` (descritor facial), `engine` (enroll/verify por distância), `liveness` (flash: a cor medida na pele tem de seguir o challenge), `challenge` (sequência de cores + token), `routes` (POST /enroll, /verify). **23 testes pytest verdes** (Python 3.14, numpy 2.4).
+- **Web:** `app/api/auth/face/challenge` (emite sequência+token) + `app/api/auth/face` (verifica) + `lib/{face,face-capture,face-config}.ts` + `app/login` com captura REAL de câmara (getUserMedia + `<canvas>`, pisca as cores, mede a cor dominante) → **fallback gracioso para senha** sem câmara/serviço.
+- **Config-not-code:** sem o serviço de rosto ligado → login facial cai no fallback de senha; ativa quando ligado (KEYS-TODO).
+- **Verde:** typecheck ✅ · `next build` ✅ (+2 rotas face) · web **108 testes** · `services/face` **23 pytest** · Biome ✅.
+- ⚠️ Fatia escrita pela sessão paralela mas NÃO committada (o processo do Claude Code saiu a meio). Eu verifiquei tudo (typecheck/build/**333 JS**+**23 py**/Biome) e committei. **Revisão de SEGURANÇA dedicada da biometria + auth a seguir** (anti-spoof/replay/threshold).
+
 ## [2026-06-20 ~13:05] Ω-3c — Auth REAL (@supabase/ssr) + FIM de Ω-3
 - **`lib/supabase/server.ts` (NOVO):** `createSupabaseServerClient` (`@supabase/ssr`, ligado aos cookies do Next, try/catch no set p/ RSC read-only) + `AUTH_ENABLED` (`SUPABASE_URL`+`SUPABASE_ANON_KEY`).
 - **`lib/supabase/middleware.ts` (NOVO):** `getSupabaseUserForMiddleware` (edge — valida o JWT via `getUser()`, propaga a rotação de cookies para a `NextResponse`).

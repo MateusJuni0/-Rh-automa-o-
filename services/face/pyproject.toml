@@ -1,12 +1,13 @@
 [project]
 name = "vera-face"
 version = "0.0.0"
-description = "Vera — biometria facial (enroll/verify, flash liveness). Esqueleto FastAPI (contrato)."
+description = "Vera — biometria facial (enroll/verify, flash liveness). FastAPI + motor numpy."
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn>=0.30",
     "pydantic>=2.8",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
