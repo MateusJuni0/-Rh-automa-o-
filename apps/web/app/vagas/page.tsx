@@ -1,5 +1,5 @@
 import { Chip, EmptyState } from "@rh/ui";
-import { CreateForm } from "@/components/CreateForm";
+import { VagaForm } from "@/components/VagaForm";
 import { listClientes } from "@/lib/clientes";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -52,25 +52,7 @@ export default async function VagasPage() {
           )}
         </div>
         <aside>
-          <CreateForm
-            endpoint="/api/vagas"
-            title="Nova vaga"
-            description="Cola o pedido do cliente — a extração é automática."
-            fields={[
-              {
-                name: "clientId",
-                label: "Cliente",
-                type: "select",
-                options: clientes.map((c) => ({ value: c.id, label: c.name })),
-              },
-              { name: "title", label: "Título da vaga" },
-              {
-                name: "requirementsText",
-                label: "Requisitos (texto do cliente)",
-                type: "textarea",
-              },
-            ]}
-          />
+          <VagaForm clientes={clientes.map((c) => ({ id: c.id, name: c.name }))} />
         </aside>
       </div>
     </div>
