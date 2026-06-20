@@ -7,7 +7,7 @@ import { type ChatContext, type ChatPlan, planResponse } from "./chat";
 import { createMemoryStore, executeToolCall } from "./gate";
 import { planResponseWithLlm } from "./llm";
 import { saveMemoryFact } from "./memory";
-import { getTool, TOOLS } from "./tools";
+import { getTool, TOOLS, validateToolArgs } from "./tools";
 
 type Db = DbHandle["db"];
 
@@ -104,6 +104,13 @@ export async function runMessage(
   for (const call of plan.toolCalls) {
     const tool = getTool(call.tool);
     if (!tool) {
+      continue;
+    }
+    // Anti prompt-injection: o LLM produz os `args`; se não baterem com o `argsSchema` da tool
+    // (ex.: `enviar_email` para um domínio fora da allowlist), DESCARTA a tool-call ao planear —
+    // nunca chega a ficar pendente nem a pedir confirmação com args envenenados.
+    const checked = validateToolArgs(call.tool, call.args);
+    if (checked && !checked.ok) {
       continue;
     }
     const outcome = executeToolCall({ tool: call.tool, args: call.args, confirmed: false }, store);
@@ -204,7 +211,17 @@ export async function confirmAction(
   if (claimed.length === 0) {
     return { actionId, tool: action.tool, efeito: action.efeito, status: "done" };
   }
-  // TODO(FASE Ω): validar `args` com o argsSchema da tool antes do adapter real.
+  // Anti prompt-injection (defesa-em-profundidade): re-valida os `args` persistidos contra o
+  // `argsSchema` da tool ANTES do executor real. Mesmo que algo tenha mudado entre planear e
+  // confirmar (ou a allowlist tenha sido apertada), um destinatário fora da allowlist não executa.
+  const recheck = validateToolArgs(action.tool, asArgs(action.args));
+  if (recheck && !recheck.ok) {
+    await db
+      .update(schema.assistantAction)
+      .set({ status: "failed" })
+      .where(eq(schema.assistantAction.id, actionId));
+    return { actionId, tool: action.tool, efeito: action.efeito, status: "failed" };
+  }
   const outcome = executeToolCall(
     {
       tool: action.tool,
@@ -214,8 +231,8 @@ export async function confirmAction(
     },
     createMemoryStore(),
   );
-  if (outcome.status === "failed") {
-    // Executor falhou DEPOIS do claim → marca 'failed' (não fica preso em 'done' sem efeito).
+  if (outcome.status === "failed" || outcome.status === "invalid_args") {
+    // Executor falhou / args inválidos DEPOIS do claim → marca 'failed' (não fica preso em 'done').
     await db
       .update(schema.assistantAction)
       .set({ status: "failed" })

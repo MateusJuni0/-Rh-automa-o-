@@ -12,6 +12,14 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~16:05] Ω-2 Bloco A3 — argsSchema por tool (anti prompt-injection)
+- **`lib/assistant/tools.ts`:** cada `ToolDef` ganha `argsSchema: z.ZodType`. Leitura/rascunho = schema tolerante (`z.record`, aceita extras). `enviar_email` = `to` validado por `recipientSchema` (email + **`EMAIL_DOMAIN_ALLOWLIST`** server-side, hoje `["iris.tech"]`) — `to` opcional (o planner mock não o extrai) MAS se presente TEM de estar na allowlist. `save_memory_fact`/`marcar_agenda`/`por_bot_na_call` validam formato dos campos se presentes (tamanho/UUID). `isAllowedRecipient()` + `validateToolArgs()` exportados.
+- **`lib/assistant/gate.ts`:** `executeToolCall` valida `argsSchema` **antes de executar** (leitura imediata OU confirmado) → novo outcome `invalid_args`. A porta de confirmação mantém precedência (sem confirm → `needs_confirm`, não chega a validar/executar).
+- **`lib/assistant/run.ts`:** ao PLANEAR descarta tool-calls com args inválidos (o LLM/injeção no CV não consegue pôr `enviar_email` para fora da allowlist em pendente); na CONFIRMAÇÃO re-valida os args persistidos antes do executor (defesa-em-profundidade; substitui o `TODO(FASE Ω)`). `invalid_args` → ação marcada `failed`.
+- **Anti-exfiltração:** um `to: ataque@evil.com` (vindo do LLM ou de um prompt-injection num CV) é rejeitado server-side; só domínios da allowlist passam. ⚠️ nota no código + KEYS-TODO: o adapter REAL de email tem de validar também cc/bcc.
+- **TDD (+9):** `isAllowedRecipient`; `validateToolArgs` (fora/dentro da allowlist; tool desconhecida→null; leitura tolerante; por_bot_na_call UUID); `executeToolCall` confirmado (envenenado→`invalid_args`; allowlist→`done`; sem confirm→`needs_confirm`). Testes existentes do gate migrados p/ destinatário na allowlist.
+- **Verde:** typecheck ✅ · web **116→125** · `next build` ✅ · Biome ✅. Sem rede · sem segredos.
+
 ## [2026-06-20 ~15:35] Ω-2 Bloco A2 — storage agency-scoped (anti-IDOR cross-agency)
 - **`lib/upload.ts`:** `validateUpload` ganha `agencyId` (OBRIGATÓRIO, da SESSÃO). Valida-o contra `UUID_RE` (recusa prefixo forjado / injeção de caminho via agencyId → "agência inválida"). A `storageKey` passa de `${uuid}.ext` para **`${agencyId}/${uuid}.ext`** → todos os CVs/PII ficam particionados por agência no bucket privado.
 - **`lib/storage.ts`:** `createAgencyScopedStorage(provider, agencyId)` (NOVO) — wrapper que EXIGE `key.startsWith(${agencyId}/)` E rejeita `..` (traversal). Key sem o prefixo / de outra agência / com traversal → Promise REJEITADA (métodos `async` → rejeição, não exceção síncrona) ANTES de tocar no storage real. É a barreira anti-IDOR para assinar download/upload de PII.

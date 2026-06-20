@@ -1,5 +1,5 @@
 import type { Efeito } from "@rh/core";
-import { getTool, type ToolResult } from "./tools";
+import { getTool, type ToolResult, validateToolArgs } from "./tools";
 
 /**
  * Porta de confirmação (ASSISTENTE-PESSOAL §2.1): `gravar`/`enviar_fora` pedem OK da Filipa;
@@ -35,6 +35,7 @@ export interface ToolCall {
 
 export type ExecuteOutcome =
   | { status: "unknown_tool"; tool: string }
+  | { status: "invalid_args"; tool: string; reason: string }
   | { status: "needs_confirm"; tool: string; efeito: Efeito }
   | { status: "duplicate"; tool: string; key: string }
   | { status: "failed"; tool: string; error: unknown }
@@ -43,7 +44,10 @@ export type ExecuteOutcome =
 /**
  * Executa uma tool-call respeitando a porta de confirmação + idempotência:
  * - tool desconhecida → `unknown_tool` (nunca executa o que não conhece);
- * - `gravar`/`enviar_fora` sem `confirmed` → `needs_confirm` (NÃO executa);
+ * - `gravar`/`enviar_fora` sem `confirmed` → `needs_confirm` (NÃO executa) — a porta tem precedência
+ *   sobre a validação de args (a ação só fica pendente; valida-se a fundo na confirmação real);
+ * - args que falham o `argsSchema` da tool → `invalid_args` (anti prompt-injection: o destinatário
+ *   de `enviar_email` é validado contra a allowlist server-side ANTES de executar);
  * - `gravar`/`enviar_fora` com `idempotencyKey` já visto → `duplicate` (anti duplo §16I);
  * - executor que lança → `failed` (a chave NÃO é queimada → o retry é possível);
  * - caso contrário → corre o executor MOCK e devolve o resultado.
@@ -56,6 +60,11 @@ export function executeToolCall(call: ToolCall, store: IdempotencyStore): Execut
   }
   if (requiresConfirmation(tool.efeito) && !call.confirmed) {
     return { status: "needs_confirm", tool: tool.name, efeito: tool.efeito };
+  }
+  // Vai mesmo executar (leitura imediata OU confirmado) → valida os args agora (a fundo).
+  const validated = validateToolArgs(tool.name, call.args);
+  if (validated && !validated.ok) {
+    return { status: "invalid_args", tool: tool.name, reason: validated.reason };
   }
   // Idempotência só para os efeitos duráveis/irreversíveis (gravar + enviar_fora).
   const idemKey = requiresConfirmation(tool.efeito) ? call.idempotencyKey : undefined;
