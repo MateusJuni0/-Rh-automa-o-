@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { INES_RECRUITER_ID } from "@/lib/auth";
 import { DEV_AGENCY_ID } from "@/lib/db";
-import { getFaceClient } from "@/lib/face-config";
+import { FACE_AUTH_ENABLED, getFaceClient } from "@/lib/face-config";
 import { DEV_RECRUITER_ID } from "@/lib/vagas";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,10 @@ const SEED: Record<string, string> = {
  * só com `match && liveness_ok` cria a sessão. Falha → 401 uniforme (sem leak do motivo do serviço).
  */
 export async function POST(req: Request): Promise<Response> {
+  // ⛔ Portão de segurança: login por rosto DESLIGADO até ser production-grade (ver face-config.ts).
+  if (!FACE_AUTH_ENABLED) {
+    return Response.json(err("not_found", "biometria desativada"), { status: 404 });
+  }
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return Response.json(err("validation", "pedido de biometria inválido"), { status: 400 });

@@ -1,5 +1,5 @@
 import { err, ok } from "@rh/core";
-import { getFaceClient } from "@/lib/face-config";
+import { FACE_AUTH_ENABLED, getFaceClient } from "@/lib/face-config";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,10 @@ export const dynamic = "force-dynamic";
  * de cores + token assinado). A secret S2S fica no servidor (este handler), nunca no browser.
  */
 export async function POST(): Promise<Response> {
+  // ⛔ Portão de segurança: biometria DESLIGADA até ser production-grade (ver face-config.ts).
+  if (!FACE_AUTH_ENABLED) {
+    return Response.json(err("not_found", "biometria desativada"), { status: 404 });
+  }
   try {
     const challenge = await getFaceClient().challenge();
     return Response.json(ok(challenge), { status: 200 });
