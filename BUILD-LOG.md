@@ -12,6 +12,14 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~15:35] Ω-2 Bloco A2 — storage agency-scoped (anti-IDOR cross-agency)
+- **`lib/upload.ts`:** `validateUpload` ganha `agencyId` (OBRIGATÓRIO, da SESSÃO). Valida-o contra `UUID_RE` (recusa prefixo forjado / injeção de caminho via agencyId → "agência inválida"). A `storageKey` passa de `${uuid}.ext` para **`${agencyId}/${uuid}.ext`** → todos os CVs/PII ficam particionados por agência no bucket privado.
+- **`lib/storage.ts`:** `createAgencyScopedStorage(provider, agencyId)` (NOVO) — wrapper que EXIGE `key.startsWith(${agencyId}/)` E rejeita `..` (traversal). Key sem o prefixo / de outra agência / com traversal → Promise REJEITADA (métodos `async` → rejeição, não exceção síncrona) ANTES de tocar no storage real. É a barreira anti-IDOR para assinar download/upload de PII.
+- **`lib/storage-config.ts`:** `getAgencyStorage(agencyId)` (NOVO) — `createAgencyScopedStorage(getStorage(), agencyId)`. É o que as ROTAS devem usar (agencyId vem de `getSession`, nunca do cliente); combina com a `storageKey` já prefixada por `validateUpload`.
+- **TDD (+5):** `validateUpload` com prefixo de agência + agencyId não-UUID rejeitado + traversal no nome ainda dá exatamente 1 `/`; `createAgencyScopedStorage` (delega com prefixo certo; OUTRA agência→lança; sem prefixo→lança; traversal→lança). Testes existentes de upload migrados p/ a nova assinatura (mudança legítima, comportamento idêntico).
+- **`vitest.config.ts`:** `testTimeout`/`hookTimeout` 20s (imports cold @rh/db/@supabase/ssr são lentos no Windows → evita flakes de timeout na suite completa).
+- **Verde:** typecheck ✅ · web **111→116** · `next build` ✅ · Biome ✅. Sem rede (mock storage) · sem segredos.
+
 ## [2026-06-20 ~15:10] Ω-2 Bloco A1 — rate-limit no login (anti brute-force)
 - **`lib/rate-limit.ts` (NOVO, lib pura):** `createLoginRateLimiter({maxAttempts,windowMs,lockoutMs}, now)` — janela deslizante de falhas por chave + lockout temporário. Relógio injetável (testes deterministas). Defaults: 5 falhas / 5 min de janela → 15 min de lockout. `check`/`recordFailure`/`recordSuccess` (sucesso limpa a chave). Interface `RateLimiter` pronta a trocar por Redis em prod (nota no topo: in-memory por-processo, não partilhado entre réplicas).
 - **`lib/request-ip.ts` (NOVO):** `clientIp(req)` — 1.º IP do `x-forwarded-for`, fallback `x-real-ip`, senão `"unknown"` (fail-safe conservador). NOTA atacante: XFF é forjável pelo cliente; em prod atrás de proxy de confiança (Vercel) é controlado — defesa válida no v1 single-tenant.

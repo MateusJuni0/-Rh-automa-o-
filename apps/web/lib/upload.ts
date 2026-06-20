@@ -24,7 +24,17 @@ export interface UploadInput {
   /** Primeiros bytes do ficheiro — OBRIGATÓRIO em runtime (magic-check). A rota TEM de ler o início
    * do ficheiro; sem isto o upload é rejeitado. */
   header?: Uint8Array;
+  /**
+   * ID da agência da SESSÃO (do servidor, NUNCA do cliente). A `storageKey` é prefixada por
+   * `${agencyId}/` → todos os ficheiros de PII ficam particionados por agência no bucket privado
+   * (anti-IDOR cross-agency). Tem de ser um UUID válido (defesa contra prefixo forjado/injeção de
+   * caminho via agencyId).
+   */
+  agencyId: string;
 }
+
+/** UUID v4-ish (mesmo formato que o `randomUUID`/IDs da DB). Usado para validar o `agencyId`. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type UploadResult =
   | { ok: true; storageKey: string; displayName: string }
@@ -48,6 +58,10 @@ function magicMatches(header: Uint8Array, magic: readonly number[]): boolean {
 }
 
 export function validateUpload(input: UploadInput): UploadResult {
+  // O agencyId vem da SESSÃO (servidor). Tem de ser UUID — recusa prefixo forjado/injeção de caminho.
+  if (!UUID_RE.test(input.agencyId)) {
+    return { ok: false, reason: "agência inválida" };
+  }
   // sizeBytes vem de JSON não-tipado → exige inteiro finito (NaN/Infinity/decimal não passam).
   if (!Number.isInteger(input.sizeBytes) || input.sizeBytes <= 0) {
     return { ok: false, reason: "tamanho inválido" };
@@ -71,10 +85,11 @@ export function validateUpload(input: UploadInput): UploadResult {
   if (!magicMatches(input.header, allowed.magic)) {
     return { ok: false, reason: "conteúdo não corresponde ao tipo declarado" };
   }
-  // storage_path gerado pelo SERVIDOR (UUID) — NUNCA o nome do utilizador (anti path traversal)
+  // storage_path gerado pelo SERVIDOR: `${agencyId}/${uuid}.ext` — prefixo da agência da SESSÃO
+  // (anti-IDOR cross-agency) + UUID (nunca o nome do utilizador → anti path traversal).
   return {
     ok: true,
-    storageKey: `${randomUUID()}.${allowed.ext}`,
+    storageKey: `${input.agencyId}/${randomUUID()}.${allowed.ext}`,
     displayName: sanitizeDisplayName(input.filename),
   };
 }

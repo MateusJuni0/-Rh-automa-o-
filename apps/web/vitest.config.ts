@@ -9,5 +9,8 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     environment: "node",
+    // Imports cold (@rh/db, @supabase/ssr) + integração DB são lentos no Windows → margem generosa.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
   },
 });

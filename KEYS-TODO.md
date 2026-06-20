@@ -44,8 +44,8 @@ Itens conscientemente adiados durante a Fase 3 (documentados nas iterações do 
 
 ## 🛡️ Endurecimentos de SEGURANÇA antes de produção (revisão Ω, 2026-06-20)
 A maioria do Ω (auth Supabase, isolamento agency, porta do assistente anti-prompt-injection) **passou** a revisão adversarial. A fechar antes de expor a app:
-- **Rate-limiting** em `/api/auth/login` + `/api/auth/face` (por IP+email + lockout). Hoje sem; o login delega parte ao Supabase.
-- **Storage agency-scoped:** ao ligar o storage real, forçar a `key` prefixada por `${agencyId}/` **no servidor** (da sessão, nunca do cliente) — evita IDOR cross-agency de CVs/PII. (Hoje o storage ainda não está ligado a nenhuma rota.)
+- ✅ **Rate-limiting** em `/api/auth/login` — FEITO (Ω-2 A1): token-bucket + lockout por IP e por IP+email (429 + Retry-After). `lib/rate-limit.ts` (in-memory; nota p/ trocar por Redis em prod multi-instância). `/api/auth/face` já não existe (biometria removida).
+- ✅ **Storage agency-scoped:** FEITO (Ω-2 A2): `validateUpload` gera `storageKey=${agencyId}/${uuid}.ext` (agencyId da sessão, validado UUID); `createAgencyScopedStorage` recusa keys fora do prefixo da agência (`getAgencyStorage(agencyId)` é o que as rotas usam). Anti-IDOR cross-agency garantido antes mesmo de o storage estar ligado a uma rota.
 - **`argsSchema` por tool** no assistente + allowlist de destinatário antes de executores REAIS (a porta de confirmação humana já protege; falta sanitizar os `args` que o LLM produz).
 - **Invariantes no arranque (fail-fast):** abortar se `AUTH_ENABLED && falta SUPABASE_ANON_KEY`; pôr o fallback DEV de sessão atrás de flag explícita `ALLOW_DEV_SESSION` (não inferir só de `NODE_ENV`).
 - **Cookies do shim:** `secure` por HTTPS (não por `NODE_ENV`); `sameSite: strict`. (Mitigado quando o `@supabase/ssr` gere os cookies.)

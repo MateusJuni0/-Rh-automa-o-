@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import {
+  createAgencyScopedStorage,
   createMockStorage,
   createSupabaseStorage,
   type StorageProvider,
@@ -33,4 +34,14 @@ export function getStorage(): StorageProvider {
     storage: client.storage as unknown as SupabaseStorageApi,
     bucket,
   });
+}
+
+/**
+ * Storage JÁ com âmbito de agência (anti-IDOR) — é o que as ROTAS devem usar. `agencyId` vem da
+ * SESSÃO (servidor, via `getSession`), NUNCA do cliente. Qualquer key sem o prefixo `${agencyId}/`
+ * (ou com traversal) é recusada antes de tocar no storage. Combina com a `storageKey` gerada por
+ * `validateUpload` (que já prefixa a agência).
+ */
+export function getAgencyStorage(agencyId: string): StorageProvider {
+  return createAgencyScopedStorage(getStorage(), agencyId);
 }

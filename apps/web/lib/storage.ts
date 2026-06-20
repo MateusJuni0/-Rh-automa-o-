@@ -81,6 +81,39 @@ export interface SupabaseStorageOptions {
  * geradas pelo serviço (segredo no servidor, nunca exposto). Erro do serviço → lança (sem falha
  * silenciosa). Ativado por env via `getStorage` (config-not-code); sem env → stub mock.
  */
+// ───────────────────────────── agency-scoping (anti-IDOR, Ω-2 A2) ─────────────────────────────
+
+/**
+ * Envolve um StorageProvider e EXIGE que toda a `key` comece por `${agencyId}/`. A `agencyId` vem
+ * sempre da SESSÃO (servidor), nunca do cliente. Uma key sem o prefixo (ou de outra agência, ou com
+ * `..`/`/` extra a tentar escapar) → **lança** antes de tocar no storage real. É a barreira que impede
+ * um pedido de assinar um download/upload de PII de outra agência (IDOR cross-agency).
+ */
+export function createAgencyScopedStorage(
+  provider: StorageProvider,
+  agencyId: string,
+): StorageProvider {
+  const prefix = `${agencyId}/`;
+  function assertScoped(key: string): void {
+    // Rejeita: sem prefixo da agência; ou tentativa de traversal (`..`) mesmo dentro do prefixo.
+    if (!key.startsWith(prefix) || key.includes("..")) {
+      throw new Error("storage: key fora do âmbito da agência (acesso negado)");
+    }
+  }
+  return {
+    // `async` → uma key fora do âmbito vira Promise REJEITADA (consistente com a interface async),
+    // não uma exceção síncrona; o chamador trata sempre por `await`/`.catch`.
+    async signedUploadUrl(key, opts) {
+      assertScoped(key);
+      return provider.signedUploadUrl(key, opts);
+    },
+    async signedDownloadUrl(key, opts) {
+      assertScoped(key);
+      return provider.signedDownloadUrl(key, opts);
+    },
+  };
+}
+
 export function createSupabaseStorage(opts: SupabaseStorageOptions): StorageProvider {
   const now = opts.now ?? Date.now;
   const bucket = opts.storage.from(opts.bucket);
