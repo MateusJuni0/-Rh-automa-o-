@@ -59,14 +59,40 @@ export async function createCandidato(
 export interface CandidatoRow {
   id: string;
   name: string;
+  /** Skills declaradas (extraídas do perfil) — para pesquisa e chips de filtro na lista. */
+  skills: string[];
+  /** Anos de experiência (do perfil), ou null se n/d — para ordenar a lista. */
+  anos: number | null;
 }
 
-export function listCandidatos(db: Db, agencyId: string): Promise<CandidatoRow[]> {
-  return db
-    .select({ id: schema.candidate.id, name: schema.candidate.name })
+const EMPTY_PROFILE: CandidateProfile = {
+  skillsDeclaradas: [],
+  experienciaAnos: null,
+  gapsCv: [],
+  resumo: "",
+};
+
+export async function listCandidatos(db: Db, agencyId: string): Promise<CandidatoRow[]> {
+  const rows = await db
+    .select({
+      id: schema.candidate.id,
+      name: schema.candidate.name,
+      profile: schema.candidate.profile,
+    })
     .from(schema.candidate)
     .where(and(eq(schema.candidate.agencyId, agencyId), isNull(schema.candidate.deletedAt)))
     .orderBy(desc(schema.candidate.createdAt));
+  // O `profile` é JSONB — valida na fronteira (não confia no shape da DB), tal como `getCandidato`.
+  return rows.map((r) => {
+    const parsed = candidateProfile.safeParse(r.profile);
+    const profile = parsed.success ? parsed.data : EMPTY_PROFILE;
+    return {
+      id: r.id,
+      name: r.name,
+      skills: profile.skillsDeclaradas,
+      anos: profile.experienciaAnos,
+    };
+  });
 }
 
 export interface CandidatoDetail {
@@ -76,13 +102,6 @@ export interface CandidatoDetail {
   profile: CandidateProfile;
   cvText: string | null;
 }
-
-const EMPTY_PROFILE: CandidateProfile = {
-  skillsDeclaradas: [],
-  experienciaAnos: null,
-  gapsCv: [],
-  resumo: "",
-};
 
 export interface ProcessoAtivo {
   processId: string;

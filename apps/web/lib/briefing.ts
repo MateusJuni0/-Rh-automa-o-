@@ -3,8 +3,9 @@ import { buildBriefing, buildRubric } from "@rh/ai";
 import type { Briefing, RoleProfile, Rubric } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { aiOptions } from "./ai";
+import { matchCandidatoVaga } from "./match";
 
 type Db = DbHandle["db"];
 
@@ -92,4 +93,52 @@ export async function generateBriefing(
   );
 
   return { rubric, briefing };
+}
+
+/** Contexto do briefing quando há um candidato em foco: nome + match% + processId (para iniciar). */
+export interface BriefingContext {
+  processId: string;
+  candidateName: string;
+  /** Score do match (stub determinístico = 50 sem chave). */
+  matchScore: number;
+}
+
+/**
+ * Resolve candidato×vaga para o topo do briefing. Lê o processo (candidatura já existente no funil)
+ * e calcula o match. Sem `candidateId` (ou processo inexistente) → null (briefing genérico da vaga).
+ */
+export async function getBriefingContext(
+  db: Db,
+  agencyId: string,
+  jobId: string,
+  candidateId: string | undefined,
+): Promise<BriefingContext | null> {
+  if (!candidateId) {
+    return null;
+  }
+  const [row] = await db
+    .select({
+      processId: schema.process.id,
+      candidateName: schema.candidate.name,
+    })
+    .from(schema.process)
+    .innerJoin(schema.candidate, eq(schema.candidate.id, schema.process.candidateId))
+    .where(
+      and(
+        eq(schema.process.candidateId, candidateId),
+        eq(schema.process.jobId, jobId),
+        eq(schema.process.agencyId, agencyId),
+        isNull(schema.process.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!row) {
+    return null;
+  }
+  const { match } = await matchCandidatoVaga(db, agencyId, { candidateId, jobId });
+  return {
+    processId: row.processId,
+    candidateName: row.candidateName,
+    matchScore: match.matchScore,
+  };
 }

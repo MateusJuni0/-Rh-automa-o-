@@ -5,74 +5,19 @@ import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, eq, sql } from "drizzle-orm";
 import { aiOptions } from "./ai";
+import { renderParecerMd } from "./parecer-view";
 
 type Db = DbHandle["db"];
 
-/** Render determinístico do Parecer → markdown (versão cliente). Puro — testável sem DB. */
-export function renderParecerMd(candidateName: string, p: Parecer): string {
-  const lines: string[] = [];
-  lines.push(`# Parecer — ${candidateName}`, "", `**Veredito:** ${p.veredito}`, "");
-
-  lines.push("## Critérios", "");
-  if (p.criterios.length === 0) {
-    lines.push("_Sem critérios avaliados._", "");
-  } else {
-    for (const c of p.criterios) {
-      const cite = c.citacao ? ` (“${c.citacao}”${c.timestamp ? ` @ ${c.timestamp}` : ""})` : "";
-      lines.push(`- **${c.criterio}** — ${c.resposta}${cite}: ${c.leitura}`);
-    }
-    lines.push("");
-  }
-
-  lines.push("## Forças", "");
-  lines.push(...bullets(p.forcas, "_Nenhuma registada._"), "");
-  lines.push("## Riscos / a sondar", "");
-  lines.push(...bullets(p.riscos, "_Nenhum registado._"), "");
-
-  const l = p.logistica;
-  lines.push(
-    "## Logística",
-    "",
-    `- Salário: ${l.salario ?? "—"}`,
-    `- Aviso prévio: ${l.avisoPrevio ?? "—"}`,
-    `- Disponibilidade: ${l.disponibilidade ?? "—"}`,
-    `- Remoto: ${l.remoto ?? "—"}`,
-    `- Risco de contraproposta: ${l.riscoContraproposta ?? "—"}`,
-    "",
-    "## Ângulo de venda",
-    "",
-    p.anguloVenda,
-    "",
-  );
-
-  lines.push("## Credenciais a verificar", "");
-  if (p.credenciaisAVerificar.length === 0) {
-    lines.push("_Nenhuma._", "");
-  } else {
-    for (const cr of p.credenciaisAVerificar) {
-      lines.push(`- ${cr.credencial} — ${cr.estado}${cr.docRef ? ` (${cr.docRef})` : ""}`);
-    }
-    lines.push("");
-  }
-
-  lines.push("## Fiabilidade", "");
-  if (p.naoCapturado.length === 0) {
-    lines.push("Captura completa.", "");
-  } else {
-    for (const g of p.naoCapturado) {
-      lines.push(`- Não capturado ${g.inicio}–${g.fim ?? "aberto"} (${g.causa})`);
-    }
-    lines.push("");
-  }
-
-  lines.push("## Fontes", "");
-  lines.push(...bullets(p.fontes, "_Sem fontes._"));
-  return lines.join("\n");
-}
-
-function bullets(items: readonly string[], empty: string): string[] {
-  return items.length === 0 ? [empty] : items.map((i) => `- ${i}`);
-}
+export type {
+  CriterioContagem,
+  CriterioEstado,
+  CriterioView,
+  ParecerView,
+} from "./parecer-view";
+// A lógica PURA de vista (sem DB) vive em ./parecer-view (client-safe). Re-exporta-se aqui para os
+// callers do servidor que já importavam de @/lib/parecer.
+export { isParecerDemo, parecerView, renderParecerMd } from "./parecer-view";
 
 /** Parecer stub (sem chave de IA) — válido e honesto sobre o seu próprio estado de demonstração. */
 function stubParecer(name: string): Parecer {
@@ -96,15 +41,15 @@ function stubParecer(name: string): Parecer {
 }
 
 /**
- * Gera o parecer (PLANO P3.1 "Depois"): lê entrevista → processo → candidato + factos dur/áveis,
+ * Gera o parecer (PLANO P3.1 "Depois"): lê entrevista → processo → candidato + factos duráveis,
  * corre `buildParecer` (stub sem chave), renderiza markdown e persiste o `report` (interview_id UNIQUE,
- * idempotente; status 'ready'). Devolve {reportId, parecer, contentMd}.
+ * idempotente; status 'ready'). Devolve {reportId, parecer, contentMd, candidateName}.
  */
 export async function gerarParecer(
   db: Db,
   agencyId: string,
   params: { interviewId: string },
-): Promise<{ reportId: string; parecer: Parecer; contentMd: string }> {
+): Promise<{ reportId: string; parecer: Parecer; contentMd: string; candidateName: string }> {
   const [iv] = await db
     .select({ processId: schema.interview.processId })
     .from(schema.interview)
@@ -182,7 +127,7 @@ export async function gerarParecer(
     .select({ id: schema.report.id })
     .from(schema.report)
     .where(eq(schema.report.interviewId, params.interviewId));
-  return { reportId: rep?.id ?? "", parecer, contentMd };
+  return { reportId: rep?.id ?? "", parecer, contentMd, candidateName };
 }
 
 /** Export: devolve o markdown do parecer já gerado (null se ainda não existe). PDF = TODO (pós-chave). */

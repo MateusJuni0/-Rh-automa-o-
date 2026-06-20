@@ -3,8 +3,8 @@ import { CandidatoForm } from "@/components/CandidatoForm";
 import { listCandidatos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { EntityList, initials } from "../components/EntityList";
 import { PageHeader } from "../components/PageHeader";
+import { CandidatosFilter } from "./CandidatosFilter";
 
 export const dynamic = "force-dynamic";
 
@@ -26,15 +26,7 @@ export default async function CandidatosPage() {
               description="Cola um CV no painel ao lado — a Vera extrai o perfil automaticamente."
             />
           ) : (
-            <EntityList
-              title="Todos os candidatos"
-              rows={rows.map((r) => ({
-                id: r.id,
-                monogram: initials(r.name),
-                title: r.name,
-                href: `/candidatos/${r.id}`,
-              }))}
-            />
+            <CandidatosFilter candidatos={rows} />
           )}
         </div>
         <aside>
