@@ -12,6 +12,17 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~17:00] Ω-2 Bloco B — Supabase LOCAL a correr + login email/senha validado ponta-a-ponta
+- **Stack `--profile supabase` SOBE no Windows** (auth GoTrue + rest PostgREST + storage + kong gateway :8000). Validado a correr de facto, não só `compose config`.
+- **2 passos de bootstrap que faltavam (DB)** — sem eles o GoTrue/PostgREST não arrancam; agora documentados:
+  1. **Roles Supabase** na `vera_dev`: `CREATE ROLE anon/authenticated/service_role` (+ `GRANT ... TO postgres`). O PostgREST exige a role `anon`; o GoTrue/storage as outras.
+  2. **Schema `auth`**: `CREATE SCHEMA auth AUTHORIZATION postgres` (o GoTrue v2.158 NÃO o cria sozinho — falhava com `SQLSTATE 3F000 no schema has been selected`). Depois `docker restart vera-auth-1` → **52 migrações aplicadas** ✅.
+- **JWTs de dev** (anon/service_role) assinados com o `SUPABASE_JWT_SECRET` default (HS256, claim `role`+`iss:supabase`). Gerados com node+crypto (NÃO são segredos — secret de dev público no compose; NUNCA em produção).
+- **Seed:** `scripts/seed-supabase-auth.ts` criou **Filipa+Inês no GoTrue** e ligou `recruiter.user_id`. Confirmado na DB (user_id do GoTrue → recruiter da agência IRIS) → `resolveSessionByUserId` resolve.
+- **Login email/senha ponta-a-ponta LOCAL ✅:** `POST /auth/v1/token?grant_type=password` via kong:8000 → password certa devolve **access_token JWT** (sub=user da Filipa); password errada → **HTTP 400**. É exatamente o que o `signInWithPassword` faz; com `SUPABASE_URL`+`SUPABASE_ANON_KEY` locais a app entra em `AUTH_ENABLED` e usa o real.
+- **PAGOS ficam inertes (confirmado):** `AI_ENABLED`=`Boolean(OPENROUTER_API_KEY)`, `EMBEDDER_ENABLED`=`Boolean(EMBEDDER_API_KEY)` — sem chave caem no mock (€0). Prontos p/ as chaves do Mateus (KEYS-TODO).
+- **Nada committado de código** (Bloco B é infra/validação) — só docs (BUILD-LOG/KEYS-TODO com o passo-a-passo de subida).
+
 ## [2026-06-20 ~16:35] Ω-2 Bloco A4 — invariantes de boot + cookies (FECHA Bloco A)
 - **`lib/auth-config.ts` (NOVO):** `assertAuthConfig()` (fail-fast) — `SUPABASE_URL` sem `SUPABASE_ANON_KEY` (ou vice-versa) → LANÇA (config meia-feita cairia em modo mock sem avisar); produção sem auth E sem `ALLOW_DEV_SESSION` → LANÇA. `devSessionAllowed()` = flag EXPLÍCITA `ALLOW_DEV_SESSION=1`.
 - **`instrumentation.ts` (NOVO):** `register()` do Next chama `assertAuthConfig()` no arranque (só `NEXT_RUNTIME=nodejs`) → o processo não sobe com config perigosa.

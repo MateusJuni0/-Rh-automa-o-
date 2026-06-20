@@ -11,20 +11,33 @@
 # O dev normal NÃO precisa disto (a app cai no shim de cookie + storage mock sem env). Para ligar
 # a auth/storage reais LOCALMENTE (sem custo, sem cloud):
 #
+# BOOTSTRAP DA DB (UMA vez — GoTrue/PostgREST exigem-no; sem isto NÃO arrancam):
+#   docker exec vera-db-1 psql -U postgres -d vera_dev -c "
+#     CREATE ROLE anon NOLOGIN NOINHERIT;
+#     CREATE ROLE authenticated NOLOGIN NOINHERIT;
+#     CREATE ROLE service_role NOLOGIN NOINHERIT BYPASSRLS;
+#     GRANT anon, authenticated, service_role TO postgres;
+#     CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION postgres;"   # GoTrue v2.158 NÃO cria o schema auth
+#
 #   docker compose -f docker-compose.dev.yml --profile supabase up -d
+#   # se o auth arrancou ANTES do schema auth existir: docker restart vera-auth-1 (corre 52 migrações)
 #
 # Depois exporta no ambiente da web (valores de dev — NUNCA em produção):
 #   SUPABASE_URL=http://localhost:8000
-#   SUPABASE_ANON_KEY=<o anon JWT de dev abaixo>
-#   SUPABASE_SERVICE_ROLE_KEY=<o service_role JWT de dev abaixo>
+#   SUPABASE_ANON_KEY=<o anon JWT de dev>
+#   SUPABASE_SERVICE_ROLE_KEY=<o service_role JWT de dev>
 #   SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long
-# Os JWT anon/service de dev assinam-se com esse JWT_SECRET (gera-os com o supabase CLI ou jwt.io,
-# claims {"role":"anon"|"service_role","iss":"supabase"}). Para criar Filipa/Inês no GoTrue:
+# Os JWT anon/service de dev assinam-se com esse JWT_SECRET (HS256, claims {"role":"anon"|
+# "service_role","iss":"supabase"}). Gera com o supabase CLI, jwt.io, ou node+crypto. Filipa/Inês:
 #   SUPABASE_URL=http://localhost:8000 SUPABASE_SERVICE_ROLE_KEY=... \
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev \
 #     pnpm --filter web exec tsx scripts/seed-supabase-auth.ts
+# Validar login (devolve access_token; password errada → 400):
+#   curl -s -X POST "http://localhost:8000/auth/v1/token?grant_type=password" \
+#     -H "apikey: $SUPABASE_ANON_KEY" -H "Content-Type: application/json" \
+#     -d '{"email":"filipa@iris.tech","password":"vera-dev-2026"}'
 #
-# NOTA Windows: se o `kong`/`storage` não arrancarem (mounts/imagens), a app continua a funcionar
-# com o fallback mock — o profile fica documentado e correto para Linux/CI.
+# ✅ Validado a correr no Windows (2026-06-20): auth/rest/storage/kong up, login email/senha OK.
 name: vera
 
 services:
