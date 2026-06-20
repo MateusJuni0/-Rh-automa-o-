@@ -30,6 +30,37 @@ const CLIENTS = [
   { id: C_FINPAY, name: "FinPay" },
 ];
 
+// Fichas dos clientes (setor/site/descrição) — fictícias; FUTURO: enriquecidas do site real.
+const CLIENT_PROFILES = [
+  {
+    name: "CMTecnologia",
+    sector: "Software House & Automação",
+    website: "https://cmtecnologia.pt",
+    description:
+      "Software house de elite e laboratório de automação — SaaS premium, e-commerce de alta performance e integrações de IA. Estética Linear/Stripe, operação 100% IA.",
+  },
+  {
+    name: "Acme Software",
+    sector: "Produto / SaaS B2B",
+    website: "https://acme.example.com",
+    description:
+      "Empresa de produto SaaS B2B em crescimento. Equipa de engenharia distribuída, forte cultura de developer experience e código limpo.",
+  },
+  {
+    name: "FinPay",
+    sector: "Fintech / Pagamentos",
+    website: "https://finpay.example.com",
+    description:
+      "Plataforma de pagamentos e infraestrutura financeira. Exigência alta de fiabilidade, segurança e escala.",
+  },
+  {
+    name: "TechCorp (demo)",
+    sector: "Tecnologia",
+    website: null as string | null,
+    description: "Cliente de demonstração.",
+  },
+];
+
 const CANDIDATES = [
   {
     id: K_SOFIA,
@@ -150,11 +181,17 @@ async function main(): Promise<void> {
       .set({ deletedAt: now })
       .where(and(eq(schema.job.agencyId, AGENCY), eq(schema.job.title, "QA Engineer")));
 
-    // 2) clientes demo.
+    // 2) clientes demo + fichas (setor/site/descrição).
     await db
       .insert(schema.client)
       .values(CLIENTS.map((c) => ({ id: c.id, agencyId: AGENCY, name: c.name })))
       .onConflictDoNothing();
+    for (const p of CLIENT_PROFILES) {
+      await db
+        .update(schema.client)
+        .set({ sector: p.sector, website: p.website, description: p.description })
+        .where(and(eq(schema.client.agencyId, AGENCY), eq(schema.client.name, p.name)));
+    }
 
     // 3) candidatos demo (perfis completos).
     await db

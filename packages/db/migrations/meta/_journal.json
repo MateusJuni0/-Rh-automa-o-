@@ -22,6 +22,13 @@
       "when": 1781948321349,
       "tag": "0002_unknown_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781983714665,
+      "tag": "0003_remarkable_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }

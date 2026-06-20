@@ -9,6 +9,11 @@ export const client = pgTable("client", {
   name: text("name").notNull(),
   notes: text("notes"),
   aliases: text("aliases").array(), // alcunhas ("TechCorp", "a Tech") — MODELO §12
+  // Perfil do cliente (ficha). Hoje preenchido manualmente/demo; FUTURO: enriquecido do site (logoUrl).
+  website: text("website"),
+  sector: text("sector"),
+  description: text("description"),
+  logoUrl: text("logo_url"),
   purgeAfter: timestamp("purge_after", { withTimezone: true }), // RGPD apagamento recuperável (§6)
   createdAt: createdAt(),
   deletedAt: deletedAt(),

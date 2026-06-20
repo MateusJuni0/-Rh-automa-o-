@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 
 export interface EntityRow {
   id: string;
-  /** Inicial(is) para o monograma (ver `initials`). */
-  monogram: string;
+  /** Inicial(is) para o monograma (ver `initials`). Ignorado se `leading` for passado. */
+  monogram?: string;
+  /** Elemento à esquerda (ex.: `<ClientLogo>`). Sobrepõe-se ao monograma. */
+  leading?: ReactNode;
   title: string;
   subtitle?: string;
   /** Conteúdo à direita (chip, contagem). Se ausente e houver `href`, mostra um chevron. */
@@ -44,9 +46,11 @@ export function EntityList({ title, rows }: EntityListProps) {
         {rows.map((r) => {
           const inner = (
             <>
-              <span className="monogram" aria-hidden="true">
-                {r.monogram}
-              </span>
+              {r.leading ?? (
+                <span className="monogram" aria-hidden="true">
+                  {r.monogram}
+                </span>
+              )}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-ink text-sm">{r.title}</span>
                 {r.subtitle ? (
