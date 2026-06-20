@@ -346,6 +346,66 @@ async function main(): Promise<void> {
         .where(and(eq(schema.client.agencyId, AGENCY), eq(schema.client.name, p.name)));
     }
 
+    // Reuniões/intake SIMULADOS: o que cada cliente valoriza / não aceita / contexto.
+    const [cmtecCli] = await db
+      .select({ id: schema.client.id })
+      .from(schema.client)
+      .where(
+        and(
+          eq(schema.client.agencyId, AGENCY),
+          eq(schema.client.name, "CMTecnologia"),
+          isNull(schema.client.deletedAt),
+        ),
+      )
+      .limit(1);
+    const FACTS: { clientId: string; items: { t: string; text: string }[] }[] = [
+      {
+        clientId: C_ACME,
+        items: [
+          { t: "preference", text: "Valoriza autonomia e ownership do início ao fim" },
+          { t: "preference", text: "Código limpo, testes e boas práticas" },
+          { t: "rejection_reason", text: "Não aceita quem só executa sem questionar" },
+          { t: "context", text: "Equipa distribuída, comunicação assíncrona" },
+        ],
+      },
+      {
+        clientId: C_FINPAY,
+        items: [
+          { t: "preference", text: "Fiabilidade e rigor acima de velocidade" },
+          { t: "rejection_reason", text: "Não aceita atalhos em segurança ou compliance" },
+          { t: "context", text: "Ambiente regulado (fintech) — PCI-DSS" },
+        ],
+      },
+      ...(cmtecCli
+        ? [
+            {
+              clientId: cmtecCli.id,
+              items: [
+                { t: "preference", text: "Estética premium (Linear/Stripe), atenção ao detalhe" },
+                { t: "preference", text: "Conforto com IA/LLM e automação" },
+                { t: "rejection_reason", text: "Não aceita código desleixado nem 'AI slop'" },
+                { t: "context", text: "Operação 100% IA, entregas em tempo recorde" },
+              ],
+            },
+          ]
+        : []),
+    ];
+    for (const f of FACTS) {
+      await db
+        .delete(schema.clientMemoryFact)
+        .where(eq(schema.clientMemoryFact.clientId, f.clientId));
+      await db.insert(schema.clientMemoryFact).values(
+        f.items.map((it) => ({
+          agencyId: AGENCY,
+          clientId: f.clientId,
+          factText: it.text,
+          factType: it.t,
+          sourceType: "intake_doc",
+          confirmedAt: now,
+        })),
+      );
+    }
+
     // 3) candidatos demo (perfis completos + CV texto para o visor inline).
     await db
       .insert(schema.candidate)

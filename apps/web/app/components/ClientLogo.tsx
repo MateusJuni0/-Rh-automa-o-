@@ -26,6 +26,11 @@ function colorFor(name: string): { bg: string; fg: string } {
   return PALETTE[Math.abs(h) % PALETTE.length] ?? DEFAULT_COLOR;
 }
 
+/** Cor de marca do cliente (hex) — para tints de hero. Determinística pelo nome. */
+export function clientColor(name: string): string {
+  return colorFor(name).bg;
+}
+
 interface ClientLogoProps {
   name: string;
   logoUrl?: string | null;

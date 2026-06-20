@@ -58,6 +58,11 @@ export interface ClienteVaga {
   numCandidatos: number;
 }
 
+export interface ClienteFacto {
+  factType: string; // preference | rejection_reason | context
+  factText: string;
+}
+
 export interface ClienteDetail {
   id: string;
   name: string;
@@ -66,6 +71,8 @@ export interface ClienteDetail {
   description: string | null;
   logoUrl: string | null;
   vagas: ClienteVaga[];
+  /** O que sabemos deste cliente (de reuniões/intake): valoriza, não aceita, contexto. */
+  factos: ClienteFacto[];
 }
 
 /** Ficha do cliente: perfil + as suas vagas (cada uma com nº de candidatos no funil). */
@@ -115,5 +122,21 @@ export async function getCliente(
     )
     .groupBy(schema.job.id)
     .orderBy(desc(schema.job.createdAt));
-  return { ...c, vagas };
+
+  const factos = await db
+    .select({
+      factType: schema.clientMemoryFact.factType,
+      factText: schema.clientMemoryFact.factText,
+    })
+    .from(schema.clientMemoryFact)
+    .where(
+      and(
+        eq(schema.clientMemoryFact.clientId, id),
+        eq(schema.clientMemoryFact.agencyId, agencyId),
+        isNull(schema.clientMemoryFact.deletedAt),
+      ),
+    )
+    .orderBy(desc(schema.clientMemoryFact.createdAt));
+
+  return { ...c, vagas, factos };
 }
