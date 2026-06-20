@@ -131,6 +131,12 @@ importers:
       '@rh/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@rh/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.22.0)
       ws:
         specifier: ^8.21.0
         version: 8.21.0

@@ -8,14 +8,16 @@ import type { WsServer } from "../src/server";
 const UUID = "11111111-1111-4111-8111-111111111111";
 
 describe("resolveConfig", () => {
-  it("lê WS_PORT/WS_JWT_SECRET", () => {
-    expect(resolveConfig({ WS_PORT: "1234", WS_JWT_SECRET: "s" })).toEqual({
-      port: 1234,
-      secret: "s",
-    });
+  it("lê WS_PORT/WS_JWT_SECRET/DATABASE_URL", () => {
+    expect(
+      resolveConfig({ WS_PORT: "1234", WS_JWT_SECRET: "s", DATABASE_URL: "postgres://x" }),
+    ).toEqual({ port: 1234, secret: "s", databaseUrl: "postgres://x" });
   });
-  it("defaults: porta 18792, segredo vazio (obrigatório a montante)", () => {
-    expect(resolveConfig({})).toEqual({ port: 18792, secret: "" });
+  it("defaults: porta 18792, segredo vazio, sem DATABASE_URL", () => {
+    expect(resolveConfig({})).toEqual({ port: 18792, secret: "", databaseUrl: undefined });
+  });
+  it("DATABASE_URL vazio/espaços → undefined (cai no mock)", () => {
+    expect(resolveConfig({ DATABASE_URL: "   " }).databaseUrl).toBeUndefined();
   });
 });
 

@@ -12,6 +12,14 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~11:40] Ω-1 (1b) — posse REAL do ws (@rh/db no entrypoint)
+- **`apps/ws/src/ownership.ts` (NOVO):** `dbVerifyOwnership(db)` = `SELECT 1 FROM interview WHERE id=$1 AND recruiter_id=$2` (Drizzle `and(eq,eq)`, `.limit(1)`). `recruiter_id` = `sub` do JWT (já verificado por `createWsAuthenticate`). **Guarda UUID_RE** antes da query → `sub`/interviewId não-UUID (token forjado) devolve `false` em vez de rebentar o cast no Postgres.
+- **config-not-code (`main.ts`):** `resolveConfig` lê `DATABASE_URL`; com URL → `createDb`+`dbVerifyOwnership` (posse REAL), sem URL → `mockVerifyOwnership` (dev/testes a €0). Pool fechado no shutdown (sem leak; `closing` guard idempotente). `startFromConfig` relaxado p/ `Pick<WsConfig,"port"|"secret">` (a posse é injetada).
+- **`@rh/db`+`drizzle-orm` adicionados como dep do `apps/ws`** (a APP); a lib `@rh/ws` (`index.ts`) **continua SEM** `@rh/db` (`ownership.ts` não é exportado) → contrato `@rh/core` intacto.
+- **TDD (DB local):** `test/ownership.integration.test.ts` (+4, `skipIf(!TEST_DATABASE_URL)`): dono→true; outro recruiter→false (4403); entrevista inexistente→false; `sub` não-UUID→false. +1 em `main.test.ts` (`resolveConfig` lê/limpa `DATABASE_URL`).
+- **Self-review (atacante):** fail-closed mantido (`createWsAuthenticate` try/catch → 4401 se a query lançar); sem posse → 4403; sem segredos hardcoded; lib sem @rh/db.
+- **Verde:** typecheck global ✅ · `pnpm test` (com DB) **301 testes** (ws 32→**37**) · sem DB: ws 33 pass/4 skip (modo CI) ✅ · Biome ✅ · **boot REAL** `WS_JWT_SECRET+DATABASE_URL pnpm start` → `[ws] posse: REAL (@rh/db)` ✅.
+
 ## [2026-06-20 ~10:30] Ω-1 (1a) — RGPD completo + migração 0002 (candidate_id)
 - **Migração 0002:** `candidate_id` (nullable, FK→candidate, índice) em `async_job` E `interview`.
 - **`purgeCandidate`** cobre agora: `async_job WHERE candidate_id` (PII no JSONB args); threads/mensagens/ações do assistente ligadas ao candidato (via `active_context->>'candidate_id'`); e **entrevistas ÓRFÃS** (`process_id NULL`, atribuídas por `interview.candidate_id`) + os seus filhos. Teste de integração estendido (órfã + thread + async_job; isolamento cross-agency mantém-se).
