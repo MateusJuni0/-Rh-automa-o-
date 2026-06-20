@@ -1,4 +1,5 @@
 import { EMBEDDING_DIM } from "@rh/db";
+import { z } from "zod";
 
 /** Embedder — texto → vetor (dim do EMBEDDER = 1536). Real = OpenAI text-embedding-3-small; aqui mock. */
 export interface Embedder {
@@ -38,6 +39,65 @@ export function mockEmbedder(): Embedder {
           return v.map((c) => c / norm);
         }),
       );
+    },
+  };
+}
+
+/** Forma mínima da resposta de embeddings (OpenAI). */
+const embeddingsResponse = z.object({
+  data: z.array(z.object({ index: z.number().int(), embedding: z.array(z.number()) })).min(1),
+});
+
+export interface OpenAiEmbedderOptions {
+  /** Chave do embedder — vem de `process.env.EMBEDDER_API_KEY` no app (NUNCA hardcoded). */
+  apiKey: string;
+  model?: string;
+  baseUrl?: string;
+  /** Injetável para testes (default = `fetch` global). */
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * Embedder REAL (OpenAI text-embedding-3-small, dim 1536). INERTE até à chave — o app só o usa
+ * quando `EMBEDDER_API_KEY` existe (config-not-code; ver `getEmbedder`). Mesma assinatura do mock,
+ * por isso troca-se sem reescrever a canalização RAG. `fetchImpl` injetável p/ testes.
+ */
+export function createOpenAiEmbedder(opts: OpenAiEmbedderOptions): Embedder {
+  if (!opts.apiKey) {
+    throw new Error("EMBEDDER_API_KEY em falta");
+  }
+  const model = opts.model ?? "text-embedding-3-small";
+  const baseUrl = opts.baseUrl ?? "https://api.openai.com/v1";
+  const doFetch = opts.fetchImpl ?? fetch;
+
+  return {
+    async embed(texts) {
+      if (texts.length === 0) {
+        return [];
+      }
+      const res = await doFetch(`${baseUrl}/embeddings`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${opts.apiKey}` },
+        body: JSON.stringify({ model, input: texts }),
+      });
+      if (!res.ok) {
+        throw new Error(`embedder OpenAI: HTTP ${res.status}`);
+      }
+      const parsed = embeddingsResponse.safeParse(await res.json());
+      if (!parsed.success) {
+        throw new Error("embedder OpenAI: resposta em formato inesperado");
+      }
+      // A OpenAI devolve por `index` — ordenar p/ garantir a ordem dos inputs.
+      const ordered = [...parsed.data.data].sort((a, b) => a.index - b.index);
+      if (ordered.length !== texts.length) {
+        throw new Error("embedder OpenAI: nº de vetores ≠ nº de textos");
+      }
+      for (const d of ordered) {
+        if (d.embedding.length !== EMBEDDING_DIM) {
+          throw new Error(`embedder OpenAI: dim ${d.embedding.length} ≠ ${EMBEDDING_DIM}`);
+        }
+      }
+      return ordered.map((d) => d.embedding);
     },
   };
 }
