@@ -33,7 +33,7 @@ export function initials(name: string): string {
 /** Painel-lista de entidades: cabeçalho com contagem + linhas com monograma/título/subtítulo. */
 export function EntityList({ title, rows }: EntityListProps) {
   return (
-    <section className="overflow-hidden rounded-card border border-line bg-card">
+    <section className="elev elev-top relative overflow-hidden rounded-card border border-line bg-card">
       {title ? (
         <header className="flex items-center justify-between border-line-subtle border-b px-4 py-3">
           <h2 className="font-medium text-ink text-sm">{title}</h2>
