@@ -2,14 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { sessionFromCookies } from "@/lib/api";
 import { AUTH_ENABLED } from "@/lib/supabase/server";
 
-// /api públicas (sem sessão): login (senha/biometria + challenge) e health. Logout exige sessão.
+// /api públicas (sem sessão): login (email/senha) e health. Logout exige sessão.
 function isPublicApi(pathname: string): boolean {
-  return (
-    pathname === "/api/health" ||
-    pathname === "/api/auth/login" ||
-    pathname === "/api/auth/face" ||
-    pathname === "/api/auth/face/challenge"
-  );
+  return pathname === "/api/health" || pathname === "/api/auth/login";
 }
 
 /**

@@ -12,6 +12,12 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~14:10] Ω-4b — REMOVIDA a biometria facial (decisão IRIS: email/senha)
+- Decisão do Mateus: a IRIS corre **só com email/senha** (Supabase real). A biometria (que a revisão de segurança reprovou e estava desligada) sai do projeto por completo, em vez de ficar como scaffolding morto.
+- **Removidos:** `services/face/` (serviço Python inteiro), `apps/web/app/api/auth/face/` (rotas), `apps/web/lib/{face,face-capture,face-config}.ts`, `apps/web/test/{face,face-capture}.test.ts`.
+- **Login limpo:** `app/login/page.tsx` reescrito — só email/senha (sem câmara/FacePanel/botão de rosto). `middleware.ts`: tira as rotas faciais da allowlist pública. `app/definicoes`: tira o cartão "Biometria". KEYS-TODO: biometria marcada REMOVIDA (reintroduzir = fast-follow com modelo real).
+- **Verde:** typecheck ✅ · `next build` ✅ · **326 testes** (web 101) · Biome ✅.
+
 ## [2026-06-20 ~13:35] Ω-4 — Motor facial (services/face) + login por rosto (flash liveness)
 - **`services/face` (FastAPI + numpy):** motor LEVE (sem dlib/mediapipe pesados — instalável) — `embedding` (descritor facial), `engine` (enroll/verify por distância), `liveness` (flash: a cor medida na pele tem de seguir o challenge), `challenge` (sequência de cores + token), `routes` (POST /enroll, /verify). **23 testes pytest verdes** (Python 3.14, numpy 2.4).
 - **Web:** `app/api/auth/face/challenge` (emite sequência+token) + `app/api/auth/face` (verifica) + `lib/{face,face-capture,face-config}.ts` + `app/login` com captura REAL de câmara (getUserMedia + `<canvas>`, pisca as cores, mede a cor dominante) → **fallback gracioso para senha** sem câmara/serviço.

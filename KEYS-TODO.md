@@ -20,16 +20,7 @@
 | **Supabase Auth** | self-hosted local — substituir o **shim de cookie** por `@supabase/ssr` | `apps/web/lib/session.ts` (`getSession`) + `lib/api.ts` (`sessionFromCookies`) + `lib/auth.ts` (`verifyMockLogin`/SEED_USERS) + `app/login` + `middleware.ts` | login real email/senha; remove o cookie-trust (limitação v1) + a dica de demo no ecrã de login | 🟡 login mock pronto (Filipa+Inês) · sessão por cookie httpOnly+maxAge |
 | **Supabase Storage** (bucket PRIVADO por agência) | `STORAGE_*` | `apps/web/lib/storage.ts` (`StorageProvider` + `createMockStorage`) | upload/download de CVs/áudios/pareceres por **signed URL** de curta duração | 🟡 stub determinístico (`mock://…?exp&sig`); falta adapter Supabase/S3 |
 | **Validador de upload (AV/re-render)** | `CLAMAV_*` (opcional) | `apps/web/lib/upload.ts` (`validateUpload`) | v1 já valida tamanho/MIME/magic-bytes/anti-traversal; falta ClamAV + re-render PDF + XXE-off no docx | ⬜ (validador base ✅; AV/re-render = Ω) |
-| **Auth biométrica** (login facial Filipa/Inês) | `FACE_AUTH_ENABLED` + `FACE_SERVICE_URL` + `FACE_S2S_SECRET` | `apps/web/app/login` → `/api/auth/face` → `services/face` (FastAPI numpy) | email/senha OU biometria | 🔴 **DESLIGADA** (`FACE_AUTH_ENABLED` off) — scaffolding pronto (UI câmara real + serviço + 23 testes), mas a revisão de segurança reprovou-a como caminho de auth — **NÃO ligar** sem a checklist ⬇️ |
-
-> ### 🔴 BIOMETRIA — pré-requisitos OBRIGATÓRIOS antes de `FACE_AUTH_ENABLED=1` (revisão 2026-06-20: 4 CRITICAL)
-> O login por rosto está construído mas **DESLIGADO** porque, como está, é forjável (entra como a Filipa sem câmara/rosto). A senha (Supabase real) é o login a sério. **Só ligar depois de fechar TODOS:**
-> 1. **Medir a cor da pele no SERVIDOR** a partir dos pixels da imagem — hoje confia no `measuredColor` enviado pelo cliente (liveness = teatro). Remover `measured_color` do contrato.
-> 2. **Modelo facial REAL** atrás do `FaceEmbedder` (insightface/ArcFace/dlib) — hoje o "embedding" é um hash dos bytes (distingue ficheiros, não caras). Calibrar threshold com FAR/FRR reais.
-> 3. **`/enroll` protegido** — exigir login por senha prévio; `user_id` vem da SESSÃO, nunca do body; sem re-enroll silencioso. Hoje qualquer um inscreve o seu rosto sob o email da vítima.
-> 4. **Sessão pela auth Supabase** (não pelo cookie-shim) — partilhar a fonte de verdade do `getSession`.
-> 5. **`services/face` valida a secret S2S** (`hmac.compare_digest`) em `/enroll`/`/verify` + fica só na rede interna; fail-closed do `FACE_S2S_SECRET` em produção (sem default de dev).
-> 6. **Challenge single-use** (nonce + store) + **rate-limit** + limites de tamanho de imagem/nº de frames.
+| ~~Auth biométrica~~ (login facial) | — | — | — | ❌ **REMOVIDA** (decisão IRIS, 2026-06-20). A IRIS corre com **email/senha** (Supabase). O `services/face`, as rotas `/api/auth/face` e a captura de câmara foram retirados do projeto — a revisão de segurança reprovou-os como caminho de auth e um motor facial seguro é fast-follow, não v1. Reintroduzir só com um modelo facial real + liveness server-side + enroll protegido + sessão Supabase. |
 | **WS JWT** (servidor de overlay) | `WS_JWT_SECRET` (+ `WS_PORT`) | `apps/ws` (`createWsAuthenticate`, `src/main.ts`) | handshake HS256 do overlay (sem segredo → o server aborta) | 🟡 server arrancável; falta a **posse real** (injetar `SELECT 1 FROM interview WHERE id=$1 AND recruiter_id=$2`) |
 | **LLM lince-brain-local** (motor ReAct do assistente) | (env do `services/agent`) | `apps/web/lib/assistant/*` (planner+tools MOCK) → `services/agent` | substituir o planner por palavras-chave pelo ReAct real + execução real das tools | ⬜ (porta de confirmação + tools mock ✅; motor real = Ω) |
 
@@ -58,4 +49,4 @@ A maioria do Ω (auth Supabase, isolamento agency, porta do assistente anti-prom
 - **`argsSchema` por tool** no assistente + allowlist de destinatário antes de executores REAIS (a porta de confirmação humana já protege; falta sanitizar os `args` que o LLM produz).
 - **Invariantes no arranque (fail-fast):** abortar se `AUTH_ENABLED && falta SUPABASE_ANON_KEY`; pôr o fallback DEV de sessão atrás de flag explícita `ALLOW_DEV_SESSION` (não inferir só de `NODE_ENV`).
 - **Cookies do shim:** `secure` por HTTPS (não por `NODE_ENV`); `sameSite: strict`. (Mitigado quando o `@supabase/ssr` gere os cookies.)
-- **Biometria:** ver o bloco 🔴 acima (6 pré-requisitos) — está DESLIGADA e acoplada à auth Supabase.
+- **Biometria:** REMOVIDA do projeto (IRIS usa email/senha). Reintroduzir é fast-follow com modelo facial real.

@@ -9,7 +9,7 @@ import { LogoutButton } from "./LogoutButton";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Definições · Vera" };
 
-/** Tela 12 — Definições (Conta · Biometria · RGPD/Retenção · Sobre). Single-tenant IRIS. */
+/** Tela 12 — Definições (Conta · RGPD/Retenção · Sobre). Single-tenant IRIS. */
 export default async function DefinicoesPage() {
   const { agencyId, recruiterId } = await getSession();
   const [me] = await getDb()
@@ -21,25 +21,13 @@ export default async function DefinicoesPage() {
     <main className="mx-auto flex max-w-3xl flex-col gap-5 px-6 py-8">
       <div>
         <h1 className="font-semibold text-ink text-xl">Definições</h1>
-        <p className="text-ink-3 text-sm">Conta, biometria e privacidade.</p>
+        <p className="text-ink-3 text-sm">Conta e privacidade.</p>
       </div>
 
       <Card title="Conta">
         <p className="text-sm text-strong">{me?.name ?? "Utilizador"}</p>
         <p className="mb-3 text-ink-3 text-xs">IRIS Tech · sessão ativa</p>
         <LogoutButton />
-      </Card>
-
-      <Card title="Biometria">
-        <div className="flex items-center gap-2">
-          <Chip tone="accent">Rosto inscrito</Chip>
-          <span className="text-ink-3 text-xs">
-            demonstração — sem câmara real (chave por ligar)
-          </span>
-        </div>
-        <p className="mt-2 text-ink-3 text-sm">
-          O login facial fica disponível quando a IRIS ligar o serviço de biometria.
-        </p>
       </Card>
 
       <Card title="Privacidade & Retenção (RGPD)">
