@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV = [
-  { href: "/", label: "Início" },
   { href: "/clientes", label: "Clientes" },
   { href: "/vagas", label: "Vagas" },
   { href: "/candidatos", label: "Candidatos" },
@@ -13,14 +12,18 @@ const NAV = [
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  return pathname.startsWith(href);
 }
 
-/** Navbar dark + contexto ativo + breadcrumb derivado do path. */
+/** Navbar premium (flat): marca em display font + indicador de secção ativa + sair discreto. */
 export function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const current = [...NAV].reverse().find((n) => isActive(pathname, n.href));
+
+  // O login é uma experiência à parte (sem sessão) — sem navbar.
+  if (pathname === "/login") {
+    return null;
+  }
 
   async function logout(): Promise<void> {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -29,43 +32,45 @@ export function NavBar() {
   }
 
   return (
-    <header className="border-line border-b bg-raised">
-      <nav className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-3">
-        <Link href="/" className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 border-line border-b bg-raised">
+      <nav className="mx-auto flex max-w-6xl items-center px-6">
+        <Link href="/" className="mr-8 flex items-center gap-2.5 py-3.5">
           <span className="size-2.5 rounded-full bg-accent" aria-hidden="true" />
-          <span className="font-semibold text-ink">Vera</span>
+          <span className="font-display font-semibold text-[17px] text-ink tracking-tight">
+            Vera
+          </span>
         </Link>
-        <div className="flex items-center gap-5">
-          {NAV.filter((n) => n.href !== "/").map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              aria-current={isActive(pathname, n.href) ? "page" : undefined}
-              className={
-                isActive(pathname, n.href)
-                  ? "text-accent-ink text-sm"
-                  : "text-ink-2 text-sm hover:text-ink"
-              }
-            >
-              {n.label}
-            </Link>
-          ))}
+        <div className="flex items-center gap-0.5">
+          {NAV.map((n) => {
+            const active = isActive(pathname, n.href);
+            return (
+              <Link
+                key={n.href}
+                href={n.href}
+                aria-current={active ? "page" : undefined}
+                className={`relative px-3 py-3.5 text-sm transition-colors ${
+                  active ? "text-ink" : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                {n.label}
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-accent"
+                  />
+                ) : null}
+              </Link>
+            );
+          })}
         </div>
         <button
           type="button"
           onClick={logout}
-          className="ml-auto text-ink-3 text-sm hover:text-ink"
+          className="ml-auto rounded-md border border-line px-3 py-1.5 text-ink-2 text-sm transition-colors hover:border-accent hover:text-ink"
         >
           Sair
         </button>
       </nav>
-      {current && current.href !== "/" ? (
-        <div className="mx-auto max-w-5xl px-6 pb-2">
-          <p className="text-ink-3 text-xs">
-            Início <span aria-hidden="true">/</span> {current.label}
-          </p>
-        </div>
-      ) : null}
     </header>
   );
 }

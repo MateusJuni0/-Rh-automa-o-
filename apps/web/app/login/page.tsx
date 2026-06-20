@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Field, Input } from "@rh/ui";
+import { Button, Field, Input } from "@rh/ui";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
@@ -34,17 +34,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-dvh place-items-center px-6 py-12">
-      <Card className="w-full max-w-sm">
-        <div className="flex flex-col items-center gap-1 pb-5">
-          <div className="flex items-center gap-2">
+    <div className="grid min-h-[78vh] place-items-center">
+      <div className="w-full max-w-sm overflow-hidden rounded-card border border-line bg-card panel-accent">
+        <div className="flex flex-col items-center gap-1.5 px-6 pt-8 pb-6">
+          <div className="flex items-center gap-2.5">
             <span className="size-2.5 rounded-full bg-accent" aria-hidden="true" />
-            <span className="font-semibold text-ink text-lg">Vera</span>
+            <span className="font-display font-semibold text-ink text-xl tracking-tight">Vera</span>
           </div>
           <p className="text-ink-3 text-sm">Copiloto de recrutamento · IRIS</p>
         </div>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <form onSubmit={onSubmit} className="flex flex-col gap-3.5 px-6 pb-8">
           <Field label="Email">
             <Input
               type="email"
@@ -70,7 +70,7 @@ export default function LoginPage() {
             {state === "busy" ? "A entrar…" : "Entrar"}
           </Button>
         </form>
-      </Card>
-    </main>
+      </div>
+    </div>
   );
 }

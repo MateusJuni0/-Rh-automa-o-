@@ -4,6 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { appEnvironment, RETENTION_DEFAULTS } from "@/lib/definicoes";
 import { getSession } from "@/lib/session";
+import { initials } from "../components/EntityList";
+import { PageHeader } from "../components/PageHeader";
 import { LogoutButton } from "./LogoutButton";
 
 export const dynamic = "force-dynamic";
@@ -17,27 +19,42 @@ export default async function DefinicoesPage() {
     .from(schema.recruiter)
     .where(and(eq(schema.recruiter.id, recruiterId), eq(schema.recruiter.agencyId, agencyId)));
 
+  const name = me?.name ?? "Utilizador";
+
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-5 px-6 py-8">
-      <div>
-        <h1 className="font-semibold text-ink text-xl">Definições</h1>
-        <p className="text-ink-3 text-sm">Conta e privacidade.</p>
-      </div>
+    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+      <PageHeader
+        eyebrow="Conta"
+        title="Definições"
+        description="Conta, privacidade e retenção de dados (RGPD)."
+      />
 
       <Card title="Conta">
-        <p className="text-sm text-strong">{me?.name ?? "Utilizador"}</p>
-        <p className="mb-3 text-ink-3 text-xs">IRIS Tech · sessão ativa</p>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <span className="monogram !size-11 !rounded-xl !text-base" aria-hidden="true">
+            {initials(name)}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-ink text-sm">{name}</p>
+            <p className="text-ink-3 text-xs">IRIS Tech · sessão ativa</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <LogoutButton />
+        </div>
       </Card>
 
       <Card title="Privacidade & Retenção (RGPD)">
-        <p className="mb-3 text-ink-3 text-sm">
-          Prazos <strong>sugeridos</strong> — ajustáveis pela IRIS. O direito ao esquecimento apaga
-          o candidato e toda a informação ligada.
+        <p className="mb-4 text-ink-3 text-sm">
+          Prazos <strong className="text-ink-2">sugeridos</strong> — ajustáveis pela IRIS. O direito
+          ao esquecimento apaga o candidato e toda a informação ligada.
         </p>
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-col">
           {RETENTION_DEFAULTS.map((r) => (
-            <li key={r.label} className="flex items-center justify-between text-sm">
+            <li
+              key={r.label}
+              className="flex items-center justify-between border-line-subtle border-b py-2.5 text-sm last:border-b-0"
+            >
               <span className="text-ink-2">{r.label}</span>
               <Chip tone="muted">{r.valor}</Chip>
             </li>
@@ -51,6 +68,6 @@ export default async function DefinicoesPage() {
           <Chip tone="muted">{appEnvironment(process.env.NODE_ENV)}</Chip>
         </div>
       </Card>
-    </main>
+    </div>
   );
 }

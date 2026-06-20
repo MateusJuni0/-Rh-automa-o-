@@ -4,6 +4,9 @@
  * Tema Apollo (dark) para o painel web. Os valores crus vivem em @rh/ui/styles/tokens.css
  * (--vera-*, importado no layout); aqui mapeiam-se para utilitários Tailwind semânticos
  * (bg-surface, text-ink, border-line, …). Single source = tokens.css.
+ *
+ * Regra da casa: FLAT (sem gradientes/sombras/blur/glow). A "premium" vem de tipografia,
+ * ritmo de espaço, contraste de superfície/borda e micro-interações — não de efeitos.
  */
 @theme {
   --color-surface: var(--vera-bg-base);
@@ -23,13 +26,17 @@
 
   --color-strong: var(--vera-state-strong);
   --color-shallow: var(--vera-state-shallow);
+  --color-shallow-ink: var(--vera-state-shallow-text);
   --color-alert: var(--vera-state-alert);
+  --color-alert-ink: var(--vera-state-alert-text);
   --color-untouched: var(--vera-state-untouched);
   --color-info: var(--vera-state-info);
 
   --radius-card: var(--vera-radius-card);
   --radius-md: var(--vera-radius-md);
 
+  /* Display = Bricolage Grotesque (carregada via next/font no layout). Body mantém-se Inter. */
+  --font-display: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, sans-serif;
   --font-sans: var(--vera-font-sans);
   --font-mono: var(--vera-font-mono);
 }
@@ -43,4 +50,83 @@ body {
   color: var(--vera-text-primary);
   font-family: var(--vera-font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Títulos display: tracking apertado + optical sizing → ar "premium" editorial. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+}
+
+/* Foco visível coerente (acento) — acessível e discreto, sem glow. */
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--vera-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--vera-accent) 30%, transparent);
+  color: var(--vera-text-primary);
+}
+
+/* Scrollbar fina e escura (Linear-like). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--vera-border-default) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--vera-border-default);
+  border-radius: 999px;
+  border: 3px solid var(--vera-bg-base);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--vera-text-tertiary);
+}
+
+/* Monograma (inicial) — substitui o "ponto" cru das listas por identidade visual. */
+.monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background-color: var(--vera-accent-bg);
+  color: var(--vera-accent-text);
+  border: 1px solid color-mix(in srgb, var(--vera-accent) 22%, transparent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* Linha de entidade: superfície interativa com realce de borda no hover (sem sombra). */
+.row-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--vera-radius-md);
+  border: 1px solid transparent;
+  transition:
+    background-color 130ms ease,
+    border-color 130ms ease;
+}
+.row-link:hover {
+  background-color: var(--vera-bg-raised);
+  border-color: var(--vera-border-default);
+}
+
+/* Painel hero com rail de acento no topo (pura borda — flat). */
+.panel-accent {
+  border-top: 2px solid var(--vera-accent);
 }
