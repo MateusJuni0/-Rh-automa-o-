@@ -37,7 +37,11 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 - **CHAVE (handover Mateus, `KEYS-TODO.md`):** IA real (OpenRouter), extração real do link, entrevista ao vivo (LiveKit/Soniox), email (Resend) — tudo INERTE/mock até às chaves.
 - **Smoke autenticado** das telas de detalhe (briefing/parecer) não corrido aqui (login = Supabase `signInWithPassword`, `SEED_PASSWORD` não em mão); build+typecheck+render-test do parecer cobrem a compilação. Confirmar a olho ao clicar.
 
-> Como retomar/ver: server já a correr (`localhost:3000`); login `filipa@iris.tech`. Rebuild: `pnpm --filter web build && cd apps/web && PORT=3000 pnpm start`.
+> **RETOMAR amanhã** (server :3000 + stack Docker DESLIGADOS no fim da sessão 2026-06-21; dados preservados nos volumes):
+> 1. `docker compose -f docker-compose.dev.yml --profile supabase up -d` (DB :5433 vera_dev + Supabase :8000)
+> 2. `pnpm --filter web build && cd apps/web && PORT=3000 pnpm start`
+> 3. http://localhost:3000 · login `filipa@iris.tech`
+> Tudo committado+pushed em `phase3/product` (HEAD `1eddc68`). Próximo trabalho: rever as 5 telas a olho; depois handover de chaves (`KEYS-TODO.md`).
 
 ---
 
