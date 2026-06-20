@@ -69,6 +69,35 @@ const CANDIDATES = [
     anos: 5,
     gaps: [] as string[],
     resumo: "Frontend engineer focada em React/Next.js e design systems. 5 anos em produtos SaaS.",
+    cvText: `Sofia Marques
+sofia.marques@email.com | +351 912 345 678 | linkedin.com/in/sofiamarques
+Lisboa, Portugal
+
+RESUMO
+Frontend engineer com 5 anos de experiência em desenvolvimento de produtos SaaS B2B.
+Especializada em React, TypeScript e design systems. Forte orientação para experiência
+do utilizador e performance.
+
+EXPERIÊNCIA
+
+Frontend Engineer Sénior — Cloudly SaaS (2022–presente)
+• Liderou a migração de CRA para Next.js 14 (App Router), reduzindo LCP em 40%.
+• Construiu design system interno com 80+ componentes (Radix + Tailwind).
+• Responsável pela acessibilidade WCAG 2.1 AA em toda a plataforma.
+• Tech stack: React 18, TypeScript, Next.js, Tailwind CSS, Storybook.
+
+Frontend Engineer — DevBox (2020–2022)
+• Desenvolveu dashboard de analytics em tempo real com WebSockets.
+• Implementou internacionalização (PT/EN/ES) com i18next.
+• Tech stack: React, JavaScript, Redux, Styled Components.
+
+FORMAÇÃO
+Licenciatura em Engenharia Informática — FCUL (2016–2020)
+
+SKILLS
+React · TypeScript · Next.js · Tailwind CSS · JavaScript · Radix UI
+Storybook · Vitest · Playwright · Git · Figma
+`,
   },
   {
     id: K_BRUNO,
@@ -77,6 +106,37 @@ const CANDIDATES = [
     anos: 7,
     gaps: ["Sem experiência declarada em frontend"],
     resumo: "Backend engineer (Python/Django) com 7 anos em fintech e APIs de alto tráfego.",
+    cvText: `Bruno Costa
+bruno.costa@email.com | +351 963 456 789
+Porto, Portugal
+
+RESUMO
+Backend engineer sénior com 7 anos de experiência em Python e Django.
+Especializado em APIs de alto tráfego e infraestrutura fintech. Proficiente em
+PostgreSQL, Docker e AWS. Historial comprovado de sistemas a processar +10M
+transações/dia.
+
+EXPERIÊNCIA
+
+Backend Engineer Sénior — FinBank Tech (2019–presente)
+• Arquitetou sistema de pagamentos SEPA com Django REST Framework e Celery.
+• Otimizou queries PostgreSQL reduzindo p95 de 800ms para 45ms.
+• Migrou serviços monolíticos para microserviços Docker/Kubernetes.
+• Implementou PCI-DSS compliance em toda a pipeline de pagamentos.
+• Tech stack: Python 3.11, Django, PostgreSQL, Docker, AWS (ECS, RDS, SQS).
+
+Backend Engineer — WebPay (2017–2019)
+• Desenvolveu integrações com Stripe e MBWay via webhooks.
+• Criou sistema de reconciliação financeira automatizada.
+• Tech stack: Python, Flask, MySQL, Redis.
+
+FORMAÇÃO
+Mestrado em Engenharia de Software — FEUP (2015–2017)
+
+SKILLS
+Python · Django · FastAPI · PostgreSQL · Docker · Kubernetes
+AWS (ECS/RDS/SQS/Lambda) · Redis · Celery · Git
+`,
   },
   {
     id: K_CARLA,
@@ -85,6 +145,35 @@ const CANDIDATES = [
     anos: 4,
     gaps: ["Pouca experiência em testes E2E"],
     resumo: "Fullstack (TypeScript) com 4 anos. Gosta de produto, do front ao back.",
+    cvText: `Carla Mendes
+carla.mendes@email.com | +351 934 567 890
+Lisboa, Portugal
+
+RESUMO
+Fullstack developer com 4 anos em TypeScript, do frontend React ao backend Node.js.
+Gosto de produto — não só da tecnologia. Experiência em startups de rápido crescimento,
+desde o zero ao primeiro €1M ARR. Forte em GraphQL e PostgreSQL.
+
+EXPERIÊNCIA
+
+Fullstack Engineer — GrowthApp (2021–presente)
+• Construiu de raiz o dashboard de analytics (React + GraphQL + Node.js).
+• Redesenhou a API GraphQL, eliminando N+1 queries com DataLoader.
+• Implementou feature flags e A/B testing com PostHog.
+• Tech stack: TypeScript, React, Node.js, GraphQL, PostgreSQL, Prisma.
+
+Junior Fullstack — AgênciaDigital (2020–2021)
+• Desenvolveu landing pages e back-offices para clientes de e-commerce.
+• Tech stack: React, Express.js, MySQL.
+
+FORMAÇÃO
+Bootcamp Fullstack — Le Wagon Lisboa (2020)
+Licenciatura em Design de Comunicação — ESAD (2016–2019)
+
+SKILLS
+TypeScript · React · Node.js · GraphQL · PostgreSQL · Prisma
+Next.js · Tailwind CSS · Docker · Git
+`,
   },
   {
     id: K_TIAGO,
@@ -93,6 +182,40 @@ const CANDIDATES = [
     anos: 6,
     gaps: [] as string[],
     resumo: "DevOps/SRE com 6 anos. Infra como código, observabilidade e fiabilidade.",
+    cvText: `Tiago Reis
+tiago.reis@email.com | +351 915 678 901
+Braga, Portugal
+
+RESUMO
+DevOps / SRE com 6 anos de experiência. Especialista em Kubernetes, Terraform e
+observabilidade. Construí e mantive infra para plataformas com 99.95% uptime
+e picos de 50k req/s. Certificado AWS Solutions Architect (Professional).
+
+EXPERIÊNCIA
+
+SRE Lead — ScaleUp Platform (2020–presente)
+• Migrou infraestrutura de VMs para Kubernetes (EKS), reduzindo custos em 35%.
+• Implementou observabilidade completa: Prometheus, Grafana, OpenTelemetry.
+• Criou pipelines CI/CD multi-ambiente com GitHub Actions e ArgoCD.
+• Geriu incidentes P1 (MTTD < 5min, MTTR < 30min) com on-call rotation.
+• Tech stack: Kubernetes, Terraform, AWS (EKS/ECS/RDS), Docker, Helm, Linux.
+
+DevOps Engineer — MicroCloud (2018–2020)
+• Automatizou provisionamento de infra com Terraform (500+ recursos).
+• Configurou alertas e dashboards Grafana para 20+ serviços.
+• Tech stack: AWS, Docker, Ansible, Jenkins.
+
+FORMAÇÃO
+Licenciatura em Redes e Sistemas — UM (2014–2018)
+
+CERTIFICAÇÕES
+AWS Solutions Architect – Professional (2022)
+Certified Kubernetes Administrator – CKA (2021)
+
+SKILLS
+Kubernetes · Docker · Terraform · AWS · Helm · ArgoCD
+Prometheus · Grafana · GitHub Actions · Linux · Python · Bash
+`,
   },
   {
     id: K_INES,
@@ -101,6 +224,36 @@ const CANDIDATES = [
     anos: 3,
     gaps: ["Experiência sobretudo académica (pouca produção)"],
     resumo: "Data/ML engineer com 3 anos. Modelos em produção e pipelines de dados.",
+    cvText: `Inês Lopes
+ines.lopes@email.com | +351 926 789 012
+Coimbra, Portugal
+
+RESUMO
+Data / ML Engineer com 3 anos de experiência. Especializada em PyTorch e TensorFlow
+para modelos de NLP e visão computacional. Experiência em colocar modelos em produção
+(FastAPI + Docker). Background académico forte (MSc Ciência de Dados, UC).
+
+EXPERIÊNCIA
+
+ML Engineer — AIDataCo (2022–presente)
+• Treinou e deployou modelos de classificação de texto (BERT fine-tuned) em produção.
+• Construiu pipeline de dados de 10TB/semana com Apache Airflow + PostgreSQL.
+• Reduziu custo de inferência em 60% com quantização de modelos (INT8).
+• Tech stack: Python, PyTorch, TensorFlow, FastAPI, Docker, PostgreSQL, Airflow.
+
+Research Assistant — CISUC (2021–2022)
+• Investigação em NLP: modelos de sumarização e extração de entidades.
+• Publicou 2 artigos em conferências (ACL 2022, EACL 2022).
+• Tech stack: Python, PyTorch, HuggingFace Transformers, scikit-learn.
+
+FORMAÇÃO
+MSc Ciência de Dados — Universidade de Coimbra (2019–2021) — Média: 18/20
+Licenciatura em Matemática — UC (2016–2019)
+
+SKILLS
+Python · PyTorch · TensorFlow · HuggingFace · scikit-learn
+FastAPI · Docker · PostgreSQL · Apache Airflow · pandas · NumPy
+`,
   },
 ];
 
@@ -193,7 +346,7 @@ async function main(): Promise<void> {
         .where(and(eq(schema.client.agencyId, AGENCY), eq(schema.client.name, p.name)));
     }
 
-    // 3) candidatos demo (perfis completos).
+    // 3) candidatos demo (perfis completos + CV texto para o visor inline).
     await db
       .insert(schema.candidate)
       .values(
@@ -211,6 +364,22 @@ async function main(): Promise<void> {
         })),
       )
       .onConflictDoNothing();
+
+    // source_doc: CV texto de cada candidato (idempotente: apaga e re-insere).
+    for (const c of CANDIDATES) {
+      await db
+        .delete(schema.sourceDoc)
+        .where(and(eq(schema.sourceDoc.candidateId, c.id), eq(schema.sourceDoc.kind, "cv")));
+    }
+    await db.insert(schema.sourceDoc).values(
+      CANDIDATES.map((c) => ({
+        agencyId: AGENCY,
+        kind: "cv",
+        candidateId: c.id,
+        rawText: c.cvText,
+        title: `CV — ${c.name}`,
+      })),
+    );
 
     // 4) vagas demo (requisitos com must/nice → triagem com chips).
     await db

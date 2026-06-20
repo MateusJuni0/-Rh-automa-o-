@@ -7,7 +7,78 @@ import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** Tela 4 — Candidato: CV destrinchado (skills declaradas, experiência, gaps, resumo). */
+const AVATAR_COLORS = [
+  "#4F46E5",
+  "#0EA5E9",
+  "#10B981",
+  "#F59E0B",
+  "#8B5CF6",
+  "#EC4899",
+  "#EF4444",
+  "#06B6D4",
+];
+
+function avatarColor(name: string): string {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) & 0x7fffffff;
+  return (AVATAR_COLORS[h % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]) as string;
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts[parts.length - 1]?.[0] ?? "";
+  if (parts.length >= 2 && last) return (first + last).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+/** Detecta se a linha é um cabeçalho de secção do CV (ex.: "RESUMO", "EXPERIÊNCIA"). */
+function isCvSectionHeader(line: string): boolean {
+  const t = line.trim();
+  return t.length >= 3 && t.length <= 60 && t === t.toUpperCase() && /[A-Z]/.test(t);
+}
+
+/** Renderiza o texto bruto do CV com secções estruturadas (sem `<pre>`). */
+function CvSections({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="flex flex-col p-4 text-xs">
+      {lines.map((line, i) => {
+        const t = line.trim();
+        // biome-ignore lint/suspicious/noArrayIndexKey: CV lines are static text — index is the only stable identity
+        if (!t) return <div key={`cv-${i}`} className="h-2" />;
+        if (isCvSectionHeader(t)) {
+          return (
+            <p
+              // biome-ignore lint/suspicious/noArrayIndexKey: CV lines are static text — index is the only stable identity
+              key={`cv-${i}`}
+              className="mt-5 mb-1.5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-accent-ink border-b border-line-subtle first:mt-0"
+            >
+              {t}
+            </p>
+          );
+        }
+        if (/^[•·\-*►▪]/.test(t)) {
+          return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: CV lines are static text — index is the only stable identity
+            <p key={`cv-${i}`} className="flex gap-1.5 leading-relaxed text-ink-2 pl-0.5">
+              <span className="shrink-0 mt-0.5 text-accent-ink">·</span>
+              <span>{t.replace(/^[•·\-*►▪]\s*/, "")}</span>
+            </p>
+          );
+        }
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: CV lines are static text — index is the only stable identity
+          <p key={`cv-${i}`} className="leading-relaxed text-ink-2">
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Tela 4 — Candidato: avatar + CV inline + skills/gaps/resumo. */
 export default async function CandidatoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { agencyId } = await getSession();
@@ -16,52 +87,105 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
     notFound();
   }
   const { skillsDeclaradas, experienciaAnos, gapsCv, resumo } = cand.profile;
+  const color = avatarColor(cand.name);
+  const mono = initials(cand.name);
+
   return (
     <div className="flex flex-col gap-6">
+      {/* ── cabeçalho ── */}
       <div>
         <Link href="/candidatos" className="text-ink-3 text-xs hover:text-ink-2">
           ← Candidatos
         </Link>
-        <h1 className="font-semibold text-ink text-xl">{cand.name}</h1>
-        <p className="text-ink-2 text-sm">
-          {experienciaAnos !== null ? `${experienciaAnos} anos de experiência` : "Experiência n/d"}
-          {cand.linkedinUrl ? " · LinkedIn ligado" : ""}
-        </p>
+
+        <div className="mt-3 flex items-center gap-4">
+          {/* avatar grande (placeholder de foto) */}
+          <div
+            className="flex shrink-0 items-center justify-center rounded-2xl font-semibold text-white text-xl"
+            style={{ width: 72, height: 72, background: color }}
+            aria-hidden="true"
+          >
+            {mono}
+          </div>
+          <div>
+            <h1 className="font-semibold text-ink text-2xl">{cand.name}</h1>
+            <p className="mt-0.5 text-ink-2 text-sm">
+              {experienciaAnos !== null
+                ? `${experienciaAnos} anos de experiência`
+                : "Experiência n/d"}
+              {cand.linkedinUrl ? (
+                <span className="ml-2 rounded-full bg-accent-bg px-2 py-0.5 text-accent-ink text-xs">
+                  LinkedIn
+                </span>
+              ) : null}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {resumo ? (
-        <Card title="Resumo">
-          <p className="text-ink text-sm leading-relaxed">{resumo}</p>
-        </Card>
-      ) : null}
+      {/* ── corpo: perfil + CV side-by-side ── */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_40%]">
+        {/* coluna esquerda — perfil extraído */}
+        <div className="flex flex-col gap-4">
+          {resumo ? (
+            <Card title="Resumo">
+              <p className="text-ink text-sm leading-relaxed">{resumo}</p>
+            </Card>
+          ) : null}
 
-      <Card title="Skills declaradas">
-        <div className="flex flex-wrap gap-2">
-          {skillsDeclaradas.length > 0 ? (
-            skillsDeclaradas.map((s) => (
-              <Chip key={s} tone="accent">
-                {s}
-              </Chip>
-            ))
+          <Card title="Skills declaradas">
+            <div className="flex flex-wrap gap-2">
+              {skillsDeclaradas.length > 0 ? (
+                skillsDeclaradas.map((s) => (
+                  <Chip key={s} tone="accent">
+                    {s}
+                  </Chip>
+                ))
+              ) : (
+                <span className="text-ink-3 text-sm">Nenhuma skill extraída.</span>
+              )}
+            </div>
+          </Card>
+
+          <Card title="Lacunas do CV">
+            {gapsCv.length > 0 ? (
+              <ul className="flex flex-col gap-1.5">
+                {gapsCv.map((g) => (
+                  <li key={g} className="flex items-start gap-2 text-ink-2 text-sm">
+                    <span className="mt-0.5 text-alert">▲</span>
+                    {g}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="text-ink-3 text-sm">Sem lacunas assinaladas.</span>
+            )}
+          </Card>
+        </div>
+
+        {/* coluna direita — CV bruto (visor inline) */}
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <header className="border-line-subtle border-b px-4 py-3">
+            <h2 className="font-medium text-ink text-sm">CV — texto original</h2>
+            <p className="text-ink-3 text-xs">Extraído automaticamente pela Vera</p>
+          </header>
+          {cand.cvText ? (
+            <div className="h-[480px] overflow-y-auto">
+              <CvSections text={cand.cvText} />
+            </div>
           ) : (
-            <span className="text-ink-3 text-sm">Nenhuma skill extraída.</span>
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+              <span className="text-2xl" aria-hidden="true">
+                📄
+              </span>
+              <p className="text-ink-2 text-sm">Sem CV guardado.</p>
+              <p className="text-ink-3 text-xs">
+                Cola o texto do CV ao criar o candidato para ver aqui.
+              </p>
+            </div>
           )}
         </div>
-      </Card>
-
-      <Card title="Lacunas do CV">
-        {gapsCv.length > 0 ? (
-          <ul className="flex flex-col gap-1.5">
-            {gapsCv.map((g) => (
-              <li key={g} className="text-ink-2 text-sm">
-                · {g}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <span className="text-ink-3 text-sm">Sem lacunas assinaladas.</span>
-        )}
-      </Card>
+      </div>
     </div>
   );
 }
