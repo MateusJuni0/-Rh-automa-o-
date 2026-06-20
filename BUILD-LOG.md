@@ -12,6 +12,13 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~12:30] Ω-3a — Supabase local no docker-compose (Auth+Storage)
+- **`docker-compose.dev.yml`:** profile **`supabase`** (opcional — dev normal não precisa) com `auth` (GoTrue v2.158.1, email/senha), `rest` (PostgREST v12.2.3), `storage` (storage-api v1.11.13, buckets privados + signed URLs), `kong` (gateway :8000 = `SUPABASE_URL`). Todos apontam ao Postgres `db` já existente (`vera_dev`); GoTrue cria o schema `auth`, storage-api o `storage`. Volumes/healthcheck. JWT_SECRET/anon/service via env com defaults de dev (NUNCA produção).
+- **`infra/supabase/kong.yml` (NOVO):** config declarativa do gateway (`/auth/v1`→auth, `/rest/v1`→rest, `/storage/v1`→storage) + CORS.
+- **`.env.example`:** `SUPABASE_JWT_SECRET` + `SUPABASE_STORAGE_BUCKET` (default `vera-private`). Documentado: sem envs → web cai no shim de cookie + storage mock.
+- **Como subir / criar Filipa+Inês no GoTrue:** instruções no topo do compose (`--profile supabase up -d` + script de seed). Nota Windows: se `kong`/`storage` não arrancarem, a app funciona com fallback mock — ficheiro correto para Linux/CI.
+- **Verde:** `docker compose config --quiet` exit 0 (sintaxe válida). Não subi os contentores (Ω-3b/c usam client mockado nos testes).
+
 ## [2026-06-20 ~12:15] Ω-2 — Assistente REAL (motor LLM)
 - **`@rh/ai features/assistant.ts` (NOVO):** `assistantPlan({message,candidatos,clienteNome,tools}, opts)` → `generate("ARCHITECT", …, planSchema, opts)` pede JSON `{reply, toolCalls:[{tool,args}]}`, **valida com Zod** (schema SEM `confirmed`), filtra tool-calls a ferramentas conhecidas (anti-alucinação). Reusa o gate ZDR + fallback do `runSlot`.
   - **Porquê em `@rh/ai` e não no web:** o `web` resolve `zod@4.3.6` (hoisted no monorepo pai) e o `@rh/ai` usa `zod@4.4.3` → schema definido no web é **incompatível** com o `generate<T extends z.ZodType>` do @rh/ai (tipos `$ZodTypeInternals` divergem). A feature vive no @rh/ai (Zod coerente), espelhando `judge.ts`.
