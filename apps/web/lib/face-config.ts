@@ -11,7 +11,11 @@ import { createFaceClient, createMockFaceClient, type FaceClient } from "./face"
  * Python validar a secret S2S + ficar só na rede interna; (6) challenge single-use + rate-limit.
  * Ver KEYS-TODO.md.
  */
-export const FACE_AUTH_ENABLED = Boolean(process.env.FACE_AUTH_ENABLED);
+export const FACE_AUTH_ENABLED =
+  Boolean(process.env.FACE_AUTH_ENABLED) &&
+  // ⛔ Acoplado à auth Supabase (revisão 2026-06-20, HIGH): o rosto NUNCA pode ligar sem a auth real,
+  // senão emitia a sessão pelo shim de cookie inseguro (combinação `FACE on + AUTH off` = bypass).
+  Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
 
 /**
  * Factory config-not-code do cliente de biometria (server-only). Com `FACE_SERVICE_URL` → serviço

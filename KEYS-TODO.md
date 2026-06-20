@@ -46,3 +46,16 @@ Itens conscientemente adiados durante a Fase 3 (documentados nas iterações do 
 - **RGPD — completude da purga**: `async_job.args` (PII em JSONB sem coluna `candidate_id` → adicionar coluna no insert dos jobs candidate-bound), `assistant_message.content` (texto livre que mencione o candidato), e **entrevistas órfãs** (`process_id IS NULL` sem `candidate_id` → ponderar coluna `candidate_id` em `interview`). Migração nova.
 - **Embeddings/RAG reais** — `recruiter_memory_fact`/`candidate_memory_fact` usam recall por texto (ILIKE); ligar o embedder + pgvector para semântica.
 - **Endurecimento adicional** — re-auth-24h, 2FA, hash-chain de auditoria, cosign — fora do scope v1 (single-tenant IRIS).
+
+> ⚠️ **NOTA:** vários itens acima JÁ foram feitos na **Fase Ω** — posse real do ws ✅, refresh JWT ✅, replay WS ✅, RGPD completo com `candidate_id` (async_job/mensagens/órfãs) ✅, embedder real ✅, auth Supabase real ✅, storage Supabase real ✅. Ver `BUILD-LOG.md` (secção FASE Ω).
+
+---
+
+## 🛡️ Endurecimentos de SEGURANÇA antes de produção (revisão Ω, 2026-06-20)
+A maioria do Ω (auth Supabase, isolamento agency, porta do assistente anti-prompt-injection) **passou** a revisão adversarial. A fechar antes de expor a app:
+- **Rate-limiting** em `/api/auth/login` + `/api/auth/face` (por IP+email + lockout). Hoje sem; o login delega parte ao Supabase.
+- **Storage agency-scoped:** ao ligar o storage real, forçar a `key` prefixada por `${agencyId}/` **no servidor** (da sessão, nunca do cliente) — evita IDOR cross-agency de CVs/PII. (Hoje o storage ainda não está ligado a nenhuma rota.)
+- **`argsSchema` por tool** no assistente + allowlist de destinatário antes de executores REAIS (a porta de confirmação humana já protege; falta sanitizar os `args` que o LLM produz).
+- **Invariantes no arranque (fail-fast):** abortar se `AUTH_ENABLED && falta SUPABASE_ANON_KEY`; pôr o fallback DEV de sessão atrás de flag explícita `ALLOW_DEV_SESSION` (não inferir só de `NODE_ENV`).
+- **Cookies do shim:** `secure` por HTTPS (não por `NODE_ENV`); `sameSite: strict`. (Mitigado quando o `@supabase/ssr` gere os cookies.)
+- **Biometria:** ver o bloco 🔴 acima (6 pré-requisitos) — está DESLIGADA e acoplada à auth Supabase.
