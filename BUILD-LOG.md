@@ -12,6 +12,14 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~11:55] Ω-1 (1d) — replay WS por seq/ack + FIM de Ω-1
+- **`WsServer` (server.ts):** buffer de frames enviados por ligação (`state.sent`, anel limitado a **256** com `shift()` anti-DoS). No `ack {lastSeq}` → `#replay` reenvia os do buffer com `seq > lastSeq` (reconstruídos com o **seq original** → dedup do lado do cliente). Limpeza de ligação no `sock close` (sem leak de `#conns`).
+- **`broadcast(payload)` (NOVO, público):** difunde um frame a todas as ligações autenticadas (ticks/sugestões/alertas) — é o que permite testar o replay e é a porta de saída real dos frames de servidor. v1 = single-tenant (1 recrutador/entrevista), sem filtro por `interviewId` (nota: apertar no multi-conn se necessário).
+- **Protocolo respeitado:** usa `ack`/`lastSeq` (cliente→servidor) e `seq` por-ligação do `FrameSession` — **sem frames inventados**.
+- **TDD (+2):** broadcast 3 frames (seq 2,3,4) → `ack{lastSeq:2}` reenvia só seq 3,4 (textos b,c); `ack` no topo → nada a reenviar.
+- **Verde:** typecheck ✅ · ws **45→47** · `pnpm test` (com DB) **311 testes** · Biome ✅.
+- **✅ Ω-1 FECHADA** (1a RGPD+migr.0002 · 1b posse REAL · 1c refresh JWT · 1d replay). +15 testes vs. base (296→311).
+
 ## [2026-06-20 ~11:50] Ω-1 (1c) — refresh/rotação de JWT (ws)
 - **`apps/ws/src/refresh.ts` (NOVO, lib pura, exportada):** `issueWsToken` (JWT curto, TTL default **15 min**), `refreshWsToken` (re-emite SÓ a partir de um token verificável → **fail-closed**: expirado/forjado NÃO renova), `shouldRefresh({exp,now,thresholdSec})` (quando o servidor emite `auth.refresh_needed`).
 - **Protocolo respeitado:** o congelado (`@rh/core`) tem o frame de SERVIDOR `auth.refresh_needed` mas **nenhum** frame cliente→servidor de refresh → **NÃO inventei frame**; a rotação é ao nível do token/endpoint (servidor sinaliza → cliente busca token novo via HTTP → reautentica com `auth`). Documentado no topo do ficheiro.

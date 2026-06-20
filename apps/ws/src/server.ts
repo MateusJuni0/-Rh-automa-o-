@@ -1,6 +1,11 @@
 import { once } from "node:events";
 import { type WebSocket, WebSocketServer } from "ws";
-import { FrameSession, parseClientMessage, type ServerFramePayload } from "./codec";
+import {
+  buildServerFrame,
+  FrameSession,
+  parseClientMessage,
+  type ServerFramePayload,
+} from "./codec";
 
 /** Resultado da autenticação de uma ligação WS. code: 4401 (não autenticado) | 4403 (sem posse). */
 export interface AuthResult {
@@ -17,13 +22,24 @@ export interface WsServerHooks {
   authenticate(accessToken: string, interviewId: string): Promise<AuthResult> | AuthResult;
 }
 
+/** Frame já enviado, guardado para replay na reconexão (seq + payload original). */
+interface BufferedFrame {
+  seq: number;
+  payload: ServerFramePayload;
+}
+
 interface ConnState {
   authed: boolean;
   session: FrameSession;
   interviewId: string;
   actorId: string | undefined;
   lastAck: number;
+  /** Buffer dos frames enviados nesta ligação (anel limitado) → replay por `ack {lastSeq}`. */
+  sent: BufferedFrame[];
 }
+
+/** Teto do buffer de replay por ligação (anti-crescimento ilimitado de memória). */
+const REPLAY_BUFFER_MAX = 256;
 
 /**
  * Servidor WebSocket do painel/overlay. 1ª mensagem TEM de ser `auth` (JWT no corpo, AUTENTICACAO §4);
@@ -32,6 +48,8 @@ interface ConnState {
 export class WsServer {
   readonly #wss: WebSocketServer;
   readonly #hooks: WsServerHooks;
+  /** Ligações autenticadas (p/ broadcast de ticks/sugestões a quem está numa entrevista). */
+  readonly #conns = new Map<WebSocket, ConnState>();
 
   private constructor(wss: WebSocketServer, hooks: WsServerHooks) {
     this.#wss = wss;
@@ -67,10 +85,12 @@ export class WsServer {
       interviewId: "",
       actorId: undefined,
       lastAck: 0,
+      sent: [],
     };
     sock.on("message", (data: { toString(): string }) => {
       void this.#onMessage(sock, state, data.toString());
     });
+    sock.on("close", () => this.#conns.delete(sock));
   }
 
   async #onMessage(sock: WebSocket, state: ConnState, raw: string): Promise<void> {
@@ -101,6 +121,7 @@ export class WsServer {
       state.authed = true;
       state.interviewId = msg.interviewId;
       state.actorId = result.actorId;
+      this.#conns.set(sock, state);
       this.#send(sock, state, { type: "auth.ok" });
       this.#send(sock, state, { type: "interview.active", interviewId: msg.interviewId, on: true });
       return;
@@ -108,10 +129,38 @@ export class WsServer {
 
     if (msg.type === "ack") {
       state.lastAck = msg.lastSeq;
+      this.#replay(sock, state, msg.lastSeq);
+    }
+  }
+
+  /** Reenvia os frames bufferizados com `seq > lastSeq` (recuperação na reconexão). */
+  #replay(sock: WebSocket, state: ConnState, lastSeq: number): void {
+    for (const f of state.sent) {
+      if (f.seq > lastSeq) {
+        sock.send(JSON.stringify(buildServerFrame(f.payload, f.seq)));
+      }
+    }
+  }
+
+  /**
+   * Envia um frame a TODAS as ligações autenticadas da entrevista (ticks/sugestões/etc.).
+   * v1: difunde a todas as ligações autenticadas (single-tenant, 1 recrutador por entrevista).
+   */
+  broadcast(payload: ServerFramePayload): void {
+    for (const [sock, state] of this.#conns) {
+      if (state.authed) {
+        this.#send(sock, state, payload);
+      }
     }
   }
 
   #send(sock: WebSocket, state: ConnState, payload: ServerFramePayload): void {
-    sock.send(JSON.stringify(state.session.build(payload)));
+    const frame = state.session.build(payload);
+    // Guarda para replay (anel limitado): o seq vem do frame já construído.
+    state.sent.push({ seq: frame.seq, payload });
+    if (state.sent.length > REPLAY_BUFFER_MAX) {
+      state.sent.shift();
+    }
+    sock.send(JSON.stringify(frame));
   }
 }
