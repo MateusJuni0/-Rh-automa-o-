@@ -9,17 +9,16 @@
  * Idempotente: se o user já existe, reaproveita-o; nunca duplica. Password de dev via env
  * (`SEED_PASSWORD`, default `vera-dev-2026`). NUNCA correr contra produção.
  */
-import { createDb, schema } from "@rh/db";
+import { createDb, SEED_IDS, schema } from "@rh/db";
 import { createClient } from "@supabase/supabase-js";
-import { eq } from "drizzle-orm";
 
-const DEV_AGENCY_ID = "11111111-0000-4000-8000-000000000001";
-const DEV_RECRUITER_ID = "11111111-0000-4000-8000-000000000002";
-const INES_RECRUITER_ID = "22222222-0000-4000-8000-000000000002";
+// Usa os MESMOS ids canónicos do seed do @rh/db (`SEED_IDS`) — senão criava recruiters Filipa/Inês
+// DUPLICADOS na agência IRIS (o seed canónico usa 2222…001/002).
+const DEV_AGENCY_ID = SEED_IDS.agency;
 
 const SEED = [
-  { email: "filipa@iris.tech", name: "Filipa", recruiterId: DEV_RECRUITER_ID },
-  { email: "ines@iris.tech", name: "Inês", recruiterId: INES_RECRUITER_ID },
+  { email: "filipa@iris.tech", name: "Filipa", recruiterId: SEED_IDS.recruiterFilipa },
+  { email: "ines@iris.tech", name: "Inês", recruiterId: SEED_IDS.recruiterInes },
 ];
 
 async function main(): Promise<void> {
@@ -58,16 +57,13 @@ async function main(): Promise<void> {
         process.stdout.write(`[seed-auth] já existe ${u.email} (${userId})\n`);
       }
 
-      // 3) liga o user ao recruiter (upsert idempotente; agência IRIS).
+      // 3) liga o user ao recruiter (upsert idempotente; agência IRIS). O `onConflictDoUpdate` no
+      // `recruiter.id` cobre ambos os casos: novo recruiter OU recruiter já existente com outro
+      // userId (o `set:{userId}` re-liga). Sem UPDATE extra (seria escrita redundante na mesma linha).
       await db
         .insert(schema.recruiter)
         .values({ id: u.recruiterId, agencyId: DEV_AGENCY_ID, userId, name: u.name })
         .onConflictDoUpdate({ target: schema.recruiter.id, set: { userId } });
-      // garante também o vínculo se o recruiter já existia com outro userId
-      await db
-        .update(schema.recruiter)
-        .set({ userId })
-        .where(eq(schema.recruiter.id, u.recruiterId));
     }
     process.stdout.write("[seed-auth] concluído.\n");
   } finally {
