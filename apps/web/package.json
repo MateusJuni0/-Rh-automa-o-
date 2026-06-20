@@ -16,6 +16,8 @@
     "@rh/db": "workspace:*",
     "@rh/knowledge": "workspace:*",
     "@rh/ui": "workspace:*",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
     "drizzle-orm": "^0.45.2",
     "next": "^15.5.19",
     "react": "^19.2.7",

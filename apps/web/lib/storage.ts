@@ -1,15 +1,19 @@
 /** Storage de ficheiros PII (CVs, áudios, pareceres). Bucket PRIVADO por agência; acesso SÓ por
- * signed URL de curta duração (SEGURANCA §4). Provider real (Supabase Storage/S3) = FASE Ω atrás
- * desta interface; o stub é determinístico e inerte (sem chave). NUNCA expor caminho cru. */
+ * signed URL de curta duração (SEGURANCA §4). Provider real = Supabase Storage (Ω-3b) atrás desta
+ * interface; sem env → stub determinístico e inerte. NUNCA expor caminho cru. */
 
 export interface SignedUrl {
   url: string;
   expiresAt: number; // epoch ms
 }
 
+/**
+ * Provider de storage. Assíncrono: o provider real (Supabase) faz I/O de rede para assinar.
+ * O mock resolve de imediato (mantém a mesma assinatura → o consumidor é igual com/sem chave).
+ */
 export interface StorageProvider {
-  signedUploadUrl(key: string, opts?: { ttlSeconds?: number }): SignedUrl;
-  signedDownloadUrl(key: string, opts?: { ttlSeconds?: number }): SignedUrl;
+  signedUploadUrl(key: string, opts?: { ttlSeconds?: number }): Promise<SignedUrl>;
+  signedDownloadUrl(key: string, opts?: { ttlSeconds?: number }): Promise<SignedUrl>;
 }
 
 export const DEFAULT_TTL_SECONDS = 300; // 5 min (curta duração)
@@ -36,7 +40,70 @@ export function createMockStorage(now: () => number): StorageProvider {
     return { url, expiresAt };
   }
   return {
-    signedUploadUrl: (key, opts) => sign("put", key, opts?.ttlSeconds ?? DEFAULT_TTL_SECONDS),
-    signedDownloadUrl: (key, opts) => sign("get", key, opts?.ttlSeconds ?? DEFAULT_TTL_SECONDS),
+    signedUploadUrl: (key, opts) =>
+      Promise.resolve(sign("put", key, opts?.ttlSeconds ?? DEFAULT_TTL_SECONDS)),
+    signedDownloadUrl: (key, opts) =>
+      Promise.resolve(sign("get", key, opts?.ttlSeconds ?? DEFAULT_TTL_SECONDS)),
+  };
+}
+
+// ───────────────────────────── Supabase Storage (Ω-3b) ─────────────────────────────
+
+/**
+ * Cliente mínimo do Supabase Storage de que precisamos (signed upload/download URLs num bucket).
+ * Estruturalmente compatível com `supabaseClient.storage.from(bucket)` — injetável para testes
+ * (sem rede). A app passa o cliente real `@supabase/supabase-js`; os testes passam um mock.
+ */
+export interface SupabaseStorageBucketApi {
+  createSignedUploadUrl(key: string): Promise<{
+    data: { signedUrl: string } | null;
+    error: { message: string } | null;
+  }>;
+  createSignedUrl(
+    key: string,
+    expiresInSeconds: number,
+  ): Promise<{ data: { signedUrl: string } | null; error: { message: string } | null }>;
+}
+
+export interface SupabaseStorageApi {
+  from(bucket: string): SupabaseStorageBucketApi;
+}
+
+export interface SupabaseStorageOptions {
+  storage: SupabaseStorageApi;
+  bucket: string;
+  /** Relógio injetável p/ `expiresAt` (o Supabase não devolve a expiração → calculamo-la). */
+  now?: () => number;
+}
+
+/**
+ * StorageProvider REAL sobre o Supabase Storage (bucket PRIVADO por agência). As signed URLs são
+ * geradas pelo serviço (segredo no servidor, nunca exposto). Erro do serviço → lança (sem falha
+ * silenciosa). Ativado por env via `getStorage` (config-not-code); sem env → stub mock.
+ */
+export function createSupabaseStorage(opts: SupabaseStorageOptions): StorageProvider {
+  const now = opts.now ?? Date.now;
+  const bucket = opts.storage.from(opts.bucket);
+  return {
+    async signedUploadUrl(key, urlOpts) {
+      const ttl = urlOpts?.ttlSeconds ?? DEFAULT_TTL_SECONDS;
+      const { data, error } = await bucket.createSignedUploadUrl(key);
+      if (error || !data) {
+        throw new Error(
+          `supabase storage: falha a assinar upload (${error?.message ?? "sem dados"})`,
+        );
+      }
+      return { url: data.signedUrl, expiresAt: now() + ttl * 1000 };
+    },
+    async signedDownloadUrl(key, urlOpts) {
+      const ttl = urlOpts?.ttlSeconds ?? DEFAULT_TTL_SECONDS;
+      const { data, error } = await bucket.createSignedUrl(key, ttl);
+      if (error || !data) {
+        throw new Error(
+          `supabase storage: falha a assinar download (${error?.message ?? "sem dados"})`,
+        );
+      }
+      return { url: data.signedUrl, expiresAt: now() + ttl * 1000 };
+    },
   };
 }

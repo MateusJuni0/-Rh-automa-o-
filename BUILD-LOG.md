@@ -12,6 +12,13 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~12:45] Ω-3b — Storage REAL (Supabase Storage)
+- **`lib/storage.ts`:** interface `StorageProvider` passou a **async** (`Promise<SignedUrl>` — o provider real faz I/O). `createMockStorage` adaptado (resolve de imediato, mesma forma de URL). **`createSupabaseStorage`** (NOVO): implementa `StorageProvider` sobre o `client.storage.from(bucket)` — `createSignedUploadUrl`/`createSignedUrl(ttl)`; erro do serviço → **lança** (sem silêncio); `expiresAt` calculado por `now`+ttl (injetável). Interface mínima `SupabaseStorageApi`/`BucketApi` injetável (testes sem rede).
+- **`lib/storage-config.ts` (NOVO, server-only):** `getStorage()` config-not-code — `SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY` → Supabase real (bucket `SUPABASE_STORAGE_BUCKET`|`vera-private`); sem env → `createMockStorage`. `STORAGE_ENABLED`. Service-role key NUNCA ao cliente; sem segredos hardcoded.
+- **Deps:** `@supabase/supabase-js` + `@supabase/ssr` (este p/ Ω-3c) no `apps/web`.
+- **TDD (client mockado, sem rede, +4):** upload→signed URL do serviço + `expiresAt`; download→`createSignedUrl(ttl)`; erro→lança; TTL default 300s. **Testes existentes do `createMockStorage`/upload atualizados p/ `await`** (mudança de assinatura legítima, comportamento idêntico).
+- **Verde:** typecheck ✅ · web storage/upload **16** · `next build` ✅ · Biome ✅.
+
 ## [2026-06-20 ~12:30] Ω-3a — Supabase local no docker-compose (Auth+Storage)
 - **`docker-compose.dev.yml`:** profile **`supabase`** (opcional — dev normal não precisa) com `auth` (GoTrue v2.158.1, email/senha), `rest` (PostgREST v12.2.3), `storage` (storage-api v1.11.13, buckets privados + signed URLs), `kong` (gateway :8000 = `SUPABASE_URL`). Todos apontam ao Postgres `db` já existente (`vera_dev`); GoTrue cria o schema `auth`, storage-api o `storage`. Volumes/healthcheck. JWT_SECRET/anon/service via env com defaults de dev (NUNCA produção).
 - **`infra/supabase/kong.yml` (NOVO):** config declarativa do gateway (`/auth/v1`→auth, `/rest/v1`→rest, `/storage/v1`→storage) + CORS.

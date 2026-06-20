@@ -99,24 +99,24 @@ describe("validateUpload (segurança de ficheiros)", () => {
 });
 
 describe("createMockStorage (signed URLs)", () => {
-  it("upload URL respeita o ttl e expira no futuro", () => {
+  it("upload URL respeita o ttl e expira no futuro", async () => {
     const s = createMockStorage(() => 1000);
-    const u = s.signedUploadUrl("ag/cv.pdf", { ttlSeconds: 60 });
+    const u = await s.signedUploadUrl("ag/cv.pdf", { ttlSeconds: 60 });
     expect(u.expiresAt).toBe(1000 + 60 * 1000);
     expect(u.url).toContain("kind=put");
     expect(u.url).toContain("exp=61000");
     expect(u.url).toContain("sig=");
   });
 
-  it("download URL usa o ttl por defeito", () => {
+  it("download URL usa o ttl por defeito", async () => {
     const s = createMockStorage(() => 0);
-    const d = s.signedDownloadUrl("ag/cv.pdf");
+    const d = await s.signedDownloadUrl("ag/cv.pdf");
     expect(d.expiresAt).toBe(DEFAULT_TTL_SECONDS * 1000);
     expect(d.url).toContain("kind=get");
   });
 
-  it("chaves diferentes → assinaturas diferentes", () => {
+  it("chaves diferentes → assinaturas diferentes", async () => {
     const s = createMockStorage(() => 0);
-    expect(s.signedDownloadUrl("a").url).not.toBe(s.signedDownloadUrl("b").url);
+    expect((await s.signedDownloadUrl("a")).url).not.toBe((await s.signedDownloadUrl("b")).url);
   });
 });
