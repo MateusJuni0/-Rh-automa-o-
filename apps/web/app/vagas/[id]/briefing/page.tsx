@@ -1,5 +1,7 @@
 import type { BriefingQuestion } from "@rh/core";
+import { type DbHandle, schema } from "@rh/db";
 import { Card } from "@rh/ui";
+import { and, eq, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { generateBriefing } from "@/lib/briefing";
@@ -9,6 +11,8 @@ import { getVaga } from "@/lib/vagas";
 import { StartInterviewButton } from "./StartInterviewButton";
 
 export const dynamic = "force-dynamic";
+
+type Db = DbHandle["db"];
 
 // As 3 lentes canónicas (@rh/core enum `lente`): tecnica|cliente|gap.
 const LENS: ReadonlyArray<{ key: BriefingQuestion["lente"]; label: string }> = [
@@ -40,16 +44,54 @@ function LensGroup({ label, perguntas }: { label: string; perguntas: BriefingQue
   );
 }
 
-/** Tela 5 — Briefing pré-entrevista: roteiro por lente + ▶ Iniciar. */
-export default async function BriefingPage({ params }: { params: Promise<{ id: string }> }) {
+/** Resolve o processId + candidateName via ?candidate=<candidateId>. */
+async function resolveProcesso(
+  db: Db,
+  agencyId: string,
+  jobId: string,
+  candidateId: string | undefined,
+): Promise<{ processId: string; candidateName: string } | null> {
+  if (!candidateId) return null;
+  const [row] = await db
+    .select({
+      processId: schema.process.id,
+      candidateName: schema.candidate.name,
+    })
+    .from(schema.process)
+    .innerJoin(schema.candidate, eq(schema.candidate.id, schema.process.candidateId))
+    .where(
+      and(
+        eq(schema.process.candidateId, candidateId),
+        eq(schema.process.jobId, jobId),
+        eq(schema.process.agencyId, agencyId),
+        isNull(schema.process.deletedAt),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+/** Tela 5 — Briefing pré-entrevista: roteiro por lente + ▶ Iniciar. Aceita ?candidate=id. */
+export default async function BriefingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ candidate?: string }>;
+}) {
   const { id } = await params;
+  const { candidate: candidateId } = await searchParams;
   const { agencyId } = await getSession();
   const db = getDb();
-  const vaga = await getVaga(db, agencyId, id);
+  const [vaga, briefingResult, processo] = await Promise.all([
+    getVaga(db, agencyId, id),
+    generateBriefing(db, agencyId, { jobId: id }),
+    resolveProcesso(db, agencyId, id, candidateId),
+  ]);
   if (!vaga) {
     notFound();
   }
-  const { briefing } = await generateBriefing(db, agencyId, { jobId: id });
+  const { briefing } = briefingResult;
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -57,9 +99,15 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
           ← {vaga.title}
         </Link>
         <h1 className="font-semibold text-ink text-xl">Briefing pré-entrevista</h1>
-        <p className="text-ink-2 text-sm">
-          Roteiro agrupado por lente. Abre "boa resposta" para o gabarito.
-        </p>
+        {processo ? (
+          <p className="text-accent-ink text-sm font-medium">
+            Preparar entrevista com {processo.candidateName}
+          </p>
+        ) : (
+          <p className="text-ink-2 text-sm">
+            Roteiro agrupado por lente. Abre "boa resposta" para o gabarito.
+          </p>
+        )}
       </div>
       {LENS.map((l) => (
         <LensGroup
@@ -68,7 +116,7 @@ export default async function BriefingPage({ params }: { params: Promise<{ id: s
           perguntas={briefing.perguntas.filter((q) => q.lente === l.key)}
         />
       ))}
-      <StartInterviewButton />
+      <StartInterviewButton processId={processo?.processId} />
     </div>
   );
 }

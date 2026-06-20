@@ -42,6 +42,17 @@ export async function createCandidato(
     nameNormalized: normalizeName(input.name),
     profile,
   });
+  // Guarda o texto bruto do CV para poder mostrá-lo no perfil sem re-upload.
+  if (input.cvText.length > 0) {
+    await db.insert(schema.sourceDoc).values({
+      id: randomUUID(),
+      agencyId,
+      kind: "cv",
+      candidateId: id,
+      rawText: input.cvText,
+      title: `CV — ${input.name}`,
+    });
+  }
   return { id, profile };
 }
 
@@ -63,6 +74,7 @@ export interface CandidatoDetail {
   name: string;
   linkedinUrl: string | null;
   profile: CandidateProfile;
+  cvText: string | null;
 }
 
 const EMPTY_PROFILE: CandidateProfile = {
@@ -72,27 +84,71 @@ const EMPTY_PROFILE: CandidateProfile = {
   resumo: "",
 };
 
+export interface ProcessoAtivo {
+  processId: string;
+  jobId: string;
+  jobTitle: string;
+  clientName: string | null;
+  stage: string;
+}
+
+/** Processos ativos de um candidato — vagas em que está e em que fase (para o detalhe do candidato). */
+export async function getCandidatoProcessos(
+  db: Db,
+  agencyId: string,
+  candidateId: string,
+): Promise<ProcessoAtivo[]> {
+  return db
+    .select({
+      processId: schema.process.id,
+      jobId: schema.job.id,
+      jobTitle: schema.job.title,
+      clientName: schema.client.name,
+      stage: schema.process.stage,
+    })
+    .from(schema.process)
+    .innerJoin(schema.job, eq(schema.job.id, schema.process.jobId))
+    .leftJoin(schema.client, eq(schema.client.id, schema.job.clientId))
+    .where(
+      and(
+        eq(schema.process.candidateId, candidateId),
+        eq(schema.process.agencyId, agencyId),
+        isNull(schema.process.deletedAt),
+        isNull(schema.job.deletedAt),
+      ),
+    )
+    .orderBy(desc(schema.process.createdAt));
+}
+
 /** Detalhe do candidato (Tela 4): valida o perfil JSONB na fronteira (não confia no shape da DB). */
 export async function getCandidato(
   db: Db,
   agencyId: string,
   id: string,
 ): Promise<CandidatoDetail | null> {
-  const [row] = await db
-    .select({
-      id: schema.candidate.id,
-      name: schema.candidate.name,
-      linkedinUrl: schema.candidate.linkedinUrl,
-      profile: schema.candidate.profile,
-    })
-    .from(schema.candidate)
-    .where(
-      and(
-        eq(schema.candidate.id, id),
-        eq(schema.candidate.agencyId, agencyId),
-        isNull(schema.candidate.deletedAt),
+  const [[row], cvRows] = await Promise.all([
+    db
+      .select({
+        id: schema.candidate.id,
+        name: schema.candidate.name,
+        linkedinUrl: schema.candidate.linkedinUrl,
+        profile: schema.candidate.profile,
+      })
+      .from(schema.candidate)
+      .where(
+        and(
+          eq(schema.candidate.id, id),
+          eq(schema.candidate.agencyId, agencyId),
+          isNull(schema.candidate.deletedAt),
+        ),
       ),
-    );
+    db
+      .select({ rawText: schema.sourceDoc.rawText })
+      .from(schema.sourceDoc)
+      .where(and(eq(schema.sourceDoc.candidateId, id), eq(schema.sourceDoc.kind, "cv")))
+      .orderBy(desc(schema.sourceDoc.fetchedAt))
+      .limit(1),
+  ]);
   if (!row) {
     return null;
   }
@@ -102,5 +158,6 @@ export async function getCandidato(
     name: row.name,
     linkedinUrl: row.linkedinUrl,
     profile: parsed.success ? parsed.data : EMPTY_PROFILE,
+    cvText: cvRows[0]?.rawText ?? null,
   };
 }

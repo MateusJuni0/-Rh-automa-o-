@@ -6,8 +6,12 @@ import { useState } from "react";
 
 type State = "idle" | "busy" | "done" | "error";
 
+interface Props {
+  processId?: string;
+}
+
 /** ▶ Iniciar entrevista: cria a entrevista (POST /api/interviews) — liga o "antes" ao "durante". */
-export function StartInterviewButton() {
+export function StartInterviewButton({ processId }: Props) {
   const [state, setState] = useState<State>("idle");
   const [room, setRoom] = useState<string | null>(null);
   const [interviewId, setInterviewId] = useState<string | null>(null);
@@ -18,7 +22,7 @@ export function StartInterviewButton() {
       const res = await fetch("/api/interviews", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(processId ? { processId } : {}),
       });
       const json: { ok: boolean; data?: { interviewId: string; room: string } } = await res.json();
       if (!res.ok || !json.ok || !json.data) {

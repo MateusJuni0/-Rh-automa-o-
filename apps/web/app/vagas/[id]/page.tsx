@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getVaga, listVagaCandidatos } from "@/lib/vagas";
 import { ClientLogo } from "../../components/ClientLogo";
-import { EntityList, initials } from "../../components/EntityList";
+import { initials } from "../../components/EntityList";
 
 export const dynamic = "force-dynamic";
 
@@ -111,15 +111,35 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
             }
           />
         ) : (
-          <EntityList
-            rows={candidatos.map((c) => ({
-              id: c.candidateId,
-              monogram: initials(c.name),
-              title: c.name,
-              trailing: <Chip tone="muted">{STAGE_LABEL[c.stage] ?? c.stage}</Chip>,
-              href: `/candidatos/${c.candidateId}`,
-            }))}
-          />
+          <div className="overflow-hidden rounded-card border border-line bg-card">
+            <ul className="flex flex-col gap-0.5 p-2">
+              {candidatos.map((c) => (
+                <li
+                  key={c.candidateId}
+                  className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-raised transition-colors"
+                >
+                  <span className="monogram shrink-0" aria-hidden="true">
+                    {initials(c.name)}
+                  </span>
+                  <Link
+                    href={`/candidatos/${c.candidateId}`}
+                    className="min-w-0 flex-1 truncate text-ink text-sm hover:text-accent-ink"
+                  >
+                    {c.name}
+                  </Link>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Chip tone="muted">{STAGE_LABEL[c.stage] ?? c.stage}</Chip>
+                    <Link
+                      href={`/vagas/${vaga.id}/briefing?candidate=${c.candidateId}`}
+                      className="text-accent-ink text-xs hover:underline"
+                    >
+                      Briefing →
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 

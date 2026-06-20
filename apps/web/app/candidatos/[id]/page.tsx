@@ -1,7 +1,7 @@
 import { Card, Chip } from "@rh/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCandidato } from "@/lib/candidatos";
+import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 
@@ -78,11 +78,25 @@ function CvSections({ text }: { text: string }) {
   );
 }
 
-/** Tela 4 — Candidato: avatar + CV inline + skills/gaps/resumo. */
+const STAGE_LABEL: Record<string, string> = {
+  sourced: "Novo",
+  screening: "Triado",
+  interview: "Entrevistar",
+  submitted: "Enviado",
+  client_iv: "Entrevista cliente",
+  offer: "Oferta",
+  placed: "Colocado",
+};
+
+/** Tela 4 — Candidato: avatar + CV inline + skills/gaps/resumo + processos ativos. */
 export default async function CandidatoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { agencyId } = await getSession();
-  const cand = await getCandidato(getDb(), agencyId, id);
+  const db = getDb();
+  const [cand, processos] = await Promise.all([
+    getCandidato(db, agencyId, id),
+    getCandidatoProcessos(db, agencyId, id),
+  ]);
   if (!cand) {
     notFound();
   }
@@ -122,6 +136,28 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
           </div>
         </div>
       </div>
+
+      {/* ── processos ativos ── */}
+      {processos.length > 0 ? (
+        <Card title="Vagas em que está">
+          <ul className="-mx-4 -my-4 divide-y divide-line-subtle">
+            {processos.map((p) => (
+              <li key={p.processId} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <Link
+                    href={`/vagas/${p.jobId}`}
+                    className="font-medium text-ink text-sm hover:text-accent-ink"
+                  >
+                    {p.jobTitle}
+                  </Link>
+                  {p.clientName ? <p className="text-ink-3 text-xs">{p.clientName}</p> : null}
+                </div>
+                <Chip tone="muted">{STAGE_LABEL[p.stage] ?? p.stage}</Chip>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       {/* ── corpo: perfil + CV side-by-side ── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_40%]">

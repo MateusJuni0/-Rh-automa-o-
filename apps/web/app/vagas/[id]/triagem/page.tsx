@@ -4,16 +4,22 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { type TriageRow, triageVaga } from "@/lib/triagem";
-import { getVaga } from "@/lib/vagas";
+import { getVaga, listVagaCandidatos } from "@/lib/vagas";
+import { AddToFunilButton } from "./AddToFunilButton";
 
 export const dynamic = "force-dynamic";
 
-function TriageItem({ row }: { row: TriageRow }) {
+function TriageItem({ row, jobId, inFunil }: { row: TriageRow; jobId: string; inFunil: boolean }) {
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-ink text-sm">{row.name}</span>
-        <span className="font-medium text-accent-ink text-sm tabular-nums">{row.matchScore}%</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="font-medium text-accent-ink text-sm tabular-nums">
+            {row.matchScore}%
+          </span>
+          <AddToFunilButton candidateId={row.candidateId} jobId={jobId} alreadyIn={inFunil} />
+        </div>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-raised">
         <div className="h-full rounded-full bg-accent" style={{ width: `${row.matchScore}%` }} />
@@ -47,11 +53,15 @@ export default async function TriagemPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const { agencyId } = await getSession();
   const db = getDb();
-  const vaga = await getVaga(db, agencyId, id);
+  const [vaga, rows, noFunil] = await Promise.all([
+    getVaga(db, agencyId, id),
+    triageVaga(db, agencyId, id),
+    listVagaCandidatos(db, agencyId, id),
+  ]);
   if (!vaga) {
     notFound();
   }
-  const rows = await triageVaga(db, agencyId, id);
+  const inFunilSet = new Set(noFunil.map((c) => c.candidateId));
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -75,7 +85,12 @@ export default async function TriagemPage({ params }: { params: Promise<{ id: st
         <Card>
           <ul className="-mx-4 -my-4 divide-y divide-line-subtle">
             {rows.map((row) => (
-              <TriageItem key={row.candidateId} row={row} />
+              <TriageItem
+                key={row.candidateId}
+                row={row}
+                jobId={id}
+                inFunil={inFunilSet.has(row.candidateId)}
+              />
             ))}
           </ul>
         </Card>
