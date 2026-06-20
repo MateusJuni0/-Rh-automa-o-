@@ -508,6 +508,47 @@ async function main(): Promise<void> {
         .onConflictDoNothing();
     }
 
+    // CV do mateus (o upload real foi feito antes de existir o guardar-CV). onConflictDoNothing +
+    // id fixo → idempotente e NÃO clobbera um futuro re-upload real (esse tem fetchedAt mais recente).
+    if (mateusId) {
+      await db
+        .insert(schema.sourceDoc)
+        .values({
+          id: "d6000000-0000-4000-8000-000000000001",
+          agencyId: AGENCY,
+          kind: "cv",
+          candidateId: mateusId,
+          title: "CV — Mateus Oliveira",
+          rawText: `Mateus Oliveira
+mateus@email.com | Lisboa, Portugal | linkedin.com/in/mateusoliveira
+
+RESUMO
+AI / LLM Engineer e Full-Stack (TypeScript / Python) com 6 anos de experiência. Construiu e
+operou sistemas LLM e produtos web em produção, do frontend à infraestrutura. Começou como
+frontend developer e cresceu para arquitetura de sistemas de IA.
+
+EXPERIÊNCIA
+
+AI / LLM Engineer — CMTecnologia (2022—presente)
+• Arquitetou copilotos de IA e agentes (tool-calling, RAG com pgvector) em produção.
+• Construiu produtos web premium em Next.js 15 + Supabase + TypeScript estrito.
+• Pipelines de automação (n8n) e integração de modelos (OpenRouter, embeddings).
+• Stack: TypeScript, Python, React, Next.js, Node.js, PostgreSQL, LLM.
+
+Full-Stack Developer (2019—2022)
+• Desenvolveu plataformas SaaS e e-commerce de alta performance.
+• Frontend React/Next.js + backend Node.js/Python.
+
+FORMAÇÃO
+Engenharia Informática
+
+SKILLS
+TypeScript · Python · React · Next.js · Node.js · LLM · RAG · PostgreSQL · Supabase
+`,
+        })
+        .onConflictDoNothing();
+    }
+
     const countRows = await db
       .select({ value: sql<number>`count(*)::int` })
       .from(schema.candidate)

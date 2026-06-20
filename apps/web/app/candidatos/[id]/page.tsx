@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { CandidatoActions } from "./CandidatoActions";
 
 export const dynamic = "force-dynamic";
 
@@ -121,9 +122,11 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
           >
             {mono}
           </div>
-          <div>
-            <h1 className="font-semibold text-ink text-2xl">{cand.name}</h1>
-            <p className="mt-0.5 text-ink-2 text-sm">
+          <div className="min-w-0">
+            <h1 className="font-display font-semibold text-ink text-3xl tracking-tight">
+              {cand.name}
+            </h1>
+            <p className="mt-1 text-ink-2 text-sm">
               {experienciaAnos !== null
                 ? `${experienciaAnos} anos de experiência`
                 : "Experiência n/d"}
@@ -134,6 +137,10 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
               ) : null}
             </p>
           </div>
+        </div>
+
+        <div className="mt-4">
+          <CandidatoActions name={cand.name} cvText={cand.cvText} />
         </div>
       </div>
 
