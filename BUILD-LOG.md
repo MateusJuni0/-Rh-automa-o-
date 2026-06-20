@@ -9,6 +9,33 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+# ═══ REDESIGN IMPECCABLE (web) — 2026-06-20/21 ═══
+> Pedido do Mateus: tirar o web do "não dá para apresentar" e pô-lo a nível Linear/Stripe (skill `impeccable`),
+> + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
+> além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
+
+## ✅ FEITO e committado (branch phase3/product)
+- **Assistente = Vera-secretária** (`0ea1e44`) — avatar robô SVG+CSS (idle/thinking/writing), wallpaper temático, balões, anexar/baixar ficheiros, porta de confirmação intacta.
+- **Candidato-dossier** (`1741380`) — CV visível (visor estruturado), Baixar/Enviar CV, "vagas em que está", perfil. CV guardado em source_doc; seed do CV do mateus.
+- **Painel** (`75305c7`) — calendário semanal + pipeline + visor de CV.
+- **Triagem→funil→briefing→entrevista** ligado (`f9dbcc4`).
+- **Cliente-ficha** (`82a7742`) — hero com cor de marca + logo grande + site + "O que sabemos" (Valoriza/Não aceita/Contexto via clientMemoryFact, simulado).
+- **Vaga por LINK** (`c30cc8d`) — cola URL → a Vera busca o texto (fetch server-side **anti-SSRF**, limpeza HTML, og:title); €0; extração estruturada = stub sem chave. VagaForm com abas Escrever|Importar.
+- Antes: identidade de cliente/logos, auto-fill heurístico, CV PDF (unpdf), painel QG, redesign premium base.
+
+## ⏭️ FALTA (para a próxima sessão — o loop parou aqui, pausa quando o PC fica idle)
+1. **Vaga detalhe** nítido — must/nice/**red-flag** com peso visual + carregar **rubric** + contexto do cliente.
+2. **Briefing** UI completa — candidato×vaga + match%, 3 lentes em cards expansíveis com "boa resposta", rubric inline, botão GRANDE "Iniciar entrevista".
+3. **Parecer** — 2 versões (interna|cliente) + matriz critério + citação clicável.
+4. **Comparar** — matriz critério-a-candidato com evidência.
+5. **Filtro** na lista de Candidatos (skill/experiência).
+6. **Polish** `.elev` nas listas (Clientes/Vagas/Candidatos) + **Definições** (modelos por slot, conectar Google Calendar [inerte], RGPD).
+- **CHAVE (handover Mateus):** IA real (OpenRouter), import-por-link com extração real, entrevista ao vivo (LiveKit/Soniox), email (Resend) — tudo INERTE/mock até às chaves.
+
+> Como retomar: `cd apps/web && PORT=3000 ALLOW_DEV_SESSION=1 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm dev` (ou Supabase real via `.env.local`). Plano completo do redesign: output do workflow `map-vera-specs-gaps`.
+
+---
+
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
