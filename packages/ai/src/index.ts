@@ -1,5 +1,6 @@
 // @rh/ai — slots de LLM por capacidade + gate ZDR + runner (fallback) + transporte OpenRouter
 // + generate (output validado por Zod, base das features) + mock de teste + features (cérebro).
+export * from "./features/assistant";
 export * from "./features/extract";
 export * from "./features/intake";
 export * from "./features/judge";

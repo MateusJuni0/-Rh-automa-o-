@@ -12,6 +12,15 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~12:15] Ω-2 — Assistente REAL (motor LLM)
+- **`@rh/ai features/assistant.ts` (NOVO):** `assistantPlan({message,candidatos,clienteNome,tools}, opts)` → `generate("ARCHITECT", …, planSchema, opts)` pede JSON `{reply, toolCalls:[{tool,args}]}`, **valida com Zod** (schema SEM `confirmed`), filtra tool-calls a ferramentas conhecidas (anti-alucinação). Reusa o gate ZDR + fallback do `runSlot`.
+  - **Porquê em `@rh/ai` e não no web:** o `web` resolve `zod@4.3.6` (hoisted no monorepo pai) e o `@rh/ai` usa `zod@4.4.3` → schema definido no web é **incompatível** com o `generate<T extends z.ZodType>` do @rh/ai (tipos `$ZodTypeInternals` divergem). A feature vive no @rh/ai (Zod coerente), espelhando `judge.ts`.
+- **`apps/web/lib/assistant/llm.ts` (NOVO):** thin wrapper `planResponseWithLlm({message,ctx,tools}, opts)` → `assistantPlan` → `ChatPlan` (mesma forma do mock keyword).
+- **`run.ts` — config-not-code:** `planFor()` → `AI_ENABLED` (há `OPENROUTER_API_KEY`) → planner LLM (`aiOptions`); senão keyword mock. LLM falha (rede/parse/slot) → **degrada** para keyword mock (assistente nunca fica mudo; sem silêncio — degradação determinística).
+- **PORTA DE CONFIRMAÇÃO INTACTA:** o LLM devolve só `{reply,toolCalls}` (sem `confirmed`); `run.ts` corre `executeToolCall({confirmed:false})` → `gravar`/`enviar_fora` ficam `pending_confirm`; só `confirmAction` (ação humana) executa. O LLM NUNCA contorna a porta.
+- **TDD (transporte LLM mockado, sem rede):** @rh/ai +5 (valida plano; defaults toolCalls/args; filtra desconhecida; `enviar_email` planeado sem `confirmed`); web +4 (mapeia ChatPlan; `enviar_email` planeado; filtra desconhecida; Q&A vazio).
+- **Verde:** typecheck (ai+web) ✅ · @rh/ai **35→40** · web **91→95** · Biome ✅. Sem segredos · zero chamadas pagas nos testes.
+
 ## [2026-06-20 ~11:55] Ω-1 (1d) — replay WS por seq/ack + FIM de Ω-1
 - **`WsServer` (server.ts):** buffer de frames enviados por ligação (`state.sent`, anel limitado a **256** com `shift()` anti-DoS). No `ack {lastSeq}` → `#replay` reenvia os do buffer com `seq > lastSeq` (reconstruídos com o **seq original** → dedup do lado do cliente). Limpeza de ligação no `sock close` (sem leak de `#conns`).
 - **`broadcast(payload)` (NOVO, público):** difunde um frame a todas as ligações autenticadas (ticks/sugestões/alertas) — é o que permite testar o replay e é a porta de saída real dos frames de servidor. v1 = single-tenant (1 recrutador/entrevista), sem filtro por `interviewId` (nota: apertar no multi-conn se necessário).

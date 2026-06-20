@@ -2,10 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, eq } from "drizzle-orm";
-import { type ChatContext, planResponse } from "./chat";
+import { AI_ENABLED, aiOptions } from "../ai";
+import { type ChatContext, type ChatPlan, planResponse } from "./chat";
 import { createMemoryStore, executeToolCall } from "./gate";
+import { planResponseWithLlm } from "./llm";
 import { saveMemoryFact } from "./memory";
-import { getTool } from "./tools";
+import { getTool, TOOLS } from "./tools";
 
 type Db = DbHandle["db"];
 
@@ -57,6 +59,26 @@ async function ensureThread(
   return id;
 }
 
+/** Lista de ferramentas (nome + efeito) que o planner LLM pode escolher. */
+const TOOL_INFO = Object.values(TOOLS).map((t) => ({ name: t.name, efeito: t.efeito }));
+
+/**
+ * Escolhe o plano (config-not-code): com chave de IA → planner LLM (slot ARCHITECT). Se o LLM
+ * falhar (rede/parse/slot esgotado), **degrada** para o keyword mock — sem silêncio: a degradação
+ * é determinística e o mock é sempre coerente. Sem chave → keyword mock direto (testes a €0).
+ */
+async function planFor(message: string, ctx: ChatContext): Promise<ChatPlan> {
+  if (!AI_ENABLED) {
+    return planResponse(message, ctx);
+  }
+  try {
+    return await planResponseWithLlm({ message, ctx, tools: TOOL_INFO }, aiOptions(undefined));
+  } catch {
+    // Fallback determinístico: o assistente nunca fica sem resposta por falha do LLM.
+    return planResponse(message, ctx);
+  }
+}
+
 /**
  * Uma mensagem nova: persiste-a, planeia, corre as tools pela PORTA com `confirmed:false` (a
  * confirmação só acontece em `confirmAction`). As `gravar`/`enviar_fora` ficam `pending_confirm`.
@@ -76,7 +98,7 @@ export async function runMessage(
     content: params.message,
   });
 
-  const plan = planResponse(params.message, params.ctx ?? {});
+  const plan = await planFor(params.message, params.ctx ?? {});
   const actions: ActionView[] = [];
   const store = createMemoryStore();
   for (const call of plan.toolCalls) {
