@@ -12,6 +12,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~13:05] Ω-3c — Auth REAL (@supabase/ssr) + FIM de Ω-3
+- **`lib/supabase/server.ts` (NOVO):** `createSupabaseServerClient` (`@supabase/ssr`, ligado aos cookies do Next, try/catch no set p/ RSC read-only) + `AUTH_ENABLED` (`SUPABASE_URL`+`SUPABASE_ANON_KEY`).
+- **`lib/supabase/middleware.ts` (NOVO):** `getSupabaseUserForMiddleware` (edge — valida o JWT via `getUser()`, propaga a rotação de cookies para a `NextResponse`).
+- **`lib/recruiter-resolve.ts` (NOVO):** `resolveSessionByUserId(db, userId)` — `user.id` (auth.users) → recruiter+agência (`recruiter.userId`); sem vínculo → `null` (fail-closed).
+- **`getSession` (config-not-code):** `AUTH_ENABLED` → `getUser()` + resolve via DB (user sem sessão/recruiter → erro ruidoso); sem env → shim de cookie atual.
+- **Login route:** `AUTH_ENABLED` → `signInWithPassword` REAL (cookies de sessão pelo SSR); senão → mock. **401 uniforme** (nunca leak do erro Supabase).
+- **Middleware:** agora `async`; `resolveSession` usa Supabase (import dinâmico só quando `AUTH_ENABLED`) ou shim; devolve a `response` com cookies rodados.
+- **`scripts/seed-supabase-auth.ts` (NOVO, idempotente):** cria Filipa+Inês no GoTrue (admin API, `email_confirm`) e liga `recruiter.userId`; reaproveita user existente; password via `SEED_PASSWORD`. NUNCA produção.
+- **Segurança:** `getUser()` (valida JWT no servidor) não `getSession()`; login usa anon key (service-role só no seed/storage); sem segredos hardcoded.
+- **TDD (+2 integração DB):** `resolveSessionByUserId` (user ligado→sessão; sem vínculo→null). Sem env = comportamento atual (testes intactos).
+- **Verde:** typecheck ✅ · web **95→101** · `next build` ✅ (middleware inclui @supabase/ssr só quando ligado) · Biome ✅.
+- **Nota handover:** a dica "Demo: filipa@iris.tech (qualquer palavra-passe)" no `app/login` mantém-se (inócua em dev); remover no handover de chaves (já no KEYS-TODO).
+- **✅ Ω-3 FECHADA** (3a compose Supabase · 3b Storage real · 3c Auth real). Tudo config-not-code, fallback mock sem env.
+
 ## [2026-06-20 ~12:45] Ω-3b — Storage REAL (Supabase Storage)
 - **`lib/storage.ts`:** interface `StorageProvider` passou a **async** (`Promise<SignedUrl>` — o provider real faz I/O). `createMockStorage` adaptado (resolve de imediato, mesma forma de URL). **`createSupabaseStorage`** (NOVO): implementa `StorageProvider` sobre o `client.storage.from(bucket)` — `createSignedUploadUrl`/`createSignedUrl(ttl)`; erro do serviço → **lança** (sem silêncio); `expiresAt` calculado por `now`+ttl (injetável). Interface mínima `SupabaseStorageApi`/`BucketApi` injetável (testes sem rede).
 - **`lib/storage-config.ts` (NOVO, server-only):** `getStorage()` config-not-code — `SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY` → Supabase real (bucket `SUPABASE_STORAGE_BUCKET`|`vera-private`); sem env → `createMockStorage`. `STORAGE_ENABLED`. Service-role key NUNCA ao cliente; sem segredos hardcoded.

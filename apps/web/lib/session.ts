@@ -1,20 +1,37 @@
 import { cookies } from "next/headers";
 import { sessionFromCookies } from "./api";
-import { DEV_AGENCY_ID } from "./db";
+import { DEV_AGENCY_ID, getDb } from "./db";
+import { resolveSessionByUserId } from "./recruiter-resolve";
+import { AUTH_ENABLED, createSupabaseServerClient } from "./supabase/server";
 import { DEV_RECRUITER_ID } from "./vagas";
 
 export type Session = { agencyId: string; recruiterId: string };
 
 /**
- * Sessão da app (single-tenant IRIS). Lê dos cookies (via `sessionFromCookies`); o middleware já
- * garante a sessão (páginas→/login, /api→401), por isso o fallback do seed (IRIS/Filipa) é só a
- * rede de segurança. É o ÚNICO ponto onde rotas/pages obtêm a identidade — as libs recebem
- * `agencyId` por parâmetro (NUNCA do cliente).
+ * Sessão da app (single-tenant IRIS). config-not-code:
+ * - com Supabase Auth (`AUTH_ENABLED`): user do Supabase → recruiter+agência via DB (`recruiter.userId`).
+ *   Sem user/recruiter → erro ruidoso (o middleware já redirecionou; aqui é defesa fail-closed).
+ * - sem env: shim de cookie (`vera_agency`/`vera_recruiter`) — comportamento v1 atual (testes intactos).
  *
- * TODO(KEYS): trocar por `@supabase/ssr` (Supabase Auth) quando a chave/serviço chegar — login real =
- * email/senha OU biometria (`services/face` enroll → passwordless). Ver KEYS-TODO.md.
+ * É o ÚNICO ponto onde rotas/pages obtêm a identidade — as libs recebem `agencyId` por parâmetro
+ * (NUNCA do cliente).
  */
 export async function getSession(): Promise<Session> {
+  if (AUTH_ENABLED) {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("getSession: sem sessão Supabase");
+    }
+    const session = await resolveSessionByUserId(getDb(), user.id);
+    if (!session) {
+      throw new Error("getSession: utilizador autenticado sem recruiter ligado");
+    }
+    return session;
+  }
+
   const jar = await cookies();
   const session = sessionFromCookies((n) => jar.get(n)?.value);
   if (session) {
