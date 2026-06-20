@@ -23,16 +23,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 - **Vaga por LINK** (`c30cc8d`) — cola URL → a Vera busca o texto (fetch server-side **anti-SSRF**, limpeza HTML, og:title); €0; extração estruturada = stub sem chave. VagaForm com abas Escrever|Importar.
 - Antes: identidade de cliente/logos, auto-fill heurístico, CV PDF (unpdf), painel QG, redesign premium base.
 
-## ⏭️ FALTA (para a próxima sessão — o loop parou aqui, pausa quando o PC fica idle)
-1. **Vaga detalhe** nítido — must/nice/**red-flag** com peso visual + carregar **rubric** + contexto do cliente.
-2. **Briefing** UI completa — candidato×vaga + match%, 3 lentes em cards expansíveis com "boa resposta", rubric inline, botão GRANDE "Iniciar entrevista".
-3. **Parecer** — 2 versões (interna|cliente) + matriz critério + citação clicável.
-4. **Comparar** — matriz critério-a-candidato com evidência.
-5. **Filtro** na lista de Candidatos (skill/experiência).
-6. **Polish** `.elev` nas listas (Clientes/Vagas/Candidatos) + **Definições** (modelos por slot, conectar Google Calendar [inerte], RGPD).
-- **CHAVE (handover Mateus):** IA real (OpenRouter), import-por-link com extração real, entrevista ao vivo (LiveKit/Soniox), email (Resend) — tudo INERTE/mock até às chaves.
+## ✅ FEITO (sessão 2026-06-21 — 5 ecrãs em paralelo, workflow `build-remaining-screens` + verificação central)
+- **Briefing ao vivo** (`0c36eb3`) — candidato×vaga + match%, perguntas por **lente** (técnica/cliente/gaps) em cards, "boa resposta" colapsável, rubric inline fraco/ok/forte, botão GRANDE "▶ Iniciar entrevista" no topo. `lib/briefing.ts: getBriefingContext`.
+- **Parecer 2 versões** (`0c36eb3`) — abas **Interna** (cru: red-flags, não-coberto, fiabilidade) vs **Cliente** (polido). Matriz de critérios com estado (✓/~/!/◦) + "Ver prova" (citação+timestamp). Enviar-ao-cliente (porta de confirmação, mock) + Exportar .md. Lógica pura em **`lib/parecer-view.ts`** (client-safe, sem DB) re-exportada por `lib/parecer.ts` — corrigido o bundle client a arrastar `pg`.
+- **Comparar matriz** (`0c36eb3`) — critério-a-candidato, must a bold, células ✓/~/!/◦ + evidência, match% por coluna, nota "só CV". `lib/comparar.ts`.
+- **Filtro de candidatos** (`0c36eb3`) — `CandidatosFilter` (client): pesquisa por nome/skill + chips + ordenar por experiência; `listCandidatos` passou a devolver skills/anos.
+- **Definições** (`0c36eb3`) — abas Conta · Modelos de IA (por slot, inerte sem chave) · Calendário (conectar Google [inerte]) · Privacidade/RGPD · Sobre. `SettingsTabs` + `lib/definicoes.ts`.
+- **Profundidade `.elev`** nas listas (`EntityList`) → Clientes/Vagas/Candidatos uniformes (`<hash>`).
+- **Verde:** typecheck + Biome (145 ficheiros) + `next build` (compila todas as rotas) ✓. Server LOCAL a correr em http://localhost:3000 (gating de auth OK: rotas → 307 login).
 
-> Como retomar: `cd apps/web && PORT=3000 ALLOW_DEV_SESSION=1 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm dev` (ou Supabase real via `.env.local`). Plano completo do redesign: output do workflow `map-vera-specs-gaps`.
+## ⏭️ FALTA / DEFERIDO
+- **Vaga detalhe — red-flag + rubric:** NÃO há colunas no modelo (`JobRequirements` só tem must/nice/nível/contexto). Mostrar red-flags/rubric por vaga exige **migração + extração** — deferido (não inventar dados). Must/nice/contexto já aparecem com peso distinto.
+- **CHAVE (handover Mateus, `KEYS-TODO.md`):** IA real (OpenRouter), extração real do link, entrevista ao vivo (LiveKit/Soniox), email (Resend) — tudo INERTE/mock até às chaves.
+- **Smoke autenticado** das telas de detalhe (briefing/parecer) não corrido aqui (login = Supabase `signInWithPassword`, `SEED_PASSWORD` não em mão); build+typecheck+render-test do parecer cobrem a compilação. Confirmar a olho ao clicar.
+
+> Como retomar/ver: server já a correr (`localhost:3000`); login `filipa@iris.tech`. Rebuild: `pnpm --filter web build && cd apps/web && PORT=3000 pnpm start`.
 
 ---
 
