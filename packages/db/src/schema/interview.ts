@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { agencyId, createdAt, pk } from "./_shared";
 import { recruiter } from "./agency";
+import { candidate } from "./candidate";
 import { process } from "./process";
 
 /** Entrevista. process_id NULLABLE (órfã/cold-start §12). distilled_at = gate da purga de áudio (§16H). */
@@ -23,6 +24,8 @@ export const interview = pgTable(
     id: pk(),
     agencyId: agencyId(),
     processId: uuid("process_id").references(() => process.id), // NULL = órfã (status 'unstructured')
+    // §16H/RGPD: atribui a entrevista (incl. órfã, process_id NULL) ao candidato → purgável.
+    candidateId: uuid("candidate_id").references(() => candidate.id),
     recruiterId: uuid("recruiter_id")
       .notNull()
       .references(() => recruiter.id),
@@ -36,6 +39,7 @@ export const interview = pgTable(
   (t) => [
     index("interview_agency_status_idx").on(t.agencyId, t.status),
     index("interview_agency_recruiter_idx").on(t.agencyId, t.recruiterId),
+    index("interview_candidate_idx").on(t.candidateId),
     check("interview_status_chk", sql`${t.status} IN ('scheduled','live','done','unstructured')`),
     check(
       "interview_capture_type_chk",

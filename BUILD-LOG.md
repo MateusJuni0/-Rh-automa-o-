@@ -9,6 +9,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 ---
 
+# ═══ FASE Ω — TORNAR REAL (em curso) ═══
+> Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
+
+## [2026-06-20 ~10:30] Ω-1 (1a) — RGPD completo + migração 0002 (candidate_id)
+- **Migração 0002:** `candidate_id` (nullable, FK→candidate, índice) em `async_job` E `interview`.
+- **`purgeCandidate`** cobre agora: `async_job WHERE candidate_id` (PII no JSONB args); threads/mensagens/ações do assistente ligadas ao candidato (via `active_context->>'candidate_id'`); e **entrevistas ÓRFÃS** (`process_id NULL`, atribuídas por `interview.candidate_id`) + os seus filhos. Teste de integração estendido (órfã + thread + async_job; isolamento cross-agency mantém-se).
+- **Reconciliação:** o teste de schema G1/G2 (que exigia `interview` SEM `candidate_id`) foi atualizado — `candidate_id` é uma **exceção RGPD documentada** para atribuir as órfãs (não-derivam o candidato do processo).
+- **Verde:** typecheck · `next build` · **296 testes** (db 28, web 91, knowledge 10, ai 35, ws 32, desktop 44, core 37, ui 16, realtime 2, intake-bots 1) · Biome.
+- **Nota infra (2026-06-20):** o Docker Desktop crashou pós-reboot (serviço `com.docker.service` parado → precisa de admin); o Mateus relançou-o com permissão de admin e a DB dev (`5433`) voltou. A sessão paralela escreveu este Ω-1 mas parou por **rate-limit do servidor** antes de testar/commitar — eu apliquei a migração, reconciliei o teste de schema e fechei a fatia.
+
+## [2026-06-19] Ω-2 (parcial) — embedder REAL (commit `4e3bc66`)
+- `createOpenAiEmbedder` (OpenAI text-embedding-3-small, dim 1536) atrás da interface `Embedder`; `getEmbedder` (web) config-not-code (`EMBEDDER_API_KEY` → real, senão mock). +5 testes (fetch mockado, sem rede).
+
+---
+
 # ═══ RESUMO FINAL — VERA v1 FASE 3 (build C–N) ═══
 **[2026-06-19] Fases I→N TODAS VERDES. Produto demonstrável ponta-a-ponta SÓ COM MOCKS. Branch `phase3/product`.**
 

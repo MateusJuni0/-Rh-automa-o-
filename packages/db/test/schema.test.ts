@@ -86,11 +86,15 @@ describe("schema canónico — contagem e cobertura", () => {
 });
 
 describe("famílias G1/G2 — process_id canónico (sem job_id/candidate_id)", () => {
-  it("interview deriva de process: tem process_id, NÃO tem job_id/candidate_id", () => {
+  it("interview deriva de process: tem process_id, NÃO tem job_id (candidate_id = exceção RGPD)", () => {
     const c = cols("interview");
     expect(c.has("process_id")).toBe(true);
     expect(c.has("job_id")).toBe(false);
-    expect(c.has("candidate_id")).toBe(false);
+    // Exceção G1/G2 (Ω-1): `interview` ganha `candidate_id` NULLABLE — as entrevistas ÓRFÃS
+    // (process_id NULL) não conseguem derivar o candidato, logo precisam de atribuição explícita
+    // para serem purgáveis (direito ao esquecimento). As outras tabelas derivadas mantêm o invariante.
+    expect(c.has("candidate_id")).toBe(true);
+    expect(col("interview", "candidate_id").notNull).toBe(false);
   });
 
   it("interview.process_id é NULLABLE (entrevista órfã / cold-start §12/§16M)", () => {

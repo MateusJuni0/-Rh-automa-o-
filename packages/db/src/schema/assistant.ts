@@ -1,6 +1,7 @@
 import { boolean, index, jsonb, pgTable, text, timestamp, uuid, vector } from "drizzle-orm/pg-core";
 import { agencyId, createdAt, deletedAt, EMBEDDING_DIM, pk, updatedAt } from "./_shared";
 import { recruiter } from "./agency";
+import { candidate } from "./candidate";
 
 /** Conversa do agente — durável (§12), sobrevive a fechar a app. Redis = só cache quente. */
 export const assistantThread = pgTable("assistant_thread", {
@@ -53,21 +54,27 @@ export const assistantAction = pgTable(
 );
 
 /** Tarefas longas (sourcing, gen_parecer, distill_final…) — duráveis e retomáveis (§12). */
-export const asyncJob = pgTable("async_job", {
-  id: pk(),
-  agencyId: agencyId(),
-  recruiterId: uuid("recruiter_id")
-    .notNull()
-    .references(() => recruiter.id),
-  threadId: uuid("thread_id").references(() => assistantThread.id),
-  kind: text("kind").notNull(), // sourcing|gen_doc|export|gen_parecer|distill_final|...
-  args: jsonb("args").notNull().default({}),
-  status: text("status").notNull().default("running"), // running|done|failed|pending_confirm
-  progress: jsonb("progress"), // {pct, msg}
-  resultRef: text("result_ref"),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const asyncJob = pgTable(
+  "async_job",
+  {
+    id: pk(),
+    agencyId: agencyId(),
+    recruiterId: uuid("recruiter_id")
+      .notNull()
+      .references(() => recruiter.id),
+    threadId: uuid("thread_id").references(() => assistantThread.id),
+    // RGPD: liga o job ao candidato (args carrega PII em JSONB) → purgável sem varrer JSONB.
+    candidateId: uuid("candidate_id").references(() => candidate.id),
+    kind: text("kind").notNull(), // sourcing|gen_doc|export|gen_parecer|distill_final|...
+    args: jsonb("args").notNull().default({}),
+    status: text("status").notNull().default("running"), // running|done|failed|pending_confirm
+    progress: jsonb("progress"), // {pct, msg}
+    resultRef: text("result_ref"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("async_job_candidate_idx").on(t.candidateId)],
+);
 
 /** Memória do RECRUTADOR (estilo/preferências/padrões da Filipa) — personalização (§8). */
 export const recruiterMemoryFact = pgTable(

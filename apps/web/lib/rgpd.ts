@@ -1,6 +1,6 @@
 import type { DbHandle } from "@rh/db";
 import { schema as s } from "@rh/db";
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
 type Db = DbHandle["db"];
 
@@ -16,9 +16,14 @@ export interface PurgeSummary {
  * caem por `onDelete: cascade` dos FKs. Ordem: filhos → pais. Inclui PII polimórfica sem FK
  * (proactive_task por target, intake_message por alvo/entity).
  *
- * GAPS CONHECIDOS (precisam de schema/Ω — ver BUILD-LOG): (a) `async_job.args` (PII em JSONB sem
- * coluna candidate_id); (b) texto livre de `assistant_message` que mencione o candidato; (c)
- * entrevistas órfãs (`process_id IS NULL`) — sem `candidate_id`, não são atribuíveis ao candidato.
+ * COBERTURA Ω-1 (migração 0002 candidate_id): (a) `async_job WHERE candidate_id` (PII no JSONB args);
+ * (b) threads/mensagens/ações do assistente ligadas ao candidato (via `active_context->>'candidate_id'`);
+ * (c) entrevistas órfãs (`process_id IS NULL`) atribuídas pelo `interview.candidate_id`.
+ *
+ * Ligação assistente↔candidato (decisão Ω-1): uma thread "pertence" ao candidato sse o seu
+ * `active_context->>'candidate_id'` for o candidato. Apaga-se a thread inteira (mensagens, ações,
+ * jobs por thread) — o texto livre das mensagens fica assim coberto sem varrer NLP. async_job
+ * também é apagado por `candidate_id` direto (cobre jobs sem thread).
  */
 export async function purgeCandidate(
   db: Db,
@@ -39,15 +44,25 @@ export async function purgeCandidate(
         .where(and(eq(s.process.candidateId, candidateId), eq(s.process.agencyId, agencyId)))
     ).map((r) => r.id);
 
-    const interviewIds =
+    // Entrevistas do candidato: via processo (subárvore) + órfãs atribuídas (candidate_id, process NULL).
+    const ivViaProcess =
       processIds.length > 0
-        ? (
-            await tx
-              .select({ id: s.interview.id })
-              .from(s.interview)
-              .where(inArray(s.interview.processId, processIds))
-          ).map((r) => r.id)
+        ? await tx
+            .select({ id: s.interview.id })
+            .from(s.interview)
+            .where(inArray(s.interview.processId, processIds))
         : [];
+    const ivOrphan = await tx
+      .select({ id: s.interview.id })
+      .from(s.interview)
+      .where(
+        and(
+          eq(s.interview.agencyId, agencyId),
+          eq(s.interview.candidateId, candidateId),
+          isNull(s.interview.processId),
+        ),
+      );
+    const interviewIds = [...new Set([...ivViaProcess, ...ivOrphan].map((r) => r.id))];
 
     // 1) Filhos das entrevistas (transcript_chunk arrasta o embedding por cascade).
     if (interviewIds.length > 0) {
@@ -121,15 +136,17 @@ export async function purgeCandidate(
       );
     }
 
-    // 2) Filhos dos processos (+ entrevistas) e os processos.
-    if (processIds.length > 0) {
+    // 2) As entrevistas (via-processo + órfãs), depois os filhos dos processos e os processos.
+    if (interviewIds.length > 0) {
       mark(
         "interview",
         await tx
           .delete(s.interview)
-          .where(inArray(s.interview.processId, processIds))
+          .where(inArray(s.interview.id, interviewIds))
           .returning({ id: s.interview.id }),
       );
+    }
+    if (processIds.length > 0) {
       mark(
         "client_verdict",
         await tx
@@ -251,6 +268,58 @@ export async function purgeCandidate(
         )
         .returning({ id: s.intakeMessage.id }),
     );
+
+    // 3c) Assistente ligado ao candidato + async_job com PII no JSONB (candidate_id, migração 0002).
+    //   Threads do candidato = active_context->>'candidate_id' == candidato. Apaga filhos→thread.
+    const threadIds = (
+      await tx
+        .select({ id: s.assistantThread.id })
+        .from(s.assistantThread)
+        .where(
+          and(
+            eq(s.assistantThread.agencyId, agencyId),
+            sql`${s.assistantThread.activeContext}->>'candidate_id' = ${candidateId}`,
+          ),
+        )
+    ).map((r) => r.id);
+    mark(
+      "async_job(candidate)",
+      await tx
+        .delete(s.asyncJob)
+        .where(and(eq(s.asyncJob.agencyId, agencyId), eq(s.asyncJob.candidateId, candidateId)))
+        .returning({ id: s.asyncJob.id }),
+    );
+    if (threadIds.length > 0) {
+      mark(
+        "assistant_message",
+        await tx
+          .delete(s.assistantMessage)
+          .where(inArray(s.assistantMessage.threadId, threadIds))
+          .returning({ id: s.assistantMessage.id }),
+      );
+      mark(
+        "assistant_action",
+        await tx
+          .delete(s.assistantAction)
+          .where(inArray(s.assistantAction.threadId, threadIds))
+          .returning({ id: s.assistantAction.id }),
+      );
+      // jobs ligados à thread (além dos já apagados por candidate_id) — evita violar FK threadId.
+      mark(
+        "async_job(thread)",
+        await tx
+          .delete(s.asyncJob)
+          .where(inArray(s.asyncJob.threadId, threadIds))
+          .returning({ id: s.asyncJob.id }),
+      );
+      mark(
+        "assistant_thread",
+        await tx
+          .delete(s.assistantThread)
+          .where(inArray(s.assistantThread.id, threadIds))
+          .returning({ id: s.assistantThread.id }),
+      );
+    }
 
     // 4) O candidato (isolado por agência — cross-agency é no-op).
     mark(

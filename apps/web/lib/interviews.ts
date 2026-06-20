@@ -23,6 +23,8 @@ function isStatus(s: string): s is InterviewStatus {
 export interface CreateInterviewParams {
   recruiterId: string;
   processId?: string | null;
+  /** RGPD: atribui a entrevista ao candidato (incl. órfã sem processo) → purgável. Best-effort. */
+  candidateId?: string | null;
 }
 
 export interface CreatedInterview {
@@ -45,10 +47,20 @@ export async function createInterview(
   // room/token MOCK efémeros por design: não persistem (o schema não tem coluna de token);
   // o token LiveKit real (assinado, recuperável) entra com a chave na Fase Ω. KEYS-TODO.
   const room = `mock-room-${interviewId}`;
+  // RGPD: deriva o candidato do processo (best-effort) ou usa o override explícito (órfã cold-start).
+  let candidateId = params.candidateId ?? null;
+  if (candidateId === null && params.processId) {
+    const [proc] = await db
+      .select({ candidateId: schema.process.candidateId })
+      .from(schema.process)
+      .where(and(eq(schema.process.id, params.processId), eq(schema.process.agencyId, agencyId)));
+    candidateId = proc?.candidateId ?? null;
+  }
   await db.insert(schema.interview).values({
     id: interviewId,
     agencyId,
     processId: params.processId ?? null,
+    candidateId,
     recruiterId: params.recruiterId,
     status: params.processId ? "live" : "unstructured",
     captureType: "none",
