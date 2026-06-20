@@ -12,6 +12,12 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~11:50] Ω-1 (1c) — refresh/rotação de JWT (ws)
+- **`apps/ws/src/refresh.ts` (NOVO, lib pura, exportada):** `issueWsToken` (JWT curto, TTL default **15 min**), `refreshWsToken` (re-emite SÓ a partir de um token verificável → **fail-closed**: expirado/forjado NÃO renova), `shouldRefresh({exp,now,thresholdSec})` (quando o servidor emite `auth.refresh_needed`).
+- **Protocolo respeitado:** o congelado (`@rh/core`) tem o frame de SERVIDOR `auth.refresh_needed` mas **nenhum** frame cliente→servidor de refresh → **NÃO inventei frame**; a rotação é ao nível do token/endpoint (servidor sinaliza → cliente busca token novo via HTTP → reautentica com `auth`). Documentado no topo do ficheiro.
+- **TDD (+8, sem rede/DB):** issue (exp=now+ttl; TTL default); refresh (renova+rotaciona; expirado→recusa; assinatura errada→recusa); shouldRefresh (longe→false; dentro do threshold→true; já expirado→true).
+- **Verde:** typecheck ✅ · ws **37→45** · Biome ✅. Sem segredos (secret é parâmetro do env).
+
 ## [2026-06-20 ~11:40] Ω-1 (1b) — posse REAL do ws (@rh/db no entrypoint)
 - **`apps/ws/src/ownership.ts` (NOVO):** `dbVerifyOwnership(db)` = `SELECT 1 FROM interview WHERE id=$1 AND recruiter_id=$2` (Drizzle `and(eq,eq)`, `.limit(1)`). `recruiter_id` = `sub` do JWT (já verificado por `createWsAuthenticate`). **Guarda UUID_RE** antes da query → `sub`/interviewId não-UUID (token forjado) devolve `false` em vez de rebentar o cast no Postgres.
 - **config-not-code (`main.ts`):** `resolveConfig` lê `DATABASE_URL`; com URL → `createDb`+`dbVerifyOwnership` (posse REAL), sem URL → `mockVerifyOwnership` (dev/testes a €0). Pool fechado no shutdown (sem leak; `closing` guard idempotente). `startFromConfig` relaxado p/ `Pick<WsConfig,"port"|"secret">` (a posse é injetada).
