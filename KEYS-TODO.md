@@ -10,8 +10,8 @@
 | **Embedder** (OpenAI `text-embedding-3-small`, dim 1536) | `EMBEDDER_API_KEY` | `packages/knowledge` (embedder) + `apps/web/lib/embedder.ts` `getEmbedder` | RAG por candidato/cliente (pgvector) | ⬜ (mock determinístico ativo; falta adapter real) |
 | **Exa** (web search) | `EXA_API_KEY` | `packages/knowledge` (search) | Role Profile (conhecimento de mercado) | ⬜ |
 | **Brave** (search fallback) | `BRAVE_API_KEY` | `packages/knowledge` (search) | fallback do Role Profile | ⬜ |
-| **LiveKit** (áudio da call) | `LIVEKIT_URL` `LIVEKIT_API_KEY` `LIVEKIT_API_SECRET` | `apps/realtime` | bot entra na call (transporte de áudio) | ⬜ |
-| **Soniox** (STT + diarização) | `SONIOX_API_KEY` | `apps/realtime` | transcrição ao vivo + quem-fala | ⬜ |
+| **LiveKit** (áudio da call) | `LIVEKIT_URL` `LIVEKIT_API_KEY` `LIVEKIT_API_SECRET` | `apps/realtime/src/livekit.ts` (`createLiveKitAudioBot`, transportes injetados) | bot entra na call (transporte de áudio) | 🟡 adapter real escrito (inerte sem chave); falta a última-milha do runtime (ver nota Ω) |
+| **Soniox** (STT + diarização) | `SONIOX_API_KEY` | `apps/realtime/src/soniox.ts` (`createSonioxSource`, WS injetado) | transcrição ao vivo + quem-fala | 🟡 adapter real escrito (inerte sem chave); diarização por falante contíguo; falta a última-milha do runtime |
 | **Telegram** | `TELEGRAM_BOT_TOKEN` | `apps/bot` | ingestão por Telegram | ⬜ |
 | **WhatsApp** (Evolution) | `EVOLUTION_API_URL` `EVOLUTION_API_KEY` | `apps/bot` | ingestão por WhatsApp | ⬜ |
 | **Resend** (email) | `RESEND_API_KEY` | envio do parecer ao cliente | email do parecer | ⬜ |
@@ -37,6 +37,7 @@ Itens conscientemente adiados durante a Fase 3 (documentados nas iterações do 
 - **RGPD — completude da purga**: `async_job.args` (PII em JSONB sem coluna `candidate_id` → adicionar coluna no insert dos jobs candidate-bound), `assistant_message.content` (texto livre que mencione o candidato), e **entrevistas órfãs** (`process_id IS NULL` sem `candidate_id` → ponderar coluna `candidate_id` em `interview`). Migração nova.
 - **Embeddings/RAG reais** — `recruiter_memory_fact`/`candidate_memory_fact` usam recall por texto (ILIKE); ligar o embedder + pgvector para semântica.
 - **Endurecimento adicional** — re-auth-24h, 2FA, hash-chain de auditoria, cosign — fora do scope v1 (single-tenant IRIS).
+- **Entrevista AO VIVO — última milha do runtime (Ω-2 C):** os adapters estão prontos e testados (Soniox STT, LiveKit áudio, captura desktop, `buildLiveTranscriptSource` que os compõe — todos inertes sem chave). FALTA o **runtime** que os liga ao vivo: `chooseTranscriptMode()==="live"` → `buildLiveTranscriptSource` → `TickEngine.attach` → broadcast WS → overlay, e ligar a `audioCapture` ao bootstrap do renderer. Só se valida ponta-a-ponta com as chaves (`LIVEKIT_*`+`SONIOX_API_KEY`) + servidor LiveKit + hardware (microfone) → **handover do Mateus**. Até lá, o mock feed é o caminho demonstrável.
 
 > ⚠️ **NOTA:** vários itens acima JÁ foram feitos na **Fase Ω** — posse real do ws ✅, refresh JWT ✅, replay WS ✅, RGPD completo com `candidate_id` (async_job/mensagens/órfãs) ✅, embedder real ✅, auth Supabase real ✅, storage Supabase real ✅. Ver `BUILD-LOG.md` (secção FASE Ω).
 

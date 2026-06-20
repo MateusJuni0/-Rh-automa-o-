@@ -12,6 +12,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~18:30] Ω-2 Bloco C — entrevista AO VIVO: adapters reais (Soniox/LiveKit) + captura desktop + compositor (inertes sem chave)
+- **Recuperação:** a sessão paralela escreveu o Bloco C mas o processo do Claude Code saiu antes de committar. Verifiquei tudo (typecheck/build/**396 testes**/Biome), corri uma **revisão adversarial dedicada** (workflow 3 lentes — segredos/chamadas-pagas · correção/protocolo · fail-loud/qualidade — + verificação cética de cada constatação) e fechei.
+- **`apps/realtime/src/soniox.ts` (NOVO):** adapter STT REAL — WebSocket Soniox (config inicial `api_key`+modelo+diarização; parse de tokens → `TranscriptChunk[]`). Transporte `SonioxSocketFactory` INJETADO (testes sem rede). Inerte sem `SONIOX_API_KEY`.
+- **`apps/realtime/src/livekit.ts` (NOVO):** transporte de áudio REAL — o bot entra na sala, recebe frames dos participantes e encaminha (`pipeToSoniox`). `Room`+token INJETADOS. Inerte sem `LIVEKIT_*`.
+- **`apps/realtime/src/wiring.ts` (NOVO):** `chooseTranscriptMode()` → `"live"` SÓ se Soniox **E** LiveKit configurados; senão `"mock"` (nunca corre meia-ligação em silêncio).
+- **`apps/realtime/src/live-source.ts` (NOVO):** `buildLiveTranscriptSource` COMPÕE LiveKit→Soniox numa única `TranscriptSource` (idêntica à do mock → o resto do pipeline `TickEngine.attach`→frames WS→overlay NÃO muda). Teste prova a composição **ponta-a-ponta** (áudio da sala → STT → chunk).
+- **`apps/desktop/.../audioCapture.ts` (NOVO):** captura no renderer flag-gated (`getUserMedia`/`desktopCapturer`), fallback no mock feed; sem permissão → degrada para inativo (sem rebentar, sem fingir sucesso).
+- **Fixes da revisão (sem CRITICAL/HIGH; todos os MEDIUM/LOW confirmados resolvidos):**
+  - **[MEDIUM] diarização correta:** uma troca de falante a meio de uma mensagem Soniox já NÃO mistura falas nem as atribui todas ao 1.º — `sonioxTokensToChunks` agrupa por **falante contíguo** → chunks separados (candidato vs recrutador). Atribuição errada corromperia o gating do tick + o texto dado à IA.
+  - **[MEDIUM] fail-loud:** `soniox` `error`/`close` e `livekit` `disconnected` deixaram de ser silenciosos → `onError` (default stderr via `log.ts`). Antes, uma chave inválida (auth reject) ou queda da call → HUD mudo indistinguível de "ainda sem fala" (violava a regra LOCKED "sem falhas silenciosas").
+  - **[LOW] `as Uint8Array` cego** no livekit → narrowing por `instanceof` (o guard volta a ter backstop do compilador).
+  - **[LOW] seed:** removido `UPDATE` redundante depois do `onConflictDoUpdate` (escrita dupla na mesma linha); `eq` importado morto removido.
+- **Verde:** typecheck ✅ · realtime **2→28** · desktop **44→50** · **396 testes** (web 139) · `next build` ✅ · Biome ✅ (312 ficheiros). Sem rede (transportes fake) · sem segredos.
+- ⚠️ **HANDOVER (Mateus) — o RUNTIME ao vivo NÃO está wired:** ligar `chooseTranscriptMode`→`buildLiveTranscriptSource`→`TickEngine`→broadcast WS→overlay, e a `audioCapture` ao bootstrap do renderer, é a **última milha** que só se valida com as chaves (LiveKit/Soniox) + servidor LiveKit + hardware (microfone). É a **entrevista ao vivo deferida** ("fazemos quando tivermos oportunidade"). Os adapters + compositor estão **prontos, testados e inertes** — o mock feed continua a ser o caminho demonstrável.
+
 ## [2026-06-20 ~17:00] Ω-2 Bloco B — Supabase LOCAL a correr + login email/senha validado ponta-a-ponta
 - **Stack `--profile supabase` SOBE no Windows** (auth GoTrue + rest PostgREST + storage + kong gateway :8000). Validado a correr de facto, não só `compose config`.
 - **2 passos de bootstrap que faltavam (DB)** — sem eles o GoTrue/PostgREST não arrancam; agora documentados:
