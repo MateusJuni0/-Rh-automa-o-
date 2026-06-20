@@ -11,10 +11,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 // Stub do `next/headers` (cookies()) — não há request real do Next nos testes unitários.
+interface CookieOpts {
+  httpOnly?: boolean;
+  sameSite?: string;
+  secure?: boolean;
+}
 const jar = {
   store: new Map<string, string>(),
-  set(name: string, value: string) {
+  opts: new Map<string, CookieOpts>(),
+  set(name: string, value: string, opts?: CookieOpts) {
     this.store.set(name, value);
+    if (opts) {
+      this.opts.set(name, opts);
+    }
   },
   get(name: string) {
     const v = this.store.get(name);
@@ -36,6 +45,7 @@ function makeRequest(body: unknown, ip: string): Request {
 // Sem env Supabase → modo mock (login por email seed + password não-vazia).
 beforeEach(() => {
   jar.store.clear();
+  jar.opts.clear();
   delete process.env.SUPABASE_URL;
   delete process.env.SUPABASE_ANON_KEY;
 });
@@ -50,6 +60,30 @@ describe("POST /api/auth/login — rate-limit (modo mock)", () => {
       makeRequest({ email: "filipa@iris.tech", password: "x" }, "203.0.113.1"),
     );
     expect(res.status).toBe(200);
+  });
+
+  it("cookies do shim: httpOnly + sameSite=strict + secure derivado de HTTPS", async () => {
+    const { POST } = await import("../app/api/auth/login/route");
+    // HTTP local → secure=false (senão o cookie não persistia em dev)
+    await POST(makeRequest({ email: "filipa@iris.tech", password: "x" }, "203.0.113.10"));
+    const httpOpts = jar.opts.get("vera_agency");
+    expect(httpOpts?.httpOnly).toBe(true);
+    expect(httpOpts?.sameSite).toBe("strict");
+    expect(httpOpts?.secure).toBe(false);
+
+    // HTTPS (x-forwarded-proto) → secure=true
+    jar.opts.clear();
+    const httpsReq = new Request("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.11",
+        "x-forwarded-proto": "https",
+      },
+      body: JSON.stringify({ email: "filipa@iris.tech", password: "x" }),
+    });
+    await POST(httpsReq);
+    expect(jar.opts.get("vera_agency")?.secure).toBe(true);
   });
 
   it("bloqueia (429) após o limite de falhas para a mesma chave IP+email", async () => {

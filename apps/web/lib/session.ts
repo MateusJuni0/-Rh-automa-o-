@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { sessionFromCookies } from "./api";
+import { devSessionAllowed } from "./auth-config";
 import { DEV_AGENCY_ID, getDb } from "./db";
 import { resolveSessionByUserId } from "./recruiter-resolve";
 import { AUTH_ENABLED, createSupabaseServerClient } from "./supabase/server";
@@ -37,10 +38,11 @@ export async function getSession(): Promise<Session> {
   if (session) {
     return session;
   }
-  // O middleware já garante a sessão; o fallback DEV é só dev/teste. Em produção, sem sessão = erro
-  // ruidoso (nunca deve acontecer) — não silenciar como Filipa.
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("getSession: sem sessão em produção");
+  // O middleware já garante a sessão; o fallback DEV de identidade (Filipa) só é permitido com a flag
+  // EXPLÍCITA `ALLOW_DEV_SESSION` — NÃO se infere de `NODE_ENV` (um deploy mal-configurado em
+  // `development` não deve ganhar uma sessão fantasma). Sem a flag → erro ruidoso (nunca silenciar).
+  if (!devSessionAllowed()) {
+    throw new Error("getSession: sem sessão e ALLOW_DEV_SESSION não está ativo");
   }
   return { agencyId: DEV_AGENCY_ID, recruiterId: DEV_RECRUITER_ID };
 }

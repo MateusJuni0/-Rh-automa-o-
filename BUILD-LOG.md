@@ -12,6 +12,16 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~16:35] Ω-2 Bloco A4 — invariantes de boot + cookies (FECHA Bloco A)
+- **`lib/auth-config.ts` (NOVO):** `assertAuthConfig()` (fail-fast) — `SUPABASE_URL` sem `SUPABASE_ANON_KEY` (ou vice-versa) → LANÇA (config meia-feita cairia em modo mock sem avisar); produção sem auth E sem `ALLOW_DEV_SESSION` → LANÇA. `devSessionAllowed()` = flag EXPLÍCITA `ALLOW_DEV_SESSION=1`.
+- **`instrumentation.ts` (NOVO):** `register()` do Next chama `assertAuthConfig()` no arranque (só `NEXT_RUNTIME=nodejs`) → o processo não sobe com config perigosa.
+- **`lib/session.ts`:** o fallback DEV de identidade (Filipa) passa a exigir `devSessionAllowed()` — **NÃO** se infere de `NODE_ENV` (deploy mal-configurado em `development` deixava de ganhar sessão fantasma). Sem a flag → erro ruidoso.
+- **`lib/request-ip.ts`:** `isHttps(req)` (de `x-forwarded-proto` ou do protocolo do URL). **Login cookies:** `sameSite: "strict"` (CSRF) + `secure: isHttps(req)` (não de `NODE_ENV` — HTTPS real é sempre secure; HTTP dev não, senão o cookie não persistia).
+- **`.env.example`:** documentado o invariante URL+ANON juntos + `ALLOW_DEV_SESSION`; removida a secção morta da biometria (FACE_*).
+- **TDD (+14):** `assertAuthConfig` (6: completa/vazia/meia-feita×2/prod-sem-flag/prod-com-flag, via `vi.stubEnv`) · `request-ip` (7: clientIp×3 + isHttps×4) · login cookie attrs (+1: httpOnly+strict+secure por HTTP/HTTPS).
+- **Verde:** typecheck ✅ · web **125→139** · `next build` ✅ (instrumentation não rebenta o build estático) · Biome ✅.
+- **✅ BLOCO A FECHADO** (A1 rate-limit · A2 storage agency-scoped · A3 argsSchema+allowlist · A4 boot+cookies). Os 5 endurecimentos da revisão Ω resolvidos (a biometria saiu do projeto).
+
 ## [2026-06-20 ~16:05] Ω-2 Bloco A3 — argsSchema por tool (anti prompt-injection)
 - **`lib/assistant/tools.ts`:** cada `ToolDef` ganha `argsSchema: z.ZodType`. Leitura/rascunho = schema tolerante (`z.record`, aceita extras). `enviar_email` = `to` validado por `recipientSchema` (email + **`EMAIL_DOMAIN_ALLOWLIST`** server-side, hoje `["iris.tech"]`) — `to` opcional (o planner mock não o extrai) MAS se presente TEM de estar na allowlist. `save_memory_fact`/`marcar_agenda`/`por_bot_na_call` validam formato dos campos se presentes (tamanho/UUID). `isAllowedRecipient()` + `validateToolArgs()` exportados.
 - **`lib/assistant/gate.ts`:** `executeToolCall` valida `argsSchema` **antes de executar** (leitura imediata OU confirmado) → novo outcome `invalid_args`. A porta de confirmação mantém precedência (sem confirm → `needs_confirm`, não chega a validar/executar).

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { verifyMockLogin } from "@/lib/auth";
 import { createLoginRateLimiter } from "@/lib/rate-limit";
-import { clientIp } from "@/lib/request-ip";
+import { clientIp, isHttps } from "@/lib/request-ip";
 import { AUTH_ENABLED, createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -93,9 +93,12 @@ export async function POST(req: Request): Promise<Response> {
   const jar = await cookies();
   const opts = {
     httpOnly: true,
-    sameSite: "lax" as const,
+    // `strict`: o cookie nunca viaja em pedidos cross-site (defesa CSRF reforçada para o shim).
+    sameSite: "strict" as const,
     path: "/",
-    secure: process.env.NODE_ENV === "production",
+    // `secure` derivado de HTTPS (não de NODE_ENV) → em produção HTTPS é sempre secure; num dev em
+    // HTTP local não marca secure (senão o cookie não persiste e o login parece partido).
+    secure: isHttps(req),
     maxAge: 8 * 60 * 60, // TTL 8h (a sessão expira; re-auth real = Supabase)
   };
   jar.set("vera_agency", user.agencyId, opts);
