@@ -1,8 +1,9 @@
 "use client";
 
-import { Button, Card, Chip, EmptyState, Input } from "@rh/ui";
-import { type FormEvent, useState } from "react";
+import { Button, Chip, Input } from "@rh/ui";
+import { type ChangeEvent, type FormEvent, useRef, useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
+import { VeraAvatar, type VeraState } from "./VeraAvatar";
 
 interface ActionView {
   actionId: string;
@@ -17,6 +18,7 @@ interface Msg {
   id: string;
   role: "filipa" | "vera";
   text: string;
+  files?: string[];
   actions: ActionView[];
 }
 
@@ -29,12 +31,29 @@ const SUGESTOES = [
   "Como está a agenda hoje?",
 ] as const;
 
+// Glifos do "wallpaper" temático (recrutamento) a flutuar atrás da Vera.
+const GLYPHS = ["📄", "✓", "★", "🗓", "✦", "📎"];
+
+function downloadArtefact(a: ActionView): void {
+  const body = `Artefacto gerado pela Vera (demo)\n\nFerramenta: ${a.tool}\nResumo: ${a.summary ?? "—"}\nReferência: ${a.resultRef ?? "—"}\n`;
+  const url = URL.createObjectURL(new Blob([body], { type: "text/plain;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${a.resultRef ?? "artefacto"}.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AssistantChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [files, setFiles] = useState<{ id: string; name: string }[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const veraState: VeraState = status === "sending" ? "thinking" : "idle";
 
   function patchAction(actionId: string, patch: Partial<ActionView>): void {
     setMessages((msgs) =>
@@ -47,20 +66,30 @@ export function AssistantChat() {
 
   async function send(text: string): Promise<void> {
     const trimmed = text.trim();
-    if (!trimmed || status === "sending") {
+    if ((!trimmed && files.length === 0) || status === "sending") {
       return;
     }
+    const names = files.map((f) => f.name);
     setMessages((m) => [
       ...m,
-      { id: crypto.randomUUID(), role: "filipa", text: trimmed, actions: [] },
+      {
+        id: crypto.randomUUID(),
+        role: "filipa",
+        text: trimmed,
+        files: names.length > 0 ? names : undefined,
+        actions: [],
+      },
     ]);
     setInput("");
+    setFiles([]);
     setStatus("sending");
     try {
+      const message =
+        names.length > 0 ? `${trimmed} (anexei: ${names.join(", ")})`.trim() : trimmed;
       const res = await fetch("/api/assistant/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(threadId ? { message: trimmed, threadId } : { message: trimmed }),
+        body: JSON.stringify(threadId ? { message, threadId } : { message }),
       });
       const json: {
         ok: boolean;
@@ -99,6 +128,17 @@ export function AssistantChat() {
     }
   }
 
+  function onPickFiles(e: ChangeEvent<HTMLInputElement>): void {
+    const picked = Array.from(e.target.files ?? []).map((f) => ({
+      id: crypto.randomUUID(),
+      name: f.name,
+    }));
+    if (picked.length > 0) {
+      setFiles((f) => [...f, ...picked]);
+    }
+    e.target.value = "";
+  }
+
   function onSubmit(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     void send(input);
@@ -109,30 +149,123 @@ export function AssistantChat() {
     .filter((a) => a.status === "done" && a.resultRef);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-      <Card title="Assistente" className="min-h-[28rem]">
-        <div className="flex flex-col gap-3">
+    <div className="grid items-start gap-5 lg:grid-cols-[19rem_1fr]">
+      {/* ───────── Vera (persona) + contexto + artefactos ───────── */}
+      <aside className="flex flex-col gap-4">
+        <div className="vera-stage flex flex-col items-center px-4 pt-5 pb-4">
+          <div className="vera-wallpaper" aria-hidden="true">
+            {GLYPHS.map((g, i) => (
+              <span
+                key={g}
+                style={{
+                  left: `${10 + i * 15}%`,
+                  bottom: "-10px",
+                  animationDuration: `${9 + i * 1.6}s`,
+                  animationDelay: `${i * 1.3}s`,
+                }}
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+          <div className="relative">
+            <VeraAvatar state={veraState} />
+          </div>
+          <p className="relative mt-1 font-display font-semibold text-ink text-lg tracking-tight">
+            Vera
+          </p>
+          <p className="relative text-ink-3 text-xs">
+            {status === "sending" ? "a tratar do teu pedido…" : "a tua assistente · a postos"}
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <header className="border-line-subtle border-b px-4 py-2.5">
+            <h2 className="font-medium text-ink text-sm">Contexto ativo</h2>
+          </header>
+          <p className="px-4 py-3 text-ink-3 text-xs leading-relaxed">
+            Sem entidade selecionada. Abre o assistente a partir de uma vaga ou candidato para a
+            Vera já saber de quem falas.
+          </p>
+        </div>
+
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <header className="flex items-center justify-between border-line-subtle border-b px-4 py-2.5">
+            <h2 className="font-medium text-ink text-sm">Artefactos</h2>
+            <span className="text-ink-3 text-xs tabular-nums">{artefactos.length}</span>
+          </header>
+          {artefactos.length === 0 ? (
+            <p className="px-4 py-3 text-ink-3 text-xs">
+              O que a Vera gerar (planilhas, emails) aparece aqui para baixares.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1 p-2">
+              {artefactos.map((a) => (
+                <li
+                  key={a.actionId}
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-raised"
+                >
+                  <span aria-hidden="true">📄</span>
+                  <span className="min-w-0 flex-1 truncate text-ink text-sm">
+                    {a.summary ?? a.tool}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => downloadArtefact(a)}
+                    className="rounded border border-line px-2 py-0.5 text-ink-2 text-xs transition-colors hover:border-accent hover:text-ink"
+                  >
+                    Baixar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </aside>
+
+      {/* ───────── Conversa ───────── */}
+      <section className="elev-top elev relative flex min-h-[34rem] flex-col overflow-hidden rounded-card border border-line bg-card">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <EmptyState
-              title="Pergunta-me o que precisares."
-              description="Comparo candidatos, redijo emails, exporto planilhas. Ações que gravam ou enviam pedem a tua confirmação."
-              action={
-                <div className="flex flex-wrap gap-2">
-                  {SUGESTOES.map((s) => (
-                    <Button key={s} variant="ghost" size="sm" onClick={() => void send(s)}>
-                      {s}
-                    </Button>
-                  ))}
-                </div>
-              }
-            />
+            <div className="m-auto max-w-sm text-center">
+              <p className="font-display font-semibold text-ink text-lg tracking-tight">
+                Olá, sou a Vera.
+              </p>
+              <p className="mt-1 text-ink-2 text-sm">
+                Comparo candidatos, redijo emails, exporto planilhas. O que grava ou envia para fora
+                pede sempre a tua confirmação.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {SUGESTOES.map((s) => (
+                  <Button key={s} variant="ghost" size="sm" onClick={() => void send(s)}>
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </div>
           ) : (
             messages.map((m) => (
-              <div key={m.id} className="flex flex-col gap-2">
-                <div className={m.role === "filipa" ? "self-end text-right" : "self-start"}>
-                  <p className="text-ink-3 text-xs">{m.role === "filipa" ? "Tu" : "Vera"}</p>
-                  <p className="text-sm text-strong">{m.text}</p>
-                </div>
+              <div
+                key={m.id}
+                className={`flex flex-col gap-1.5 ${m.role === "filipa" ? "items-end" : "items-start"}`}
+              >
+                {m.role === "vera" ? <span className="px-1 text-ink-3 text-xs">Vera</span> : null}
+                {m.text ? (
+                  <div
+                    className={`bubble ${m.role === "filipa" ? "bubble-filipa" : "bubble-vera"}`}
+                  >
+                    {m.text}
+                  </div>
+                ) : null}
+                {m.files ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.files.map((f) => (
+                      <Chip key={f} tone="muted">
+                        📎 {f}
+                      </Chip>
+                    ))}
+                  </div>
+                ) : null}
                 {m.actions.map((a) => (
                   <ActionRow
                     key={a.actionId}
@@ -146,49 +279,65 @@ export function AssistantChat() {
             ))
           )}
           {status === "sending" ? (
-            <p className="text-ink-3 text-sm">A Vera está a pensar…</p>
+            <div className="flex items-center gap-1.5 self-start rounded-full bg-raised px-3 py-2">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+            </div>
           ) : null}
           {status === "error" ? (
             <p className="text-alert text-sm">Falha ao falar com a Vera. Tenta de novo.</p>
           ) : null}
         </div>
 
-        <form onSubmit={onSubmit} className="mt-4 flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escreve uma mensagem…"
-            aria-label="Mensagem para a Vera"
-            disabled={status === "sending"}
-          />
-          <Button type="submit" disabled={status === "sending" || input.trim().length === 0}>
-            Enviar
-          </Button>
-        </form>
-      </Card>
-
-      <aside className="flex flex-col gap-4">
-        <Card title="Contexto ativo">
-          <p className="text-ink-3 text-sm">
-            Sem entidade selecionada. Abre o assistente a partir de uma vaga ou candidato para dar
-            contexto.
-          </p>
-        </Card>
-        <Card title="Artefactos">
-          {artefactos.length === 0 ? (
-            <p className="text-ink-3 text-sm">Ainda sem artefactos.</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {artefactos.map((a) => (
-                <li key={a.actionId} className="text-sm text-strong">
-                  📄 {a.summary ?? a.tool}
-                  <span className="text-ink-3"> · {a.resultRef}</span>
-                </li>
+        <div className="border-line-subtle border-t p-3">
+          {files.length > 0 ? (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {files.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFiles((arr) => arr.filter((x) => x.id !== f.id))}
+                  className="inline-flex items-center gap-1 rounded-full border border-line bg-raised px-2.5 py-1 text-ink-2 text-xs hover:border-alert hover:text-ink"
+                >
+                  📎 {f.name} <span aria-hidden="true">×</span>
+                </button>
               ))}
-            </ul>
-          )}
-        </Card>
-      </aside>
+            </div>
+          ) : null}
+          <form onSubmit={onSubmit} className="flex items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              tabIndex={-1}
+              className="sr-only"
+              onChange={onPickFiles}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              aria-label="Anexar ficheiro"
+              className="flex size-9 flex-none items-center justify-center rounded-md border border-line text-ink-2 transition-colors hover:border-accent hover:text-ink"
+            >
+              📎
+            </button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Escreve à Vera…"
+              aria-label="Mensagem para a Vera"
+              disabled={status === "sending"}
+            />
+            <Button
+              type="submit"
+              disabled={status === "sending" || (input.trim().length === 0 && files.length === 0)}
+            >
+              Enviar
+            </Button>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }

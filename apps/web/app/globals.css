@@ -130,3 +130,205 @@ body {
 .panel-accent {
   border-top: 2px solid var(--vera-accent);
 }
+
+/* ═══════════════════════ DESIGN v2 (WEB) — profundidade subtil, só no web ═══════════════════════
+ * O overlay desktop fica flat/LOCKED. No web evoluímos: elevação disciplinada (hierarquia, não
+ * decoração), tipografia maior e a persona animada da Vera. */
+
+:root {
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.34), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 8px 30px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Cartão elevado: separa do fundo por sombra subtil + hairline no topo (estilo Linear/Vercel). */
+.elev {
+  box-shadow: var(--shadow-raised);
+}
+.elev-top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--vera-text-primary) 9%, transparent),
+    transparent
+  );
+}
+
+/* ───────────── Vera — persona (robô-secretária) ───────────── */
+.vera-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--vera-radius-card);
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--vera-accent) 12%, transparent), transparent 60%),
+    var(--vera-bg-raised);
+  border: 1px solid var(--vera-border-default);
+}
+/* Wallpaper temático: glifos a flutuar, muito subtis (respeita reduced-motion). */
+.vera-wallpaper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.vera-wallpaper span {
+  position: absolute;
+  color: color-mix(in srgb, var(--vera-accent) 30%, transparent);
+  font-size: 13px;
+  animation: vera-drift linear infinite;
+}
+@keyframes vera-drift {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 0.7;
+  }
+  to {
+    transform: translateY(-130px);
+    opacity: 0;
+  }
+}
+
+/* Avatar — micro-animações por estado. */
+.vera-bot {
+  animation: vera-breathe 4.5s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes vera-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.008);
+  }
+}
+.vera-eye {
+  transform-origin: center;
+  animation: vera-blink 5s infinite;
+}
+@keyframes vera-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.12);
+  }
+}
+.vera-antenna {
+  animation: vera-pulse 2.6s ease-in-out infinite;
+}
+@keyframes vera-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+/* estado "a pensar/escrever": mãos a teclar + antena rápida */
+.vera-bot[data-state="thinking"] .vera-antenna,
+.vera-bot[data-state="writing"] .vera-antenna {
+  animation-duration: 0.9s;
+}
+.vera-hand {
+  animation: vera-type 0.5s steps(2) infinite;
+}
+.vera-bot[data-state="idle"] .vera-hand {
+  animation: none;
+}
+@keyframes vera-type {
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+.vera-think-dot {
+  opacity: 0;
+}
+.vera-bot[data-state="thinking"] .vera-think-dot {
+  animation: vera-think 1.1s ease-in-out infinite;
+}
+.vera-think-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.vera-think-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes vera-think {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vera-bot,
+  .vera-eye,
+  .vera-antenna,
+  .vera-hand,
+  .vera-wallpaper span,
+  .vera-think-dot {
+    animation: none !important;
+  }
+}
+
+/* ───────────── Chat — balões ───────────── */
+.bubble {
+  max-width: 80%;
+  border-radius: 14px;
+  padding: 9px 13px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  animation: vera-bubble-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes vera-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.bubble-filipa {
+  align-self: flex-end;
+  background: var(--vera-accent);
+  color: var(--vera-on-accent);
+  border-bottom-right-radius: 5px;
+}
+.bubble-vera {
+  align-self: flex-start;
+  background: var(--vera-bg-raised);
+  border: 1px solid var(--vera-border-default);
+  color: var(--vera-text-primary);
+  border-bottom-left-radius: 5px;
+}
+/* indicador "a escrever" (3 pontos). */
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--vera-text-tertiary);
+  animation: vera-think 1.1s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
