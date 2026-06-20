@@ -12,6 +12,14 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 # ═══ FASE Ω — TORNAR REAL (em curso) ═══
 > Adaptadores/serviços REAIS atrás das interfaces, ativados por env (config-not-code); mock = fallback sem chave. NUNCA chamadas pagas no dev (rede mockada nos testes), NUNCA segredos, NUNCA VPS.
 
+## [2026-06-20 ~15:10] Ω-2 Bloco A1 — rate-limit no login (anti brute-force)
+- **`lib/rate-limit.ts` (NOVO, lib pura):** `createLoginRateLimiter({maxAttempts,windowMs,lockoutMs}, now)` — janela deslizante de falhas por chave + lockout temporário. Relógio injetável (testes deterministas). Defaults: 5 falhas / 5 min de janela → 15 min de lockout. `check`/`recordFailure`/`recordSuccess` (sucesso limpa a chave). Interface `RateLimiter` pronta a trocar por Redis em prod (nota no topo: in-memory por-processo, não partilhado entre réplicas).
+- **`lib/request-ip.ts` (NOVO):** `clientIp(req)` — 1.º IP do `x-forwarded-for`, fallback `x-real-ip`, senão `"unknown"` (fail-safe conservador). NOTA atacante: XFF é forjável pelo cliente; em prod atrás de proxy de confiança (Vercel) é controlado — defesa válida no v1 single-tenant.
+- **`/api/auth/login`:** rate-limiter singleton de módulo. **Duas chaves** — `ip:<ip>` (varredura de contas) + `ip+email:<ip>|<email>` (brute-force de 1 conta). Pré-check por-IP ANTES de ler o body (trava scripts que nem mandam JSON; o malformado conta como falha por-IP). 401/inválido → `recordFailure`; sucesso → `recordSuccess`. **429 + `Retry-After`** (envelope inline `rate_limited` — NÃO inventei código no enum congelado de `@rh/core`, espelha o 401 inline do middleware).
+- **`vitest.config.ts`:** alias `@ → ./` (espelha o `paths` do tsconfig) p/ os testes de route que importam por `@/lib/...`.
+- **TDD (+10):** `rate-limit.test.ts` (+6: limite N+1; isolamento de chaves; sucesso limpa; lockout expira; janela deslizante; Retry-After decrescente) · `login-route.test.ts` (+4: 200 mock; 429 após 5 falhas mesmo com credenciais válidas; IPs distintos não partilham lockout; malformado 400 conta por-IP).
+- **Verde:** typecheck ✅ · web **101→111** · `next build` ✅ · Biome ✅. Sem segredos · zero rede.
+
 ## [2026-06-20 ~14:10] Ω-4b — REMOVIDA a biometria facial (decisão IRIS: email/senha)
 - Decisão do Mateus: a IRIS corre **só com email/senha** (Supabase real). A biometria (que a revisão de segurança reprovou e estava desligada) sai do projeto por completo, em vez de ficar como scaffolding morto.
 - **Removidos:** `services/face/` (serviço Python inteiro), `apps/web/app/api/auth/face/` (rotas), `apps/web/lib/{face,face-capture,face-config}.ts`, `apps/web/test/{face,face-capture}.test.ts`.
