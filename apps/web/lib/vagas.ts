@@ -5,6 +5,7 @@ import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { aiOptions } from "./ai";
+import { heuristicRequirements } from "./cv-heuristics";
 
 type Db = DbHandle["db"];
 
@@ -19,14 +20,9 @@ export interface NewVaga {
   requirementsText: string;
 }
 
-/** Requisitos canned (determinísticos) quando não há chave — demo sem custo. */
+/** Requisitos de fallback (sem chave de IA): deteção determinística por palavra-chave do texto. */
 function stubRequirements(input: NewVaga): JobRequirements {
-  return {
-    roleType: input.roleTypeSlug ?? "demo_role",
-    nivel: "pleno",
-    skills: { must: [], nice: [] },
-    contexto: input.requirementsText.slice(0, 500),
-  };
+  return heuristicRequirements(input.requirementsText, input.roleTypeSlug);
 }
 
 /** Cria uma vaga, extraindo os requisitos do texto via `@rh/ai` (real com chave; stub sem). */

@@ -5,6 +5,7 @@ import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { aiOptions } from "./ai";
+import { heuristicProfile } from "./cv-heuristics";
 
 type Db = DbHandle["db"];
 
@@ -15,14 +16,9 @@ export interface NewCandidato {
   cvText: string;
 }
 
-/** Perfil canned quando não há chave — demo sem custo. */
+/** Perfil de fallback (sem chave de IA): deteção determinística por palavra-chave do CV. */
 function stubProfile(input: NewCandidato): CandidateProfile {
-  return {
-    skillsDeclaradas: [],
-    experienciaAnos: null,
-    gapsCv: [],
-    resumo: input.cvText.slice(0, 300),
-  };
+  return heuristicProfile(input.cvText);
 }
 
 /** Normaliza o nome (sem acentos, minúsculas) para dedup/resolução de entidade (§12). */
