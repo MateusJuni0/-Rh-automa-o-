@@ -1,4 +1,5 @@
 import { Card, Chip } from "@rh/ui";
+import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
@@ -97,12 +98,37 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
               {experienciaAnos !== null
                 ? `${experienciaAnos} anos de experiência`
                 : "Experiência n/d"}
-              {cand.linkedinUrl ? (
-                <span className="ml-2 rounded-full bg-accent-bg px-2 py-0.5 text-accent-ink text-xs">
-                  LinkedIn
-                </span>
-              ) : null}
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+              {cand.email ? (
+                <a
+                  href={`mailto:${cand.email}`}
+                  className="inline-flex items-center gap-1.5 text-accent-ink hover:underline"
+                >
+                  <Mail size={14} />
+                  {cand.email}
+                </a>
+              ) : null}
+              {cand.phone ? (
+                <a
+                  href={`tel:${cand.phone.replace(/[\s.-]/g, "")}`}
+                  className="inline-flex items-center gap-1.5 text-accent-ink hover:underline"
+                >
+                  <Phone size={14} />
+                  {cand.phone}
+                </a>
+              ) : null}
+              {cand.linkedinUrl ? (
+                <a
+                  href={cand.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-ink hover:underline"
+                >
+                  LinkedIn ↗
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -127,6 +153,51 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
                   {p.clientName ? <p className="text-ink-3 text-xs">{p.clientName}</p> : null}
                 </div>
                 <Chip tone="muted">{STAGE_LABEL[p.stage] ?? p.stage}</Chip>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
+      {/* ── o que as entrevistas (transcrições) já revelaram ── */}
+      {cand.factos.length > 0 ? (
+        <Card title="O que sabemos das entrevistas">
+          <p className="-mt-1 mb-3 text-ink-3 text-xs">
+            Extraído automaticamente das transcrições, com a prova (citação + minuto).
+          </p>
+          <ul className="flex flex-col gap-3">
+            {cand.factos.map((f) => (
+              <li
+                key={`${f.competencia}-${f.factText}`}
+                className="border-line-subtle border-t pt-3 first:border-t-0 first:pt-0"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Chip
+                    tone={
+                      f.factType === "gap"
+                        ? "alert"
+                        : f.rubricLevel === "forte"
+                          ? "strong"
+                          : f.rubricLevel === "fraco"
+                            ? "alert"
+                            : "muted"
+                    }
+                  >
+                    {f.competencia}
+                  </Chip>
+                  {f.rubricLevel ? (
+                    <span className="text-ink-3 text-xs uppercase tracking-wide">
+                      {f.rubricLevel}
+                    </span>
+                  ) : null}
+                  {f.factType === "gap" ? <span className="text-alert text-xs">lacuna</span> : null}
+                </div>
+                <p className="mt-1.5 text-ink-2 text-sm leading-relaxed">{f.factText}</p>
+                {f.evidenceQuote ? (
+                  <blockquote className="mt-1.5 rounded-md bg-raised p-2.5 text-ink-3 text-xs italic">
+                    “{f.evidenceQuote}”{f.evidenceTs ? ` — @${f.evidenceTs}` : ""}
+                  </blockquote>
+                ) : null}
               </li>
             ))}
           </ul>

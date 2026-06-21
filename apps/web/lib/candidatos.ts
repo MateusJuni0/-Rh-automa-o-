@@ -95,12 +95,37 @@ export async function listCandidatos(db: Db, agencyId: string): Promise<Candidat
   });
 }
 
+/** Facto do candidato extraído de uma ENTREVISTA (transcrição) — com prova e nível de rubric. */
+export interface CandidatoFacto {
+  competencia: string;
+  factText: string;
+  evidenceQuote: string | null;
+  evidenceTs: string | null;
+  rubricLevel: string | null; // fraco | ok | forte
+  factType: string; // statement | skill_demo | gap
+}
+
 export interface CandidatoDetail {
   id: string;
   name: string;
   linkedinUrl: string | null;
   profile: CandidateProfile;
   cvText: string | null;
+  /** Contacto extraído do CV (para links clicáveis). */
+  email: string | null;
+  phone: string | null;
+  /** O que sabemos das entrevistas (factos com prova) — atualizado pelas transcrições. */
+  factos: CandidatoFacto[];
+}
+
+/** Extrai email + telefone do texto do CV (para mailto:/tel:). Determinístico, sem IA. */
+function extractContact(cv: string | null): { email: string | null; phone: string | null } {
+  if (!cv) {
+    return { email: null, phone: null };
+  }
+  const email = cv.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? null;
+  const phone = cv.match(/(\+\d{2,3}[\s.-]?)?\d{3}[\s.-]?\d{3}[\s.-]?\d{3}/)?.[0]?.trim() ?? null;
+  return { email, phone };
 }
 
 export interface ProcessoAtivo {
@@ -145,7 +170,7 @@ export async function getCandidato(
   agencyId: string,
   id: string,
 ): Promise<CandidatoDetail | null> {
-  const [[row], cvRows] = await Promise.all([
+  const [[row], cvRows, factRows] = await Promise.all([
     db
       .select({
         id: schema.candidate.id,
@@ -167,16 +192,39 @@ export async function getCandidato(
       .where(and(eq(schema.sourceDoc.candidateId, id), eq(schema.sourceDoc.kind, "cv")))
       .orderBy(desc(schema.sourceDoc.fetchedAt))
       .limit(1),
+    db
+      .select({
+        competencia: schema.candidateMemoryFact.competencia,
+        factText: schema.candidateMemoryFact.factText,
+        evidenceQuote: schema.candidateMemoryFact.evidenceQuote,
+        evidenceTs: schema.candidateMemoryFact.evidenceTs,
+        rubricLevel: schema.candidateMemoryFact.rubricLevel,
+        factType: schema.candidateMemoryFact.factType,
+      })
+      .from(schema.candidateMemoryFact)
+      .where(
+        and(
+          eq(schema.candidateMemoryFact.candidateId, id),
+          eq(schema.candidateMemoryFact.agencyId, agencyId),
+        ),
+      )
+      .orderBy(desc(schema.candidateMemoryFact.createdAt))
+      .limit(24),
   ]);
   if (!row) {
     return null;
   }
   const parsed = candidateProfile.safeParse(row.profile);
+  const cvText = cvRows[0]?.rawText ?? null;
+  const { email, phone } = extractContact(cvText);
   return {
     id: row.id,
     name: row.name,
     linkedinUrl: row.linkedinUrl,
     profile: parsed.success ? parsed.data : EMPTY_PROFILE,
-    cvText: cvRows[0]?.rawText ?? null,
+    cvText,
+    email,
+    phone,
+    factos: factRows,
   };
 }

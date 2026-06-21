@@ -563,6 +563,146 @@ async function main(): Promise<void> {
         .onConflictDoNothing();
     }
 
+    // Factos de ENTREVISTAS (transcrições) para os candidatos demo — mostra a Vera a atualizar o dossier.
+    type Fact = {
+      comp: string;
+      text: string;
+      quote: string;
+      ts: string;
+      level: string;
+      type: string;
+    };
+    const CAND_FACTS: Record<string, Fact[]> = {
+      [K.sofia]: [
+        {
+          comp: "React / Next.js",
+          text: "Liderou a migração de CRA para Next.js 14 (App Router) e cortou o LCP em ~40%.",
+          quote: "Passámos para o App Router e o LCP caiu quase para metade.",
+          ts: "12:34",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Design systems",
+          text: "Construiu um design system interno com mais de 80 componentes (Radix + Tailwind).",
+          quote: "Mantemos um design system com 80+ componentes, é a base de tudo.",
+          ts: "18:02",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Testes E2E",
+          text: "Pouca prática em testes end-to-end; trabalhou sobretudo com unitários.",
+          quote: "E2E, confesso, é onde tenho menos horas de voo.",
+          ts: "24:10",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+      [K.bruno]: [
+        {
+          comp: "PostgreSQL",
+          text: "Otimizou queries reduzindo o p95 de 800ms para 45ms.",
+          quote: "Reescrevemos as queries críticas e o p95 passou de 800 para 45 milissegundos.",
+          ts: "09:50",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Segurança / PCI-DSS",
+          text: "Implementou compliance PCI-DSS em toda a pipeline de pagamentos.",
+          quote: "Toda a pipeline de pagamentos é PCI-DSS, fui eu que a montei.",
+          ts: "15:20",
+          level: "ok",
+          type: "statement",
+        },
+        {
+          comp: "Frontend",
+          text: "Sem experiência prática de frontend.",
+          quote: "Frontend não é a minha praia, sou backend puro.",
+          ts: "21:05",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+      [K.carla]: [
+        {
+          comp: "GraphQL",
+          text: "Eliminou problemas N+1 com DataLoader na API GraphQL.",
+          quote: "Os N+1 desapareceram quando metemos DataLoader.",
+          ts: "11:12",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Orientação a produto",
+          text: "Levou um produto do zero ao primeiro €1M de ARR.",
+          quote: "Entrei quando éramos 4 e saímos do zero ao primeiro milhão de ARR.",
+          ts: "16:40",
+          level: "ok",
+          type: "statement",
+        },
+      ],
+      [K.tiago]: [
+        {
+          comp: "Kubernetes",
+          text: "Migrou infraestrutura de VMs para EKS e cortou custos em 35%.",
+          quote: "A migração para EKS deu-nos 35% de poupança em cloud.",
+          ts: "08:30",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Observabilidade",
+          text: "Implementou observabilidade completa (Prometheus, Grafana, OpenTelemetry).",
+          quote: "Temos tudo instrumentado com OpenTelemetry e dashboards no Grafana.",
+          ts: "14:05",
+          level: "forte",
+          type: "skill_demo",
+        },
+      ],
+      [K.ines]: [
+        {
+          comp: "ML em produção",
+          text: "Deployou modelos BERT em produção e reduziu o custo de inferência em 60% com quantização.",
+          quote: "Com quantização INT8 cortámos o custo de inferência em 60%.",
+          ts: "10:18",
+          level: "ok",
+          type: "skill_demo",
+        },
+        {
+          comp: "Experiência a escala",
+          text: "Background sobretudo académico; pouca experiência de produção a grande escala.",
+          quote: "A maior parte do meu percurso foi académico, produção a escala ainda é novo.",
+          ts: "19:50",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+    };
+    for (const [cid, facts] of Object.entries(CAND_FACTS)) {
+      if (!existing.has(cid)) {
+        continue;
+      }
+      await db
+        .delete(schema.candidateMemoryFact)
+        .where(eq(schema.candidateMemoryFact.candidateId, cid));
+      await db.insert(schema.candidateMemoryFact).values(
+        facts.map((f) => ({
+          candidateId: cid,
+          agencyId: AGENCY,
+          competencia: f.comp,
+          factText: f.text,
+          evidenceQuote: f.quote,
+          evidenceTs: f.ts,
+          rubricLevel: f.level,
+          factType: f.type,
+          sourceType: "interview",
+          speaker: "candidate",
+        })),
+      );
+    }
+
     process.stdout.write(
       `[seed-real] concluído. ${ci} empresas PT reais, ${vagas} vagas, ${procs.length} candidatos ligados.\n`,
     );
