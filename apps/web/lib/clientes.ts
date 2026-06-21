@@ -94,6 +94,14 @@ export interface ClienteFacto {
   factText: string;
 }
 
+/** Facto do cliente COM prova (excerto + fonte) — para o Q&A por entidade citar a proveniência. */
+export interface ClienteFactoProva {
+  factType: string;
+  factText: string;
+  sourceSnippet: string | null;
+  sourceRef: string | null;
+}
+
 export interface ClienteCriterio {
   criterio: string;
   peso: string; // must | normal | nice
@@ -121,6 +129,8 @@ export interface ClienteDetail {
   vagas: ClienteVaga[];
   /** O que sabemos deste cliente (de reuniões/intake): valoriza, não aceita, contexto. */
   factos: ClienteFacto[];
+  /** Os mesmos factos (não-reunião) com prova citável (excerto + fonte) — para o Q&A por entidade. */
+  factosComProva: ClienteFactoProva[];
   /** Critérios que este cliente pede sempre (viram rubric). */
   criterios: ClienteCriterio[];
   /** Reuniões/intake registadas (com excerto de transcrição). */
@@ -197,9 +207,17 @@ export async function getCliente(
     )
     .orderBy(desc(schema.clientMemoryFact.createdAt));
 
-  const factos: ClienteFacto[] = allFacts
-    .filter((f) => f.factType !== "meeting")
-    .map((f) => ({ factType: f.factType, factText: f.factText }));
+  const nonMeeting = allFacts.filter((f) => f.factType !== "meeting");
+  const factos: ClienteFacto[] = nonMeeting.map((f) => ({
+    factType: f.factType,
+    factText: f.factText,
+  }));
+  const factosComProva: ClienteFactoProva[] = nonMeeting.map((f) => ({
+    factType: f.factType,
+    factText: f.factText,
+    sourceSnippet: f.sourceSnippet,
+    sourceRef: f.sourceRef,
+  }));
   const reunioes: ClienteReuniao[] = allFacts
     .filter((f) => f.factType === "meeting")
     .map((f) => ({ titulo: f.factText, data: f.sourceRef, excerto: f.sourceSnippet }));
@@ -219,5 +237,5 @@ export async function getCliente(
     )
     .orderBy(desc(schema.clientCriteria.createdAt));
 
-  return { ...c, vagas, factos, criterios, reunioes };
+  return { ...c, vagas, factos, factosComProva, criterios, reunioes };
 }

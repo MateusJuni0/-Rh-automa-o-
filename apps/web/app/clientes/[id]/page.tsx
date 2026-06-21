@@ -1,4 +1,4 @@
-import { Chip, EmptyState } from "@rh/ui";
+import { Card, Chip, EmptyState } from "@rh/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -11,6 +11,7 @@ import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { ClientLogo, clientColor } from "../../components/ClientLogo";
 import { EntityList, initials } from "../../components/EntityList";
+import { EntityQA } from "../../components/EntityQA";
 
 export const dynamic = "force-dynamic";
 
@@ -242,6 +243,11 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
       <CriteriosSection criterios={cliente.criterios} />
 
       <ReunioesSection reunioes={cliente.reunioes} />
+
+      {/* ── Q&A por entidade (Tela 8): perguntar à Vera sobre este cliente, com prova ── */}
+      <Card title={`Perguntar à Vera sobre ${cliente.name}`}>
+        <EntityQA entityType="client" entityId={cliente.id} entityName={cliente.name} />
+      </Card>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-medium text-ink text-sm">Vagas deste cliente</h2>

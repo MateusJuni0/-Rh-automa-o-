@@ -6,6 +6,7 @@ import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { CandidatoAvatar } from "../../components/CandidatoAvatar";
+import { EntityQA } from "../../components/EntityQA";
 import { CandidatoActions } from "./CandidatoActions";
 
 export const dynamic = "force-dynamic";
@@ -203,6 +204,11 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
           </ul>
         </Card>
       ) : null}
+
+      {/* ── Q&A por entidade (Tela 8): perguntar à Vera sobre este candidato, com prova ── */}
+      <Card title={`Perguntar à Vera sobre ${cand.name}`}>
+        <EntityQA entityType="candidate" entityId={cand.id} entityName={cand.name} />
+      </Card>
 
       {/* ── corpo: perfil + CV side-by-side ── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_40%]">

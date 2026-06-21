@@ -22,9 +22,10 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 **🔑 chave:** envio email, Soniox/LiveKit, biometria facial, RAG vetorial, calendário Google. **⏭️ v2:** multi-tenant RLS, particionamento.
 
 **✅ FATIAS FEITAS neste loop:**
+- **#1 Q&A por entidade (Tela 8)** — chat embutido no detalhe de candidato E cliente que responde a perguntas SOBRE a entidade SEMPRE com PROVA (citação+minuto p/ candidato; excerto+fonte p/ cliente), reusando os factos que a ficha já carrega. Arquitetura (blueprint via workflow de 3 leitores+síntese): rota nova `app/api/assistant/qa` (LEITURA PURA — não toca na porta de ações), brain determinístico `lib/qa/{qa,run}.ts` (retriever keyword+stem PT/EN + **fallback por intenção de rubric**: forte/lacuna→nível, valoriza/rejeitou→tipo), componente `EntityQA.tsx` (3 estados UX, auto-scroll). REGRA-MÃE: sem facto que case → "não foi falado" (não inventa). Edição cirúrgica `getCliente` (+`factosComProva`). TDD 9 testes + review adversarial (`code-reviewer`: 0 CRITICAL/HIGH — auth/isolamento/RGPD-recall OK; 2 MEDIUM de render corrigidos). E2E verificado no Chrome (resposta fundamentada + prova renderiza). ASSISTENTE-CONVERSA Modo A/B · UI-DESIGN Tela 8.
 - **#4 Gate de consentimento (`assertCaptureAllowed`)** — `apps/web/lib/consent.ts` (puro: captura real `bot_online`/`local_mic` exige `consent='dado'`; `none` passa sempre). Ligado a `createInterview` (lê `process.consent_status`, recusa captura sem consentimento). TDD: 5 testes unitários + 2 de integração, todos verdes. SEGURANCA §5 / LEGAL §6 / TESTES-ACEITACAO §275/§308.
 
-Próximo na fila (loop): gates visíveis de produto (Q&A por entidade, onboarding) + purga RGPD ligada a rota.
+Próximo na fila (loop): #2 Onboarding 1º uso (Tela 11) → #5 purga RGPD ligada a rota + anonimizar.
 
 ---
 
