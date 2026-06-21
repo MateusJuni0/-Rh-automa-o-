@@ -21,7 +21,9 @@ export interface VagaEspera {
 export interface EntrevistaAgenda {
   id: string;
   candidateName: string | null;
+  candidateId: string | null;
   jobTitle: string | null;
+  jobId: string | null;
   startedAt: Date | null;
   status: string;
 }
@@ -100,7 +102,9 @@ export async function getDashboard(db: Db, agencyId: string): Promise<DashboardD
       status: schema.interview.status,
       startedAt: schema.interview.startedAt,
       candidateName: schema.candidate.name,
+      candidateId: schema.candidate.id,
       jobTitle: schema.job.title,
+      jobId: schema.job.id,
     })
     .from(schema.interview)
     .leftJoin(schema.process, eq(schema.process.id, schema.interview.processId))
