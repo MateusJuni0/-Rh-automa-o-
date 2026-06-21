@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export interface EntityRow {
   id: string;
@@ -43,7 +43,7 @@ export function EntityList({ title, rows }: EntityListProps) {
         </header>
       ) : null}
       <ul className="flex flex-col gap-0.5 p-2">
-        {rows.map((r) => {
+        {rows.map((r, i) => {
           const inner = (
             <>
               {r.leading ?? (
@@ -69,7 +69,7 @@ export function EntityList({ title, rows }: EntityListProps) {
             </>
           );
           return (
-            <li key={r.id}>
+            <li key={r.id} className="rise" style={{ "--i": i } as CSSProperties}>
               {r.href ? (
                 <Link href={r.href} className="row-link group">
                   {inner}

@@ -21,14 +21,15 @@ interface PageHeaderProps {
 export function PageHeader({ eyebrow, title, description, action, stats }: PageHeaderProps) {
   const hasAside = Boolean(action) || (stats?.length ?? 0) > 0;
   return (
-    <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-line-subtle border-b pb-6">
+    <div className="rise flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-line-subtle border-b pb-6">
       <div className="min-w-0">
         {eyebrow ? (
-          <p className="mb-2.5 font-medium text-accent-ink text-xs uppercase tracking-[0.18em]">
+          <p className="mb-3 flex items-center gap-2.5 font-medium text-accent-ink text-xs uppercase tracking-[0.18em]">
+            <span aria-hidden="true" className="h-px w-7 bg-accent" />
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="font-display font-semibold text-3xl text-ink tracking-tight md:text-[2.5rem] md:leading-[1.04]">
+        <h1 className="font-display font-semibold text-3xl text-ink tracking-tight md:text-[2.6rem] md:leading-[1.02] lg:text-[3rem]">
           {title}
         </h1>
         {description ? (

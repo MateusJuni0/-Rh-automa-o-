@@ -166,6 +166,55 @@ body {
   );
 }
 
+/* ───────────── Movimento — entrada subtil (stagger) + marca "live" ───────────── */
+/* Conteúdo "sobe" ao aparecer; stagger por --i inline (ex.: linhas de lista). */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise-in 540ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* Ponto "live" da marca: anel de ping lento — a Vera está acordada (copiloto ao vivo). */
+.live-dot {
+  position: relative;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--vera-accent);
+  animation: live-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes live-ping {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+  .live-dot::after {
+    animation: none;
+  }
+}
+
 /* ───────────── Vera — persona (robô-secretária) ───────────── */
 .vera-stage {
   position: relative;

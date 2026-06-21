@@ -35,7 +35,7 @@ export function NavBar() {
     <header className="sticky top-0 z-40 border-line border-b bg-raised">
       <nav className="mx-auto flex max-w-6xl items-center px-6">
         <Link href="/" className="mr-8 flex items-center gap-2.5 py-3.5">
-          <span className="size-2.5 rounded-full bg-accent" aria-hidden="true" />
+          <span className="live-dot size-2.5 rounded-full bg-accent" aria-hidden="true" />
           <span className="font-display font-semibold text-[17px] text-ink tracking-tight">
             Vera
           </span>
