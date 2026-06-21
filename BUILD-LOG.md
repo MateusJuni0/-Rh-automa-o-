@@ -14,6 +14,19 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-21 (tarde) — dados reais + profundidade + diagnóstico do "bug dos cliques" ═══
+**Feito e committado (`phase3/product`, HEAD `9468230`, pushed):**
+- **Dados REAIS de PT** (`seed-real.ts`) — 6 empresas tech portuguesas (Feedzai, Talkdesk, Unbabel, OutSystems, Sword Health, Remote) com **logos reais** (icon.horse), perfis fundos (sede/fundação/equipa/stack/LinkedIn), 12 vagas representativas, factos/critérios/reunião de intake, candidatos demo ligados aos funis. Idempotente.
+- **Ficha de cliente rica + edição** — "Sobre a empresa" (local/fundada/equipa/stack/LinkedIn), factos de reunião (Valoriza/Não aceita/Contexto), critérios, reuniões com excerto de transcrição. **Filipa edita** via `/clientes/[id]/editar` (PATCH validado por Zod). Migration `0004` (location/founded/headcount/linkedinUrl/techStack).
+- **Ficha de vaga COMPLETA + auto-fill + edição** (`478518e`) — modelo/local/horário/salário/contrato/idiomas/visto/início/benefícios/processo/responsabilidades/equipa. Banner "preenchido pela Vera". Edição em `/vagas/[id]/editar`. Migration `0005` (`job.details` jsonb). `lib/vaga-details.ts` (Zod + heurística sem chave).
+- **Cards** (clientes/vagas/candidatos) com logos + fotos (randomuser.me). **Candidato enriquecido** (`9468230`): contactos **clicáveis** (mailto:/tel:/LinkedIn, extraídos do CV) + secção **"O que sabemos das entrevistas"** (factos das transcrições com competência/citação/minuto/nível forte-fraco-lacuna) — semeados para os candidatos demo. Mostra o ciclo transcrição→dossier.
+
+**🔍 "BUG DOS CLIQUES" — investigado a fundo, NÃO é bug de código.** O Mateus reportou "tenho de clicar 10×, o site todo trava". Diagnóstico definitivo (conduzi o Chrome REAL dele via extensão Claude-in-Chrome): numa **aba fresca**, entrei em 7 vagas de 7 clientes diferentes — **todas abriram à primeira, instantâneo, zero erros de consola/rede**. Causa real = **aba VELHA** (o JS de uma build que substituí ~10× hoje; os chunks pedidos pela aba velha dão 404 → a página nunca fica interativa → cliques caem no vazio). Reproduzi também o **click-before-hydration** (clicar no instante exato em que a página carrega, antes de hidratar, só foca o cartão). **Fix do utilizador: aba nova / Ctrl+Shift+R.** Secundário, mas removido: `background-attachment:fixed` no body (repaint no scroll) + troca pravatar(1.77s)→randomuser(0.07s) + imagens externas lazy/async (`33eedce`). Lição: ao iterar com `next start`, cada rebuild estraga a aba aberta — avisar o Mateus para refrescar, OU passar a `next dev` (Fast Refresh) nas sessões de iteração.
+
+**Estado ao pausar:** branch limpa, tudo pushed. Server `localhost:3000` **UP** (tracked, build de prod) + Docker UP (DB :5433 + Supabase :8000), dados preservados. Para retomar: a aba tem de ser **fresca** (a do Mateus pode estar velha). Próximo: rever o resto a olho; handover de chaves (`KEYS-TODO.md`).
+
+---
+
 ## ✅ FEITO e committado (branch phase3/product)
 - **Assistente = Vera-secretária** (`0ea1e44`) — avatar robô SVG+CSS (idle/thinking/writing), wallpaper temático, balões, anexar/baixar ficheiros, porta de confirmação intacta.
 - **Candidato-dossier** (`1741380`) — CV visível (visor estruturado), Baixar/Enviar CV, "vagas em que está", perfil. CV guardado em source_doc; seed do CV do mateus.
