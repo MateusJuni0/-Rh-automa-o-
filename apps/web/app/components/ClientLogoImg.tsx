@@ -22,6 +22,8 @@ export function ClientLogoImg({
       src={src}
       alt=""
       aria-hidden="true"
+      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className="flex-none rounded-[10px] border border-line bg-raised object-cover"
       style={{ width: size, height: size }}

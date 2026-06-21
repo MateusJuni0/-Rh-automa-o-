@@ -4,9 +4,20 @@ import { useState } from "react";
 import { initials } from "./EntityList";
 
 /**
- * Foto do candidato — avatar determinístico (pravatar, pela id) com fallback para monograma se a
- * imagem falhar. Para a demo parecer real; com fotos verdadeiras um dia, troca-se a fonte.
+ * Retrato determinístico do candidato (randomuser.me — CDN rápido, fotos reais) com fallback para
+ * monograma se a imagem falhar. Carrega lazy/async para nunca bloquear a interação. Demo: fotos
+ * geradas; com fotos reais um dia, troca-se a fonte.
  */
+function portraitFor(id: string, name: string): string {
+  const first = name.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  const gender = /a$|ês$/.test(first) ? "women" : "men";
+  let h = 0;
+  for (const ch of id) {
+    h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  }
+  return `https://randomuser.me/api/portraits/${gender}/${h % 100}.jpg`;
+}
+
 export function CandidatoAvatar({
   id,
   name,
@@ -19,11 +30,13 @@ export function CandidatoAvatar({
   const [failed, setFailed] = useState(false);
   if (!failed) {
     return (
-      // biome-ignore lint/performance/noImgElement: avatar externo (demo), sem otimização Next.
+      // biome-ignore lint/performance/noImgElement: retrato externo (demo), sem otimização Next.
       <img
-        src={`https://i.pravatar.cc/${size * 2}?u=${encodeURIComponent(id)}`}
+        src={portraitFor(id, name)}
         alt=""
         aria-hidden="true"
+        loading="lazy"
+        decoding="async"
         onError={() => setFailed(true)}
         className="flex-none rounded-full border border-line object-cover"
         style={{ width: size, height: size }}
