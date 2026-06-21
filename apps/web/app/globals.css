@@ -47,6 +47,15 @@ html {
 
 body {
   background-color: var(--vera-bg-base);
+  /* Profundidade ambiente: bloom de luz muito subtil ancorado no topo (neutro, ~4%) — dá ar
+   * tridimensional ao canvas em vez do preto plano, sem cor "glow". Fixo: não desliza no scroll. */
+  background-image: radial-gradient(
+    78% 50% at 50% -14%,
+    color-mix(in srgb, var(--vera-text-primary) 4%, transparent),
+    transparent 68%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--vera-text-primary);
   font-family: var(--vera-font-sans);
   -webkit-font-smoothing: antialiased;

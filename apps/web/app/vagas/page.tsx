@@ -17,12 +17,17 @@ export default async function VagasPage() {
     listVagas(db, agencyId),
     listClientes(db, agencyId),
   ]);
+  const comCandidatos = vagas.filter((v) => v.numCandidatos > 0).length;
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Processos"
         title="Vagas"
-        description="Cada vaga arranca de um texto do cliente — a Vera extrai requisitos, rubric e role profile."
+        description="Cada vaga arranca de um texto do cliente: a Vera extrai requisitos, rubric e role profile."
+        stats={[
+          { value: vagas.length, label: vagas.length === 1 ? "vaga" : "vagas" },
+          { value: comCandidatos, label: "ativas" },
+        ]}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_22rem]">
         <div>

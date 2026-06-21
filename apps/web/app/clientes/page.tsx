@@ -12,12 +12,17 @@ export const dynamic = "force-dynamic";
 export default async function ClientesPage() {
   const { agencyId } = await getSession();
   const rows = await listClientes(getDb(), agencyId);
+  const totalVagas = rows.reduce((sum, r) => sum + r.numVagas, 0);
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Carteira"
         title="Clientes"
         description="As empresas para quem a IRIS recruta. Abre um cliente para ver o que fazem e as suas vagas."
+        stats={[
+          { value: rows.length, label: rows.length === 1 ? "empresa" : "empresas" },
+          { value: totalVagas, label: totalVagas === 1 ? "vaga" : "vagas" },
+        ]}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_20rem]">
         <div>

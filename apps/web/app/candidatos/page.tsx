@@ -17,6 +17,7 @@ export default async function CandidatosPage() {
         eyebrow="Talento"
         title="Candidatos"
         description="Os perfis na tua base. Cola um CV e a Vera extrai competências e experiência."
+        stats={[{ value: rows.length, label: rows.length === 1 ? "perfil" : "perfis" }]}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_20rem]">
         <div>

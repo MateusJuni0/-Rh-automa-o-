@@ -52,22 +52,26 @@ export function EntityList({ title, rows }: EntityListProps) {
                 </span>
               )}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-ink text-sm">{r.title}</span>
+                <span className="block truncate font-medium text-[15px] text-ink">{r.title}</span>
                 {r.subtitle ? (
-                  <span className="block truncate text-ink-3 text-xs">{r.subtitle}</span>
+                  <span className="mt-0.5 block truncate text-ink-3 text-xs">{r.subtitle}</span>
                 ) : null}
               </span>
-              {r.trailing ?? (
-                <span className="text-ink-3 text-lg leading-none" aria-hidden="true">
+              {r.trailing ? <span className="shrink-0">{r.trailing}</span> : null}
+              {r.href ? (
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 text-ink-3 text-lg leading-none transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-ink-2"
+                >
                   ›
                 </span>
-              )}
+              ) : null}
             </>
           );
           return (
             <li key={r.id}>
               {r.href ? (
-                <Link href={r.href} className="row-link">
+                <Link href={r.href} className="row-link group">
                   {inner}
                 </Link>
               ) : (
