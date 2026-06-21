@@ -80,6 +80,49 @@ export async function listMemoryFacts(
     .limit(opts.limit ?? 50);
 }
 
+/** Lê um facto por id (isolado por agency+recruiter). Para o eco "Anotei que…" sem corrida. */
+export async function getMemoryFactById(
+  db: Db,
+  agencyId: string,
+  recruiterId: string,
+  id: string,
+): Promise<MemoryFact | null> {
+  const [fact] = await db
+    .select(FACT_COLUMNS)
+    .from(schema.recruiterMemoryFact)
+    .where(
+      and(
+        eq(schema.recruiterMemoryFact.id, id),
+        eq(schema.recruiterMemoryFact.agencyId, agencyId),
+        eq(schema.recruiterMemoryFact.recruiterId, recruiterId),
+        isNull(schema.recruiterMemoryFact.deletedAt),
+      ),
+    );
+  return fact ?? null;
+}
+
+/** Soft-delete de um facto do recrutador (RGPD/edição). Devolve `true` se removeu. Isolado. */
+export async function deleteMemoryFact(
+  db: Db,
+  agencyId: string,
+  recruiterId: string,
+  id: string,
+): Promise<boolean> {
+  const removed = await db
+    .update(schema.recruiterMemoryFact)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(schema.recruiterMemoryFact.id, id),
+        eq(schema.recruiterMemoryFact.agencyId, agencyId),
+        eq(schema.recruiterMemoryFact.recruiterId, recruiterId),
+        isNull(schema.recruiterMemoryFact.deletedAt),
+      ),
+    )
+    .returning({ id: schema.recruiterMemoryFact.id });
+  return removed.length > 0;
+}
+
 /**
  * Recall simples por correspondência de texto (ILIKE). v1 SEM vetorial/RAG (isso é FASE Ω).
  * O `query` é parametrizado (drizzle bind) → sem injeção; os `%` são wildcards do LIKE.

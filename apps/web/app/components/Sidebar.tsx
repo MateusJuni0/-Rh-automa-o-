@@ -7,6 +7,7 @@ import {
   LogOut,
   MessageSquare,
   Settings,
+  Sparkles,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { href: "/vagas", label: "Vagas", Icon: Briefcase },
   { href: "/candidatos", label: "Candidatos", Icon: Users },
   { href: "/assistente", label: "Assistente", Icon: MessageSquare },
+  { href: "/onboarding", label: "Primeiros passos", Icon: Sparkles },
   { href: "/definicoes", label: "Definições", Icon: Settings },
 ];
 
