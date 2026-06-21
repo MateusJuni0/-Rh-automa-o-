@@ -11,12 +11,9 @@ const bodySchema = z.object({ confirm: z.literal(true) });
 
 /**
  * DELETE /api/candidatos/:id — direito ao esquecimento (RGPD Art.17, DATA-RETENTION §3).
- * Purga em cascata TODA a PII do candidato, numa transação, isolada por agência (`purgeCandidate`).
+ * ANONIMIZA o candidato em cascata (apaga a PII, preserva o ground-truth da calibração sem PII),
+ * numa transação isolada por agência (`purgeCandidate`, DATA-RETENTION §3.2/§6).
  * IRREVERSÍVEL: só corre com `{ confirm: true }` no corpo.
- *
- * NOTA (#5b, DATA-RETENTION §3.2): a versão atual faz hard-delete também de `placement_outcome`/
- * `client_verdict` (ground-truth da calibração). O contrato pede ANONIMIZAR (preservar o sinal sem
- * PII) — refinamento separado. A atual é PII-safe (apaga a mais, nunca vaza).
  */
 export async function DELETE(
   req: Request,
@@ -34,7 +31,7 @@ export async function DELETE(
   }
   const { agencyId } = await getSession();
   const summary = await purgeCandidate(getDb(), agencyId, id);
-  if (summary.removed.candidate === 0) {
+  if (!summary.anonymized) {
     return Response.json(err("not_found", "candidato não encontrado nesta agência"), {
       status: 404,
     });
