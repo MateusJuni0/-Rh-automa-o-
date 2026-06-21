@@ -23,6 +23,31 @@ export async function createCliente(
   return { id };
 }
 
+export interface UpdateCliente {
+  name?: string;
+  sector?: string | null;
+  website?: string | null;
+  description?: string | null;
+  location?: string | null;
+  founded?: string | null;
+  headcount?: string | null;
+  linkedinUrl?: string | null;
+  techStack?: string[] | null;
+}
+
+/** Atualiza a ficha do cliente (a Filipa edita). Predicado por agência (§15.1). */
+export async function updateCliente(
+  db: Db,
+  agencyId: string,
+  id: string,
+  input: UpdateCliente,
+): Promise<void> {
+  await db
+    .update(schema.client)
+    .set(input)
+    .where(and(eq(schema.client.id, id), eq(schema.client.agencyId, agencyId)));
+}
+
 export interface ClienteRow {
   id: string;
   name: string;
@@ -88,6 +113,11 @@ export interface ClienteDetail {
   website: string | null;
   description: string | null;
   logoUrl: string | null;
+  location: string | null;
+  founded: string | null;
+  headcount: string | null;
+  linkedinUrl: string | null;
+  techStack: string[] | null;
   vagas: ClienteVaga[];
   /** O que sabemos deste cliente (de reuniões/intake): valoriza, não aceita, contexto. */
   factos: ClienteFacto[];
@@ -111,6 +141,11 @@ export async function getCliente(
       website: schema.client.website,
       description: schema.client.description,
       logoUrl: schema.client.logoUrl,
+      location: schema.client.location,
+      founded: schema.client.founded,
+      headcount: schema.client.headcount,
+      linkedinUrl: schema.client.linkedinUrl,
+      techStack: schema.client.techStack,
     })
     .from(schema.client)
     .where(

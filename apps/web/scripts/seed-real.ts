@@ -1,61 +1,259 @@
 /**
- * Seed de DADOS REAIS (demo IRIS Tech) — empresas reais com logos, vagas reais (Remotive),
- * + factos/critérios/reunião de intake sintetizados de forma plausível. Fixture: scripts/real-jobs.json
- * (gerado de https://remotive.com/api/remote-jobs). Idempotente (ids fixos + delete/insert dos factos).
+ * Seed de DADOS REAIS (demo IRIS Tech) — empresas TECH PORTUGUESAS reais, com logos (icon.horse),
+ * perfis fundos (sede/fundação/equipa/stack/LinkedIn), vagas representativas, + factos/critérios/
+ * reunião de intake. Idempotente (ids fixos e1000000.. / e2000000..; delete/insert dos factos/critérios).
  *
  *   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev \
  *     pnpm --filter web exec tsx scripts/seed-real.ts
  */
-import { readFileSync } from "node:fs";
 import { createDb, schema } from "@rh/db";
 import { eq } from "drizzle-orm";
 
 const AGENCY = "11111111-0000-4000-8000-000000000001";
 const FILIPA = "22222222-0000-4000-8000-000000000001";
 
-interface RealJob {
+interface Role {
   title: string;
-  requirements: string;
-  tags: string[];
+  must: string[];
+  nice: string[];
+  contexto: string;
 }
-interface RealCompany {
-  company: string;
-  logo: string;
+interface Company {
+  name: string;
+  domain: string;
+  linkedin: string;
   sector: string;
   location: string;
-  jobs: RealJob[];
+  founded: string;
+  headcount: string;
+  tech: string[];
+  description: string;
+  valoriza: string[];
+  naoAceita: string;
+  contexto: string;
+  reuniao: string;
+  roles: Role[];
 }
 
-const WEBSITE: Record<string, string> = {
-  EverAI: "https://ever.ai",
-  "A.Team": "https://a.team",
-  "Quinncia Inc": "https://quinncia.io",
-  "Mitre Media": "https://mitremedia.com",
-  "Lemon.io": "https://lemon.io",
-  nooro: "https://nooro.com",
-};
-const DESCRIPTION: Record<string, string> = {
-  EverAI:
-    "Plataforma de IA generativa para criação de vídeo cinematográfico. Equipa global, produto consumer com forte componente de IA.",
-  "A.Team":
-    "Rede de talento tech sénior independente — liga engenheiros e arquitetos de topo a projetos exigentes.",
-  "Quinncia Inc":
-    "Produto de carreira e recrutamento assistido por IA. Equipa pequena, totalmente remota.",
-  "Mitre Media":
-    "Media e produtos digitais na área financeira, construídos em Rails. Plataformas de conteúdo a escala.",
-  "Lemon.io":
-    "Marketplace que liga programadores a startups por todo o mundo. Crescimento rápido e cultura de produto.",
-  nooro:
-    "Health-tech com app móvel (iOS) para gestão de dor e bem-estar. Produto consumer no mercado dos EUA.",
-};
+const COMPANIES: Company[] = [
+  {
+    name: "Feedzai",
+    domain: "feedzai.com",
+    linkedin: "https://www.linkedin.com/company/feedzai",
+    sector: "Fintech · Deteção de fraude (IA)",
+    location: "Coimbra & Lisboa, Portugal",
+    founded: "2011",
+    headcount: "600+",
+    tech: ["Java", "Python", "Spark", "Kafka", "Cassandra"],
+    description:
+      "Plataforma de IA para deteção de fraude e crime financeiro, usada por alguns dos maiores bancos do mundo. Unicórnio português fundado em Coimbra, com forte cultura de engenharia e investigação.",
+    valoriza: [
+      "Rigor de engenharia e sistemas de alta escala (milhões de transações)",
+      "Pensamento de produto e ownership do problema de ponta a ponta",
+    ],
+    naoAceita: "Não avança com quem trata segurança e fiabilidade como opcional",
+    contexto: "Equipa híbrida (Coimbra/Lisboa/remoto). Processo: 3 etapas + case técnico.",
+    reuniao:
+      '"...o perfil ideal já trabalhou com dados a escala real, não só projetos. Queremos alguém que questione o problema, não só implemente. Híbrido em Coimbra ou Lisboa, mas damos flexibilidade. Time-to-hire: 4 semanas."',
+    roles: [
+      {
+        title: "Senior Data Scientist — Fraude",
+        must: ["Python", "Machine Learning", "Spark"],
+        nice: ["Kafka", "Streaming"],
+        contexto:
+          "Modelos de deteção de fraude em tempo real sobre milhões de transações. Forte componente de feature engineering e avaliação rigorosa.",
+      },
+      {
+        title: "Senior Backend Engineer — Java",
+        must: ["Java", "Kafka", "Sistemas distribuídos"],
+        nice: ["Cassandra", "Spark"],
+        contexto:
+          "Plataforma de processamento de eventos de baixa latência. Exige experiência sólida em concorrência e sistemas distribuídos.",
+      },
+    ],
+  },
+  {
+    name: "Talkdesk",
+    domain: "talkdesk.com",
+    linkedin: "https://www.linkedin.com/company/talkdesk",
+    sector: "SaaS · Contact Center na cloud",
+    location: "Lisboa, Portugal (global)",
+    founded: "2011",
+    headcount: "1800+",
+    tech: ["Node.js", "React", "TypeScript", "Go", "AWS"],
+    description:
+      "Plataforma cloud de contact center com IA, fundada por portugueses e presente a nível global. Unicórnio com produto a escala enterprise e forte aposta em IA generativa.",
+    valoriza: [
+      "Experiência em produto SaaS a escala (multi-tenant, alta disponibilidade)",
+      "Autonomia e boa comunicação em equipa distribuída internacional",
+    ],
+    naoAceita: "Não aceita perfis que precisam de micro-gestão constante",
+    contexto: "Equipa global, inglês no dia a dia. Processo: 4 etapas (técnica + system design).",
+    reuniao:
+      '"...precisamos de seniores que peguem em ambiguidade e tragam clareza. Inglês fluente é obrigatório, a equipa é global. Damos preferência a quem já escalou produto real. Remoto OK dentro da Europa."',
+    roles: [
+      {
+        title: "Senior Frontend Engineer — React",
+        must: ["React", "TypeScript", "JavaScript"],
+        nice: ["Design systems", "WebRTC"],
+        contexto:
+          "Aplicação de contact center em tempo real (chamadas, IA, analytics). Foco em performance e experiência do agente.",
+      },
+      {
+        title: "Staff Backend Engineer — Node.js",
+        must: ["Node.js", "AWS", "Sistemas distribuídos"],
+        nice: ["Go", "Kafka"],
+        contexto:
+          "Serviços de telefonia e roteamento a escala global. Exige experiência em arquitetura e fiabilidade.",
+      },
+    ],
+  },
+  {
+    name: "Unbabel",
+    domain: "unbabel.com",
+    linkedin: "https://www.linkedin.com/company/unbabel",
+    sector: "IA · Tradução & Language Operations",
+    location: "Lisboa, Portugal",
+    founded: "2013",
+    headcount: "200+",
+    tech: ["Python", "PyTorch", "React", "Kubernetes"],
+    description:
+      "Plataforma de tradução assistida por IA (human-in-the-loop) para apoio ao cliente e conteúdo multilingue a escala. Forte equipa de investigação em NLP, em Lisboa.",
+    valoriza: [
+      "Conforto com IA/ML e produtos data-intensive",
+      "Curiosidade e vontade de experimentar (cultura de research)",
+    ],
+    naoAceita: "Não avança com perfis sem bases sólidas em Python/ML para os papéis de IA",
+    contexto: "Lisboa, modelo híbrido. Processo: 3 etapas + conversa com a equipa de research.",
+    reuniao:
+      '"...queremos alguém que goste do problema de linguagem, não só do código. Para o papel de ML, tem de ter posto modelos em produção, não só notebooks. Híbrido em Lisboa, 2 dias no escritório."',
+    roles: [
+      {
+        title: "Machine Learning Engineer — NLP",
+        must: ["Python", "PyTorch", "NLP"],
+        nice: ["MLOps", "Kubernetes"],
+        contexto:
+          "Modelos de tradução e qualidade linguística em produção. Pipeline human-in-the-loop com avaliação contínua.",
+      },
+      {
+        title: "Full-Stack Engineer — Python/React",
+        must: ["Python", "React", "TypeScript"],
+        nice: ["GraphQL", "Kubernetes"],
+        contexto:
+          "Produto de Language Operations: dashboards, fluxos de revisão humana e integrações. Do front ao back.",
+      },
+    ],
+  },
+  {
+    name: "OutSystems",
+    domain: "outsystems.com",
+    linkedin: "https://www.linkedin.com/company/outsystems",
+    sector: "Plataforma de desenvolvimento low-code",
+    location: "Lisboa, Portugal (global)",
+    founded: "2001",
+    headcount: "1700+",
+    tech: [".NET", "C#", "React", "Kubernetes", "AWS"],
+    description:
+      "Líder global em desenvolvimento low-code. Unicórnio português que permite às empresas criar aplicações a alta velocidade. Engenharia exigente, produto a escala enterprise.",
+    valoriza: [
+      "Fundamentos de engenharia fortes (algoritmos, arquitetura)",
+      "Qualidade e atenção ao detalhe em produto crítico",
+    ],
+    naoAceita: "Não aceita código sem testes nem quem ignora performance",
+    contexto: "Lisboa (híbrido). Processo: 4 etapas, inclui problema de algoritmia.",
+    reuniao:
+      '"...procuramos engenheiros com bases muito sólidas, gente que percebe o que faz por baixo da abstração. O produto é crítico para milhares de empresas, a fasquia de qualidade é alta. Híbrido em Lisboa."',
+    roles: [
+      {
+        title: "Senior Software Engineer — .NET",
+        must: ["C#", ".NET", "Arquitetura de software"],
+        nice: ["React", "Cloud"],
+        contexto:
+          "Core da plataforma low-code (compilador, runtime). Exige fundamentos fortes e cuidado com performance.",
+      },
+      {
+        title: "Cloud Platform Engineer",
+        must: ["Kubernetes", "AWS", "Go"],
+        nice: ["Terraform", "Observabilidade"],
+        contexto:
+          "Infraestrutura cloud que corre as aplicações dos clientes a escala. Fiabilidade e automação no centro.",
+      },
+    ],
+  },
+  {
+    name: "Sword Health",
+    domain: "swordhealth.com",
+    linkedin: "https://www.linkedin.com/company/sword-health",
+    sector: "Health-tech · Fisioterapia digital (IA)",
+    location: "Porto, Portugal",
+    founded: "2015",
+    headcount: "900+",
+    tech: ["Python", "React Native", "AWS", "Go"],
+    description:
+      "Health-tech de fisioterapia digital com IA e sensores de movimento. Unicórnio fundado no Porto, a tratar dor músculo-esquelética a escala internacional.",
+    valoriza: [
+      "Impacto e propósito (saúde) — gente que se importa com o utilizador final",
+      "Velocidade com qualidade num ambiente de hiper-crescimento",
+    ],
+    naoAceita: "Não avança com quem não comunica bem em equipa remota/distribuída",
+    contexto: "Porto + remoto. Processo: 3 etapas + case prático.",
+    reuniao:
+      '"...crescemos muito depressa, precisamos de gente que se mexe mas não parte tudo. O produto é clínico, a qualidade importa. Porto ou remoto. Valorizamos quem já trabalhou em saúde ou produto consumer."',
+    roles: [
+      {
+        title: "Senior Backend Engineer — Python",
+        must: ["Python", "AWS", "APIs"],
+        nice: ["Go", "Health-tech"],
+        contexto:
+          "Backend do programa clínico (sessões, progresso, alertas). Dados sensíveis, exige rigor e privacidade.",
+      },
+      {
+        title: "Mobile Engineer — React Native",
+        must: ["React Native", "TypeScript", "Mobile"],
+        nice: ["iOS", "Android"],
+        contexto:
+          "App do paciente com sensores de movimento em tempo real. Foco em experiência e fiabilidade.",
+      },
+    ],
+  },
+  {
+    name: "Remote",
+    domain: "remote.com",
+    linkedin: "https://www.linkedin.com/company/remote-com",
+    sector: "HR-tech · Contratação & payroll global",
+    location: "Remote-first (raízes em Portugal)",
+    founded: "2019",
+    headcount: "1400+",
+    tech: ["Elixir", "Ruby", "React", "PostgreSQL"],
+    description:
+      "Plataforma global de RH, contratação e payroll internacional. Empresa remote-first com forte presença portuguesa e cultura de documentação e assincronia.",
+    valoriza: [
+      "Excelente comunicação escrita (cultura async, 100% remota)",
+      "Autonomia e capacidade de trabalhar com pessoas em vários fusos",
+    ],
+    naoAceita: "Não aceita quem precisa de escritório/supervisão para render",
+    contexto: "100% remoto, async. Processo: 3-4 etapas, muito por escrito.",
+    reuniao:
+      '"...somos 100% remotos e async, por isso a escrita é tudo. Quem comunica mal por escrito não funciona aqui. Elixir é um plus mas ensinamos a quem tem boas bases. Qualquer fuso horário compatível com a equipa."',
+    roles: [
+      {
+        title: "Senior Backend Engineer — Elixir",
+        must: ["Elixir", "PostgreSQL", "APIs"],
+        nice: ["Ruby", "Phoenix"],
+        contexto:
+          "Core de payroll e contratação internacional. Domínio complexo (legal/fiscal por país), exige cuidado.",
+      },
+      {
+        title: "Senior Frontend Engineer — React",
+        must: ["React", "TypeScript", "JavaScript"],
+        nice: ["GraphQL", "Design systems"],
+        contexto:
+          "Produto self-service de onboarding e gestão de equipas globais. Muitos fluxos, foco em clareza.",
+      },
+    ],
+  },
+];
 
-function nivelFor(title: string): string {
-  const t = title.toLowerCase();
-  if (/(head|lead|principal|staff|director)/.test(t)) return "lead";
-  if (/(senior|sénior|sr\.)/.test(t)) return "senior";
-  if (/(junior|júnior|jr\.)/.test(t)) return "junior";
-  return "pleno";
-}
 const hex = (n: number, len: number): string => String(n).padStart(len, "0");
 
 async function main(): Promise<void> {
@@ -63,48 +261,50 @@ async function main(): Promise<void> {
   if (!databaseUrl) {
     throw new Error("falta DATABASE_URL");
   }
-  const companies: RealCompany[] = JSON.parse(
-    readFileSync(new URL("./real-jobs.json", import.meta.url), "utf8"),
-  );
   const { db, close } = createDb(databaseUrl);
   try {
     const now = new Date();
     const dateStr = now.toLocaleDateString("pt-PT");
     let ci = 0;
     let vagas = 0;
-    for (const co of companies) {
+    for (const co of COMPANIES) {
       ci += 1;
       const clientId = `e1000000-0000-4000-8000-${hex(ci, 12)}`;
       const profile = {
         sector: co.sector,
-        website: WEBSITE[co.company] ?? null,
-        description: DESCRIPTION[co.company] ?? `${co.sector}. Equipa remota (${co.location}).`,
-        logoUrl: co.logo,
+        website: `https://${co.domain}`,
+        description: co.description,
+        logoUrl: `https://icon.horse/icon/${co.domain}`,
+        location: co.location,
+        founded: co.founded,
+        headcount: co.headcount,
+        linkedinUrl: co.linkedin,
+        techStack: co.tech,
       };
       await db
         .insert(schema.client)
-        .values({
-          id: clientId,
-          agencyId: AGENCY,
-          name: co.company,
-          notes: `Remoto • ${co.location}`,
-          ...profile,
-        })
+        .values({ id: clientId, agencyId: AGENCY, name: co.name, ...profile })
         .onConflictDoNothing();
-      await db.update(schema.client).set(profile).where(eq(schema.client.id, clientId));
+      await db
+        .update(schema.client)
+        .set({ name: co.name, ...profile })
+        .where(eq(schema.client.id, clientId));
 
-      const allTags: string[] = [];
+      await db.delete(schema.job).where(eq(schema.job.clientId, clientId));
       let ji = 0;
-      for (const job of co.jobs) {
+      for (const role of co.roles) {
         ji += 1;
         vagas += 1;
         const jobId = `e2000000-0000-4000-8000-${hex(ci, 6)}${hex(ji, 6)}`;
-        const tags = job.tags.length > 0 ? job.tags : ["Software"];
-        allTags.push(...tags);
-        const slug = job.title
+        const slug = role.title
           .toLowerCase()
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
           .replace(/[^a-z0-9]+/g, "_")
           .slice(0, 40);
+        const nivel = /senior|sénior|staff|lead|principal/.test(role.title.toLowerCase())
+          ? "senior"
+          : "pleno";
         await db
           .insert(schema.job)
           .values({
@@ -112,39 +312,28 @@ async function main(): Promise<void> {
             agencyId: AGENCY,
             clientId,
             recruiterId: FILIPA,
-            title: job.title,
+            title: role.title,
             roleTypeSlug: slug,
             requirements: {
               roleType: slug,
-              nivel: nivelFor(job.title),
-              skills: { must: tags.slice(0, 3), nice: tags.slice(3, 5) },
-              contexto: job.requirements.slice(0, 400),
+              nivel,
+              skills: { must: role.must, nice: role.nice },
+              contexto: role.contexto,
             },
           })
           .onConflictDoNothing();
       }
 
-      const topTags = [...new Set(allTags)].slice(0, 4);
       await db.delete(schema.clientMemoryFact).where(eq(schema.clientMemoryFact.clientId, clientId));
       const facts: Array<{ t: string; text: string; ref?: string; snippet?: string }> = [
-        {
-          t: "preference",
-          text: `Valoriza experiência sólida em ${topTags.slice(0, 2).join(" e ") || "tecnologia"}`,
-        },
-        { t: "preference", text: "Quer autonomia e à-vontade para trabalhar remoto sem supervisão" },
-        {
-          t: "rejection_reason",
-          text: `Não avança com perfis sem experiência prática em ${topTags[0] ?? "tecnologia"}`,
-        },
-        {
-          t: "context",
-          text: `Equipa 100% remota (${co.location}). Processo rápido, 2 a 3 etapas.`,
-        },
+        ...co.valoriza.map((text) => ({ t: "preference", text })),
+        { t: "rejection_reason", text: co.naoAceita },
+        { t: "context", text: co.contexto },
         {
           t: "meeting",
           text: "Reunião de intake — alinhamento do perfil e prioridades de contratação",
           ref: `Intake • ${dateStr}`,
-          snippet: `"...precisamos de alguém forte em ${topTags[0] ?? "produto"}, que pegue no problema de ponta a ponta. Remoto é OK, mas tem de comunicar muito bem por escrito. Time-to-hire ideal: 3 semanas."`,
+          snippet: co.reuniao,
         },
       ];
       await db.insert(schema.clientMemoryFact).values(
@@ -162,9 +351,9 @@ async function main(): Promise<void> {
 
       await db.delete(schema.clientCriteria).where(eq(schema.clientCriteria.clientId, clientId));
       const crit: Array<{ criterio: string; peso: string }> = [
-        ...topTags.slice(0, 2).map((c) => ({ criterio: c, peso: "must" })),
-        ...topTags.slice(2, 4).map((c) => ({ criterio: c, peso: "nice" })),
-        { criterio: "Comunicação escrita forte (equipa remota)", peso: "must" },
+        ...co.tech.slice(0, 2).map((c) => ({ criterio: c, peso: "must" })),
+        ...co.tech.slice(2, 4).map((c) => ({ criterio: c, peso: "nice" })),
+        { criterio: "Comunicação forte e ownership", peso: "must" },
       ];
       await db.insert(schema.clientCriteria).values(
         crit.map((c) => ({
@@ -176,7 +365,7 @@ async function main(): Promise<void> {
         })),
       );
     }
-    process.stdout.write(`[seed-real] concluído. ${ci} empresas reais, ${vagas} vagas.\n`);
+    process.stdout.write(`[seed-real] concluído. ${ci} empresas PT reais, ${vagas} vagas.\n`);
   } finally {
     await close();
   }

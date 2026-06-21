@@ -145,6 +145,12 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
           }}
         />
         <div className="relative flex flex-wrap items-start gap-4 p-6">
+          <Link
+            href={`/clientes/${cliente.id}/editar`}
+            className="absolute top-4 right-4 rounded-md border border-line bg-card px-3 py-1.5 text-ink-2 text-xs transition-colors hover:border-accent hover:text-ink"
+          >
+            Editar ficha
+          </Link>
           <ClientLogo name={cliente.name} logoUrl={cliente.logoUrl} size={72} />
           <div className="min-w-0 flex-1">
             <h1 className="font-display font-semibold text-3xl text-ink tracking-tight">
@@ -152,6 +158,7 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
             </h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               {cliente.sector ? <span className="text-ink-2">{cliente.sector}</span> : null}
+              {cliente.location ? <span className="text-ink-3">· {cliente.location}</span> : null}
               {cliente.website ? (
                 <a
                   href={cliente.website}
@@ -177,6 +184,58 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
       </div>
+
+      {cliente.location ||
+      cliente.founded ||
+      cliente.headcount ||
+      (cliente.techStack?.length ?? 0) > 0 ||
+      cliente.linkedinUrl ? (
+        <section className="elev elev-top relative rounded-card border border-line bg-card p-4">
+          <h2 className="font-medium text-ink text-sm">Sobre a empresa</h2>
+          <dl className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-3">
+            {cliente.location ? (
+              <div>
+                <dt className="text-ink-3 text-xs">Sede / mercado</dt>
+                <dd className="mt-0.5 text-ink text-sm">{cliente.location}</dd>
+              </div>
+            ) : null}
+            {cliente.founded ? (
+              <div>
+                <dt className="text-ink-3 text-xs">Fundada</dt>
+                <dd className="mt-0.5 text-ink text-sm">{cliente.founded}</dd>
+              </div>
+            ) : null}
+            {cliente.headcount ? (
+              <div>
+                <dt className="text-ink-3 text-xs">Equipa</dt>
+                <dd className="mt-0.5 text-ink text-sm">{cliente.headcount}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {cliente.techStack && cliente.techStack.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-ink-3 text-xs">Stack principal</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {cliente.techStack.map((t) => (
+                  <Chip key={t} tone="muted">
+                    {t}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {cliente.linkedinUrl ? (
+            <a
+              href={cliente.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-accent-ink text-sm hover:underline"
+            >
+              LinkedIn ↗
+            </a>
+          ) : null}
+        </section>
+      ) : null}
 
       <FactosReuniao factos={cliente.factos} />
 

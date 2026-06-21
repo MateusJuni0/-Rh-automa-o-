@@ -14,6 +14,12 @@ export const client = pgTable("client", {
   sector: text("sector"),
   description: text("description"),
   logoUrl: text("logo_url"),
+  // Detalhe da empresa (ficha rica) — preenchido do site/LinkedIn ou pela Filipa.
+  location: text("location"), // sede / mercado (ex.: "Lisboa, Portugal")
+  founded: text("founded"), // ano de fundação (ex.: "2011")
+  headcount: text("headcount"), // dimensão da equipa (ex.: "600+")
+  linkedinUrl: text("linkedin_url"),
+  techStack: text("tech_stack").array(), // stack principal (chips)
   purgeAfter: timestamp("purge_after", { withTimezone: true }), // RGPD apagamento recuperável (§6)
   createdAt: createdAt(),
   deletedAt: deletedAt(),
