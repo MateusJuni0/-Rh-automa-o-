@@ -4,36 +4,11 @@
  * (stub sem chave). SEGURANÇA: guard anti-SSRF (só http(s) público; bloqueia localhost/IPs privados).
  */
 
+import { guardedFetch, SsrfBlockedError } from "./net/guarded-fetch";
+
 export type LinkImport =
   | { ok: true; text: string; title: string | null }
   | { ok: false; reason: string };
-
-/** Recusa URLs perigosos (SSRF): protocolo não-http, localhost, IPs privados/link-local. */
-function isSafeUrl(raw: string): URL | null {
-  let u: URL;
-  try {
-    u = new URL(raw);
-  } catch {
-    return null;
-  }
-  if (u.protocol !== "http:" && u.protocol !== "https:") {
-    return null;
-  }
-  const host = u.hostname.toLowerCase();
-  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) {
-    return null;
-  }
-  if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host)) {
-    return null;
-  }
-  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
-    return null;
-  }
-  if (host === "::1" || host.startsWith("fe80") || host.startsWith("fc") || host.startsWith("fd")) {
-    return null;
-  }
-  return u;
-}
 
 function decodeEntities(s: string): string {
   return s
@@ -72,18 +47,17 @@ const MAX_BYTES = 1_500_000;
 
 /** Vai buscar o texto da página da vaga. Server-side apenas (fetch de URL externo). */
 export async function importVagaFromLink(rawUrl: string): Promise<LinkImport> {
-  const url = isSafeUrl(rawUrl);
-  if (!url) {
-    return { ok: false, reason: "URL inválido ou não permitido (só http/https público)" };
-  }
   let res: Response;
   try {
-    res = await fetch(url, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(8000),
+    // Funil anti-SSRF único: valida esquema/host e re-valida cada redirect (anti 30x→IP interno).
+    res = await guardedFetch(rawUrl, {
+      timeoutMs: 8000,
       headers: { "user-agent": "VeraBot/1.0 (recrutamento)", accept: "text/html" },
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof SsrfBlockedError) {
+      return { ok: false, reason: "URL inválido ou não permitido (só http/https público)" };
+    }
     return { ok: false, reason: "não consegui aceder a esse link (timeout ou rede)" };
   }
   if (!res.ok) {

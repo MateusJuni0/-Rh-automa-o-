@@ -32,7 +32,9 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 - **#7 Destilação-final durável (`distill_final`)** — `lib/destilar.ts: distillFinal`: ao encerrar, lê a Camada A (`transcript_chunk` do candidato) → factos duráveis (via `destilarFacto`+RAG), regista `async_job kind='distill_final'` (running→done/failed) e seta `interview.distilled_at` — o GATE que destrava a purga de áudio cru (DATA-RETENTION §1.1). IDEMPOTENTE por entrevista (gate `distilled_at` → re-correr não duplica factos). 3 testes integração (destila+gate+job done · idempotência · entrevista inexistente). MODELO-DADOS §16H / ARQUITETURA-TEMPO-REAL §11.1(5).
 
-Próximo na fila (loop): #9 SSRF guard em funil único (anti-rebinding) → #5b anonimizar cascata RGPD → #3 porta de confirmação do Intake na WEB → #8 serialização família G → P2.
+- **#9 SSRF guard em funil único** — `lib/net/guarded-fetch.ts`: `assertSafeUrl`/`isInternalHost` (recusa não-http(s), localhost, RFC1918/loopback/link-local/metadata `169.254.169.254`, IPv6 ULA/link-local, IPv4-mapped) + `guardedFetch` (redirect MANUAL + re-valida CADA `Location` → bloqueia bypass por 30x→IP interno). `vaga-import.ts` refatorado para o funil único. 5 testes (esquemas/IPs internos/públicos/mapped/malformado). SEGURANCA §2. Nota: pinning de IP pós-DNS (anti-rebinding total) = Fase Ω.
+
+Próximo na fila (loop): #3 porta de confirmação do Intake na WEB → #5b anonimizar cascata RGPD → #8 serialização família G → P2 (realtime-config, comparar selector, …).
 
 ---
 
