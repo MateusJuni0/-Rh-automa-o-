@@ -30,7 +30,9 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 - **#6 Persistência da Camada A (`transcript_chunk`)** — `lib/transcript.ts`: `persistChunk` (write-path da FONTE DE VERDADE, com selo de não-repúdio hash-chain por entrevista §15.8: `content_hash = sha256(prev_hash | conteúdo canónico)`) + `verifyChunkChain` (tamper-evident: editar um chunk no Postgres quebra a cadeia). 2 testes de integração (encadeamento + prova de adulteração, SEGURANCA §13.b). Falta só o wiring ao TickEngine/STT mock (Fase Ω alimenta) — o write-path + a verificação estão prontos. ARQUITETURA-TEMPO-REAL §8 / MODELO-DADOS §2/§15.8.
 
-Próximo na fila (loop): #7 destilação durável (`async_job kind=distill_final` + gate `distilled_at`) → #9 SSRF funil único → #5b anonimizar cascata RGPD → #3 intake confirm UI → #8 serialização família G.
+- **#7 Destilação-final durável (`distill_final`)** — `lib/destilar.ts: distillFinal`: ao encerrar, lê a Camada A (`transcript_chunk` do candidato) → factos duráveis (via `destilarFacto`+RAG), regista `async_job kind='distill_final'` (running→done/failed) e seta `interview.distilled_at` — o GATE que destrava a purga de áudio cru (DATA-RETENTION §1.1). IDEMPOTENTE por entrevista (gate `distilled_at` → re-correr não duplica factos). 3 testes integração (destila+gate+job done · idempotência · entrevista inexistente). MODELO-DADOS §16H / ARQUITETURA-TEMPO-REAL §11.1(5).
+
+Próximo na fila (loop): #9 SSRF guard em funil único (anti-rebinding) → #5b anonimizar cascata RGPD → #3 porta de confirmação do Intake na WEB → #8 serialização família G → P2.
 
 ---
 
