@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, eq } from "drizzle-orm";
+import { assertCaptureAllowed, type CaptureType } from "./consent";
 import { gerarParecer } from "./parecer";
 
 type Db = DbHandle["db"];
@@ -25,6 +26,8 @@ export interface CreateInterviewParams {
   processId?: string | null;
   /** RGPD: atribui a entrevista ao candidato (incl. órfã sem processo) → purgável. Best-effort. */
   candidateId?: string | null;
+  /** Tipo de captura pedido. v1 = `'none'` (sem áudio). Captura real exige consentimento 'dado'. */
+  captureType?: CaptureType;
 }
 
 export interface CreatedInterview {
@@ -43,19 +46,28 @@ export async function createInterview(
   agencyId: string,
   params: CreateInterviewParams,
 ): Promise<CreatedInterview> {
+  const captureType: CaptureType = params.captureType ?? "none";
   const interviewId = randomUUID();
   // room/token MOCK efémeros por design: não persistem (o schema não tem coluna de token);
   // o token LiveKit real (assinado, recuperável) entra com a chave na Fase Ω. KEYS-TODO.
   const room = `mock-room-${interviewId}`;
-  // RGPD: deriva o candidato do processo (best-effort) ou usa o override explícito (órfã cold-start).
+  // RGPD: deriva o candidato do processo (best-effort) ou usa o override explícito (órfã cold-start);
+  // lê também o consentimento do processo para o gate de captura.
   let candidateId = params.candidateId ?? null;
-  if (candidateId === null && params.processId) {
+  let consentStatus: string | null = null;
+  if (params.processId) {
     const [proc] = await db
-      .select({ candidateId: schema.process.candidateId })
+      .select({
+        candidateId: schema.process.candidateId,
+        consentStatus: schema.process.consentStatus,
+      })
       .from(schema.process)
       .where(and(eq(schema.process.id, params.processId), eq(schema.process.agencyId, agencyId)));
-    candidateId = proc?.candidateId ?? null;
+    candidateId = candidateId ?? proc?.candidateId ?? null;
+    consentStatus = proc?.consentStatus ?? null;
   }
+  // Gate de consentimento (SEGURANCA §5): captura real é recusada sem consentimento 'dado'. 'none' passa.
+  assertCaptureAllowed(captureType, consentStatus);
   await db.insert(schema.interview).values({
     id: interviewId,
     agencyId,
@@ -63,7 +75,7 @@ export async function createInterview(
     candidateId,
     recruiterId: params.recruiterId,
     status: params.processId ? "live" : "unstructured",
-    captureType: "none",
+    captureType,
     livekitRoom: room,
   });
   return { interviewId, room, token: `mock-token-${interviewId}` };

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createDb, type DbHandle, schema } from "@rh/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ConsentNotGrantedError } from "../lib/consent";
 import {
   createInterview,
   getInterview,
@@ -71,6 +72,17 @@ describe.skipIf(!url)("integração — interviews lib (apps/web)", () => {
     await expect(
       joinInterview(handle.db, AG, "a4000000-0000-4000-8000-0000000000ee"),
     ).rejects.toBeInstanceOf(InterviewNotFoundError);
+  });
+
+  it("recusa captura real ('bot_online') sem consentimento — gate server-side (SEGURANCA §5)", async () => {
+    await expect(
+      createInterview(handle.db, AG, { recruiterId: REC, captureType: "bot_online" }),
+    ).rejects.toBeInstanceOf(ConsentNotGrantedError);
+  });
+
+  it("permite captura 'none' (default v1) sem consentimento — não há captura a proteger", async () => {
+    const res = await createInterview(handle.db, AG, { recruiterId: REC, captureType: "none" });
+    expect(await getInterview(handle.db, AG, res.interviewId)).not.toBeNull();
   });
 
   it("reportInterview transita p/ done e gera parecer (mesmo órfã)", async () => {

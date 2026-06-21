@@ -14,6 +14,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-21 (noite) — LOOP de fecho de gaps vs specs (análise 360 + implementação) ═══
+**Análise completa spec↔código (3 agentes paralelos: web/UI · dados/realtime · auth/segurança/RGPD).** Veredito: o **schema (35 tabelas) está ~100%** e a jornada Triagem→Briefing→Entrevista→Parecer está demonstrável. Os gaps reais (v1, construíveis com MOCK, SEM chaves) são fluxos human-in-the-loop sem UI + write-paths de runtime + gates que ficaram por ligar:
+
+**🔴 P1:** (1) Q&A por entidade (Tela 8) ❌ · (2) Onboarding 1º uso (Tela 11) ❌ · (3) Porta de confirmação do Intake na WEB 🟡 (só API) · (4) ✅ Gate de consentimento server-side · (5) Purga RGPD ligada a rota + anonimizar (não apagar) 🟡 · (6) Persistência da Camada A (`transcript_chunk`) ❌ · (7) Destilação-final durável (`async_job distill_final`) ❌ · (8) Serialização família G (§11.1) ❌ · (9) SSRF guard em funil único 🟡.
+**🟡 P2:** `realtime-config.ts` · selector no Comparar · candidato por LinkedIn+dedup · crons retenção · webhook Telegram secret · vaga por PDF · contexto ativo do assistente · `contradiction` write-path.
+**🔑 chave:** envio email, Soniox/LiveKit, biometria facial, RAG vetorial, calendário Google. **⏭️ v2:** multi-tenant RLS, particionamento.
+
+**✅ FATIAS FEITAS neste loop:**
+- **#4 Gate de consentimento (`assertCaptureAllowed`)** — `apps/web/lib/consent.ts` (puro: captura real `bot_online`/`local_mic` exige `consent='dado'`; `none` passa sempre). Ligado a `createInterview` (lê `process.consent_status`, recusa captura sem consentimento). TDD: 5 testes unitários + 2 de integração, todos verdes. SEGURANCA §5 / LEGAL §6 / TESTES-ACEITACAO §275/§308.
+
+Próximo na fila (loop): gates visíveis de produto (Q&A por entidade, onboarding) + purga RGPD ligada a rota.
+
+---
+
 ## ═══ Sessão 2026-06-21 (fim de tarde) — 🎯 CAUSA REAL do "bug dos cliques" RESOLVIDA ═══
 **CORREÇÃO ao diagnóstico anterior** (que dizia "aba velha" — estava ERRADO). A causa real do "clico várias vezes e não entra":
 
