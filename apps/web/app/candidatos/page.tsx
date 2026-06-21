@@ -16,6 +16,7 @@ export default async function CandidatosPage() {
       <PageHeader
         eyebrow="Talento"
         title="Candidatos"
+        marker
         description="Os perfis na tua base. Cola um CV e a Vera extrai competências e experiência."
         stats={[{ value: rows.length, label: rows.length === 1 ? "perfil" : "perfis" }]}
       />

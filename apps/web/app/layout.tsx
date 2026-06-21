@@ -2,14 +2,14 @@ import "@rh/ui/styles/tokens.css";
 import "@rh/ui/styles/ui.css";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
 import { NavBar } from "./components/NavBar";
 
-/** Display font (Bricolage Grotesque) — só títulos/marca. O corpo mantém-se Inter (tokens LOCKED). */
-const display = Bricolage_Grotesque({
+/** Display font (Space Grotesk) — títulos/marca bold e graphic. O corpo mantém-se Inter. */
+const display = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-bricolage",
+  variable: "--font-display-grotesk",
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });

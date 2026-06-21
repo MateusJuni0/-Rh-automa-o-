@@ -23,6 +23,7 @@ export default async function VagasPage() {
       <PageHeader
         eyebrow="Processos"
         title="Vagas"
+        marker
         description="Cada vaga arranca de um texto do cliente: a Vera extrai requisitos, rubric e role profile."
         stats={[
           { value: vagas.length, label: vagas.length === 1 ? "vaga" : "vagas" },

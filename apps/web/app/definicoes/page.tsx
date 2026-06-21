@@ -178,6 +178,7 @@ export default async function DefinicoesPage() {
       <PageHeader
         eyebrow="Conta"
         title="Definições"
+        marker
         description="Conta, modelos de IA, calendário e retenção de dados (RGPD)."
       />
       <SettingsTabs

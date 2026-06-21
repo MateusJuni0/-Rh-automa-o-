@@ -36,7 +36,7 @@
   --radius-md: var(--vera-radius-md);
 
   /* Display = Bricolage Grotesque (carregada via next/font no layout). Body mantém-se Inter. */
-  --font-display: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, sans-serif;
+  --font-display: var(--font-display-grotesk), "Space Grotesk", ui-sans-serif, sans-serif;
   --font-sans: var(--vera-font-sans);
   --font-mono: var(--vera-font-mono);
 }
@@ -389,4 +389,35 @@ body {
 }
 .typing-dot:nth-child(3) {
   animation-delay: 0.36s;
+}
+
+/* ═══════════════ TEMA 4B — "Magenta Marker" (override dos tokens, SÓ web) ═══════════════
+ * Reskin do web para a direção bold escolhida: preto profundo + acento fúcsia + marcador de
+ * assinatura. SÓ no web — globals.css não é carregado pelo overlay desktop, logo tokens.css fica
+ * intacto e o HUD da entrevista mantém-se. */
+:root {
+  --vera-bg-base: #09090b;
+  --vera-bg-raised: #131317;
+  --vera-bg-card: #141416;
+  --vera-border-default: #2a2a31;
+  --vera-border-subtle: #1f1f24;
+
+  --vera-text-primary: #fafafa;
+  --vera-text-secondary: #a1a1aa;
+  --vera-text-tertiary: #6f6f78;
+
+  --vera-accent: #e879f9;
+  --vera-accent-bg: #2e0f33;
+  --vera-accent-text: #f0abfc;
+  --vera-on-accent: #4a044e;
+}
+
+/* Marcador de assinatura: realce fúcsia atrás de uma palavra-chave (o "4B"). */
+.marker {
+  background: var(--vera-accent);
+  color: var(--vera-on-accent);
+  padding: 0 0.3em;
+  border-radius: 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }

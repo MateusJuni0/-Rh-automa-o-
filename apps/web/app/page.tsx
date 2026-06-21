@@ -34,7 +34,7 @@ const fmtDia = new Intl.DateTimeFormat("pt-PT", { day: "2-digit", month: "short"
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-card border border-line bg-card px-4 py-3.5">
-      <p className="font-display font-semibold text-3xl text-ink tabular-nums tracking-tight">
+      <p className="font-display font-semibold text-4xl text-ink tabular-nums tracking-tight">
         {value}
       </p>
       <p className="mt-0.5 text-ink-3 text-xs">{label}</p>
@@ -317,8 +317,12 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         eyebrow="Painel"
-        title={`Olá, ${firstName}`}
-        description="O que precisa da tua atenção hoje — agenda, vagas à espera e o funil."
+        title={
+          <>
+            Olá, <span className="marker">{firstName}</span>
+          </>
+        }
+        description="O que precisa da tua atenção hoje: agenda, vagas à espera e o funil."
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

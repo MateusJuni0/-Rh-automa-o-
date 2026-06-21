@@ -18,6 +18,7 @@ export default async function ClientesPage() {
       <PageHeader
         eyebrow="Carteira"
         title="Clientes"
+        marker
         description="As empresas para quem a IRIS recruta. Abre um cliente para ver o que fazem e as suas vagas."
         stats={[
           { value: rows.length, label: rows.length === 1 ? "empresa" : "empresas" },

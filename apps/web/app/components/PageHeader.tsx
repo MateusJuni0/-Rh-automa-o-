@@ -9,16 +9,25 @@ interface PageStat {
 interface PageHeaderProps {
   /** Eyebrow curto (ex.: a secção) — contexto sem pesar no título. */
   eyebrow?: string;
-  title: string;
+  title: ReactNode;
   description?: string;
   /** Ação à direita (ex.: botão primário). */
   action?: ReactNode;
   /** Faixa de contexto à direita: números discretos (não é o template hero-metric). */
   stats?: PageStat[];
+  /** Realça o título com o marcador fúcsia (assinatura 4B) — usar só em títulos curtos de secção. */
+  marker?: boolean;
 }
 
 /** Cabeçalho de página: eyebrow + título display + descrição, com faixa de contexto e regra inferior. */
-export function PageHeader({ eyebrow, title, description, action, stats }: PageHeaderProps) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action,
+  stats,
+  marker,
+}: PageHeaderProps) {
   const hasAside = Boolean(action) || (stats?.length ?? 0) > 0;
   return (
     <div className="rise flex flex-wrap items-end justify-between gap-x-8 gap-y-5 border-line-subtle border-b pb-6">
@@ -30,7 +39,7 @@ export function PageHeader({ eyebrow, title, description, action, stats }: PageH
           </p>
         ) : null}
         <h1 className="font-display font-semibold text-3xl text-ink tracking-tight md:text-[2.6rem] md:leading-[1.02] lg:text-[3rem]">
-          {title}
+          {marker ? <span className="marker">{title}</span> : title}
         </h1>
         {description ? (
           <p className="mt-3 max-w-prose text-ink-2 text-sm leading-relaxed">{description}</p>
