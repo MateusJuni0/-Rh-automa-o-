@@ -365,7 +365,51 @@ async function main(): Promise<void> {
         })),
       );
     }
-    process.stdout.write(`[seed-real] concluído. ${ci} empresas PT reais, ${vagas} vagas.\n`);
+    // Liga candidatos de demo às vagas PT reais → os funis das empresas reais ganham vida.
+    const ptJob = (c: number, j: number): string =>
+      `e2000000-0000-4000-8000-${hex(c, 6)}${hex(j, 6)}`;
+    const K = {
+      sofia: "d2000000-0000-4000-8000-000000000001",
+      bruno: "d2000000-0000-4000-8000-000000000002",
+      carla: "d2000000-0000-4000-8000-000000000003",
+      tiago: "d2000000-0000-4000-8000-000000000004",
+      ines: "d2000000-0000-4000-8000-000000000005",
+    };
+    const existing = new Set(
+      (
+        await db
+          .select({ id: schema.candidate.id })
+          .from(schema.candidate)
+          .where(eq(schema.candidate.agencyId, AGENCY))
+      ).map((r) => r.id),
+    );
+    const procs = [
+      { n: 1, cand: K.sofia, job: ptJob(2, 1), stage: "submitted" }, // Talkdesk Frontend React
+      { n: 2, cand: K.carla, job: ptJob(2, 2), stage: "interview" }, // Talkdesk Backend Node
+      { n: 3, cand: K.bruno, job: ptJob(5, 1), stage: "screening" }, // Sword Backend Python
+      { n: 4, cand: K.ines, job: ptJob(3, 1), stage: "sourced" }, // Unbabel ML
+      { n: 5, cand: K.tiago, job: ptJob(4, 2), stage: "client_iv" }, // OutSystems Cloud
+      { n: 6, cand: K.sofia, job: ptJob(6, 2), stage: "screening" }, // Remote Frontend React
+    ].filter((p) => existing.has(p.cand));
+    if (procs.length > 0) {
+      await db
+        .insert(schema.process)
+        .values(
+          procs.map((p) => ({
+            id: `e4000000-0000-4000-8000-${hex(p.n, 12)}`,
+            agencyId: AGENCY,
+            candidateId: p.cand,
+            jobId: p.job,
+            recruiterId: FILIPA,
+            stage: p.stage,
+          })),
+        )
+        .onConflictDoNothing();
+    }
+
+    process.stdout.write(
+      `[seed-real] concluído. ${ci} empresas PT reais, ${vagas} vagas, ${procs.length} candidatos ligados.\n`,
+    );
   } finally {
     await close();
   }

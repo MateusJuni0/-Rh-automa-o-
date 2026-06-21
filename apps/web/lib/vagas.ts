@@ -56,15 +56,18 @@ export interface VagaRow {
   clientName: string | null;
   clientLogoUrl: string | null;
   numCandidatos: number;
+  nivel: string;
+  must: string[];
 }
 
-/** Vagas da agência, com o CLIENTE (nome+logo) e o nº de candidatos no funil de cada uma. */
-export function listVagas(db: Db, agencyId: string): Promise<VagaRow[]> {
-  return db
+/** Vagas da agência, com o CLIENTE (nome+logo), nível, must-haves e nº de candidatos no funil. */
+export async function listVagas(db: Db, agencyId: string): Promise<VagaRow[]> {
+  const rows = await db
     .select({
       id: schema.job.id,
       title: schema.job.title,
       roleTypeSlug: schema.job.roleTypeSlug,
+      requirements: schema.job.requirements,
       clientName: schema.client.name,
       clientLogoUrl: schema.client.logoUrl,
       numCandidatos: count(schema.process.id),
@@ -78,6 +81,20 @@ export function listVagas(db: Db, agencyId: string): Promise<VagaRow[]> {
     .where(and(eq(schema.job.agencyId, agencyId), isNull(schema.job.deletedAt)))
     .groupBy(schema.job.id, schema.client.id)
     .orderBy(desc(schema.job.createdAt));
+  return rows.map((r) => {
+    const parsed = jobRequirements.safeParse(r.requirements);
+    const req = parsed.success ? parsed.data : EMPTY_REQUIREMENTS;
+    return {
+      id: r.id,
+      title: r.title,
+      roleTypeSlug: r.roleTypeSlug,
+      clientName: r.clientName,
+      clientLogoUrl: r.clientLogoUrl,
+      numCandidatos: r.numCandidatos,
+      nivel: req.nivel,
+      must: req.skills.must,
+    };
+  });
 }
 
 export interface VagaCandidato {
@@ -110,6 +127,11 @@ export function listVagaCandidatos(
     .orderBy(desc(schema.process.createdAt));
 }
 
+export interface VagaCriterio {
+  criterio: string;
+  peso: string; // must | normal | nice
+}
+
 export interface VagaDetail {
   id: string;
   title: string;
@@ -117,7 +139,11 @@ export interface VagaDetail {
   clientId: string | null;
   clientName: string | null;
   clientLogoUrl: string | null;
+  clientSector: string | null;
+  clientLocation: string | null;
   requirements: JobRequirements;
+  /** Critérios que o cliente pede sempre (rubric herdada da ficha do cliente). */
+  clientCriterios: VagaCriterio[];
 }
 
 const EMPTY_REQUIREMENTS: JobRequirements = {
@@ -138,6 +164,8 @@ export async function getVaga(db: Db, agencyId: string, id: string): Promise<Vag
       clientId: schema.client.id,
       clientName: schema.client.name,
       clientLogoUrl: schema.client.logoUrl,
+      clientSector: schema.client.sector,
+      clientLocation: schema.client.location,
     })
     .from(schema.job)
     .leftJoin(schema.client, eq(schema.client.id, schema.job.clientId))
@@ -148,6 +176,21 @@ export async function getVaga(db: Db, agencyId: string, id: string): Promise<Vag
     return null;
   }
   const parsed = jobRequirements.safeParse(row.requirements);
+  const clientCriterios: VagaCriterio[] = row.clientId
+    ? await db
+        .select({
+          criterio: schema.clientCriteria.criterio,
+          peso: schema.clientCriteria.peso,
+        })
+        .from(schema.clientCriteria)
+        .where(
+          and(
+            eq(schema.clientCriteria.clientId, row.clientId),
+            eq(schema.clientCriteria.agencyId, agencyId),
+            isNull(schema.clientCriteria.deletedAt),
+          ),
+        )
+    : [];
   return {
     id: row.id,
     title: row.title,
@@ -155,6 +198,9 @@ export async function getVaga(db: Db, agencyId: string, id: string): Promise<Vag
     clientId: row.clientId,
     clientName: row.clientName,
     clientLogoUrl: row.clientLogoUrl,
+    clientSector: row.clientSector,
+    clientLocation: row.clientLocation,
     requirements: parsed.success ? parsed.data : EMPTY_REQUIREMENTS,
+    clientCriterios,
   };
 }

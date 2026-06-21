@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getVaga, listVagaCandidatos } from "@/lib/vagas";
+import { CandidatoAvatar } from "../../components/CandidatoAvatar";
 import { ClientLogo } from "../../components/ClientLogo";
-import { initials } from "../../components/EntityList";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +85,11 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
             {candidatos.length} {candidatos.length === 1 ? "candidato" : "candidatos"}
           </Chip>
         </div>
+        {vaga.clientSector || vaga.clientLocation ? (
+          <p className="text-ink-3 text-xs">
+            {[vaga.clientSector, vaga.clientLocation].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
         <div className="flex gap-4 text-accent-ink text-sm">
           <Link href={`/vagas/${vaga.id}/triagem`} className="hover:underline">
             ▶ Ver triagem
@@ -118,9 +123,7 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
                   key={c.candidateId}
                   className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-raised transition-colors"
                 >
-                  <span className="monogram shrink-0" aria-hidden="true">
-                    {initials(c.name)}
-                  </span>
+                  <CandidatoAvatar id={c.candidateId} name={c.name} size={32} />
                   <Link
                     href={`/candidatos/${c.candidateId}`}
                     className="min-w-0 flex-1 truncate text-ink text-sm hover:text-accent-ink"
@@ -147,9 +150,38 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
         <div className="flex flex-col gap-4">
           <Skills label="Must-have" items={skills.must} tone="strong" />
           <Skills label="Nice-to-have" items={skills.nice} tone="muted" />
-          {contexto ? <p className="text-ink-2 text-sm">{contexto}</p> : null}
+          {contexto ? (
+            <p className="border-line-subtle border-t pt-3 text-ink-2 text-sm leading-relaxed">
+              {contexto}
+            </p>
+          ) : null}
         </div>
       </Card>
+
+      {vaga.clientCriterios.length > 0 ? (
+        <Card title="Critérios do cliente (rubric)">
+          <p className="mb-3 text-ink-3 text-xs">
+            O que {vaga.clientName ?? "este cliente"} pede sempre, e que pesa na avaliação dos
+            candidatos.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {vaga.clientCriterios
+              .filter((c) => c.peso === "must")
+              .map((c) => (
+                <Chip key={c.criterio} tone="strong">
+                  {c.criterio}
+                </Chip>
+              ))}
+            {vaga.clientCriterios
+              .filter((c) => c.peso !== "must")
+              .map((c) => (
+                <Chip key={c.criterio} tone="muted">
+                  {c.criterio}
+                </Chip>
+              ))}
+          </div>
+        </Card>
+      ) : null}
     </div>
   );
 }

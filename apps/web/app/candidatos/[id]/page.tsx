@@ -4,34 +4,10 @@ import { notFound } from "next/navigation";
 import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { CandidatoAvatar } from "../../components/CandidatoAvatar";
 import { CandidatoActions } from "./CandidatoActions";
 
 export const dynamic = "force-dynamic";
-
-const AVATAR_COLORS = [
-  "#4F46E5",
-  "#0EA5E9",
-  "#10B981",
-  "#F59E0B",
-  "#8B5CF6",
-  "#EC4899",
-  "#EF4444",
-  "#06B6D4",
-];
-
-function avatarColor(name: string): string {
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) & 0x7fffffff;
-  return (AVATAR_COLORS[h % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]) as string;
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts[parts.length - 1]?.[0] ?? "";
-  if (parts.length >= 2 && last) return (first + last).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
 
 /** Detecta se a linha é um cabeçalho de secção do CV (ex.: "RESUMO", "EXPERIÊNCIA"). */
 function isCvSectionHeader(line: string): boolean {
@@ -102,8 +78,6 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
     notFound();
   }
   const { skillsDeclaradas, experienciaAnos, gapsCv, resumo } = cand.profile;
-  const color = avatarColor(cand.name);
-  const mono = initials(cand.name);
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,14 +88,7 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
         </Link>
 
         <div className="mt-3 flex items-center gap-4">
-          {/* avatar grande (placeholder de foto) */}
-          <div
-            className="flex shrink-0 items-center justify-center rounded-2xl font-semibold text-white text-xl"
-            style={{ width: 72, height: 72, background: color }}
-            aria-hidden="true"
-          >
-            {mono}
-          </div>
+          <CandidatoAvatar id={cand.id} name={cand.name} size={72} />
           <div className="min-w-0">
             <h1 className="font-display font-semibold text-ink text-3xl tracking-tight">
               {cand.name}

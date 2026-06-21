@@ -1,9 +1,10 @@
 "use client";
 
 import { Chip, EmptyState, Input } from "@rh/ui";
+import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 import type { CandidatoRow } from "@/lib/candidatos";
-import { EntityList, initials } from "../components/EntityList";
+import { CandidatoAvatar } from "../components/CandidatoAvatar";
 
 interface CandidatosFilterProps {
   candidatos: CandidatoRow[];
@@ -32,14 +33,6 @@ function topSkills(candidatos: CandidatoRow[]): string[] {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, TOP_SKILLS)
     .map(([skill]) => skill);
-}
-
-/** Subtítulo da linha: anos de experiência + primeiras skills, para dar contexto sem abrir o perfil. */
-function rowSubtitle(c: CandidatoRow): string | undefined {
-  const anos = c.anos !== null ? `${c.anos} anos` : null;
-  const skills = c.skills.slice(0, 3).join(", ");
-  const parts = [anos, skills].filter((p): p is string => Boolean(p));
-  return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
 /**
@@ -151,16 +144,37 @@ export function CandidatosFilter({ candidatos }: CandidatosFilterProps) {
           description="Ajusta a pesquisa ou limpa os filtros para ver toda a base."
         />
       ) : (
-        <EntityList
-          title="Candidatos"
-          rows={filtered.map((c) => ({
-            id: c.id,
-            monogram: initials(c.name),
-            title: c.name,
-            subtitle: rowSubtitle(c),
-            href: `/candidatos/${c.id}`,
-          }))}
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {filtered.map((c) => (
+            <Link
+              key={c.id}
+              href={`/candidatos/${c.id}`}
+              className="elev elev-top group relative flex flex-col gap-3 rounded-card border border-line bg-card p-4 transition-colors hover:border-accent"
+            >
+              <div className="flex items-center gap-3">
+                <CandidatoAvatar id={c.id} name={c.name} size={44} />
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-[15px] text-ink">{c.name}</p>
+                  <p className="text-ink-3 text-xs">
+                    {c.anos !== null ? `${c.anos} anos de experiência` : "Experiência n/d"}
+                  </p>
+                </div>
+              </div>
+              {c.skills.length > 0 ? (
+                <div className="mt-auto flex flex-wrap items-center gap-1.5">
+                  {c.skills.slice(0, 4).map((s) => (
+                    <Chip key={s} tone="muted">
+                      {s}
+                    </Chip>
+                  ))}
+                  {c.skills.length > 4 ? (
+                    <span className="text-ink-3 text-xs">+{c.skills.length - 4}</span>
+                  ) : null}
+                </div>
+              ) : null}
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

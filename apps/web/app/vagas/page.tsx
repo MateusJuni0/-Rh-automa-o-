@@ -1,11 +1,11 @@
 import { Chip, EmptyState } from "@rh/ui";
+import Link from "next/link";
 import { VagaForm } from "@/components/VagaForm";
 import { listClientes } from "@/lib/clientes";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { listVagas } from "@/lib/vagas";
 import { ClientLogo } from "../components/ClientLogo";
-import { EntityList } from "../components/EntityList";
 import { PageHeader } from "../components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -35,26 +35,45 @@ export default async function VagasPage() {
           {vagas.length === 0 ? (
             <EmptyState
               title="Sem vagas ainda"
-              description="Cola a descrição do cliente no painel ao lado — a Vera extrai os requisitos."
+              description="Cola a descrição do cliente no painel ao lado: a Vera extrai os requisitos."
             />
           ) : (
-            <EntityList
-              title="Vagas abertas"
-              rows={vagas.map((v) => ({
-                id: v.id,
-                leading: <ClientLogo name={v.clientName ?? v.title} logoUrl={v.clientLogoUrl} />,
-                title: v.title,
-                subtitle: v.clientName ?? "Sem cliente",
-                trailing: (
-                  <Chip tone={v.numCandidatos === 0 ? "shallow" : "muted"}>
-                    {v.numCandidatos === 0
-                      ? "à espera"
-                      : `${v.numCandidatos} ${v.numCandidatos === 1 ? "candidato" : "candidatos"}`}
-                  </Chip>
-                ),
-                href: `/vagas/${v.id}`,
-              }))}
-            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {vagas.map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/vagas/${v.id}`}
+                  className="elev elev-top group relative flex flex-col gap-3 rounded-card border border-line bg-card p-4 transition-colors hover:border-accent"
+                >
+                  <div className="flex items-start gap-3">
+                    <ClientLogo
+                      name={v.clientName ?? v.title}
+                      logoUrl={v.clientLogoUrl}
+                      size={40}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-[15px] text-ink">{v.title}</p>
+                      <p className="truncate text-ink-3 text-xs">
+                        {v.clientName ?? "Sem cliente"}
+                        {v.nivel ? ` · ${v.nivel}` : ""}
+                      </p>
+                    </div>
+                    <Chip tone={v.numCandidatos === 0 ? "shallow" : "muted"}>
+                      {v.numCandidatos === 0 ? "à espera" : v.numCandidatos}
+                    </Chip>
+                  </div>
+                  {v.must.length > 0 ? (
+                    <div className="mt-auto flex flex-wrap gap-1.5">
+                      {v.must.slice(0, 4).map((s) => (
+                        <Chip key={s} tone="muted">
+                          {s}
+                        </Chip>
+                      ))}
+                    </div>
+                  ) : null}
+                </Link>
+              ))}
+            </div>
           )}
         </div>
         <aside>
