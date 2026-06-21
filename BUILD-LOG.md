@@ -28,7 +28,9 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 - **#5 Purga RGPD executável (rota + porta de confirmação)** — `DELETE /api/candidatos/[id]` torna o direito ao esquecimento (Art.17, DATA-RETENTION §3) ACIONÁVEL: exige `{confirm:true}` (irreversível), chama `purgeCandidate` (cascata transacional isolada por agência). E2E: sem confirm→400, confirm+inexistente→404 (no-op isolado), id malformado→400. ⚠️ **#5b POR FAZER (DATA-RETENTION §3.2):** a cascata hard-deleta `placement_outcome`/`client_verdict`; o contrato pede ANONIMIZAR o candidato preservando esse ground-truth da calibração (sem PII) + REDIGIR `assistant_action` (não apagar a linha). É reescrita sensível (muda o teste rgpd) → fatia dedicada. A atual é PII-safe (apaga a mais, nunca vaza).
 
-Próximo na fila (loop): #5b anonimizar a cascata RGPD → #6 persistência Camada A (`transcript_chunk` write-path) → #7 destilação durável (`async_job`) → #9 SSRF funil único → #3 intake confirm UI → #8 família G.
+- **#6 Persistência da Camada A (`transcript_chunk`)** — `lib/transcript.ts`: `persistChunk` (write-path da FONTE DE VERDADE, com selo de não-repúdio hash-chain por entrevista §15.8: `content_hash = sha256(prev_hash | conteúdo canónico)`) + `verifyChunkChain` (tamper-evident: editar um chunk no Postgres quebra a cadeia). 2 testes de integração (encadeamento + prova de adulteração, SEGURANCA §13.b). Falta só o wiring ao TickEngine/STT mock (Fase Ω alimenta) — o write-path + a verificação estão prontos. ARQUITETURA-TEMPO-REAL §8 / MODELO-DADOS §2/§15.8.
+
+Próximo na fila (loop): #7 destilação durável (`async_job kind=distill_final` + gate `distilled_at`) → #9 SSRF funil único → #5b anonimizar cascata RGPD → #3 intake confirm UI → #8 serialização família G.
 
 ---
 
