@@ -19,15 +19,13 @@ describe.skipIf(!url)("integração — Camada A (transcript_chunk) + hash-chain
       .values({ id: REC, agencyId: AG, userId: randomUUID(), name: "Filipa T" })
       .onConflictDoNothing();
     interviewId = randomUUID();
-    await handle.db
-      .insert(s.interview)
-      .values({
-        id: interviewId,
-        agencyId: AG,
-        recruiterId: REC,
-        status: "live",
-        captureType: "none",
-      });
+    await handle.db.insert(s.interview).values({
+      id: interviewId,
+      agencyId: AG,
+      recruiterId: REC,
+      status: "live",
+      captureType: "none",
+    });
   });
   afterAll(() => handle?.close());
 
