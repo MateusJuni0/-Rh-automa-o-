@@ -14,6 +14,17 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-21 (fim de tarde) — 🎯 CAUSA REAL do "bug dos cliques" RESOLVIDA ═══
+**CORREÇÃO ao diagnóstico anterior** (que dizia "aba velha" — estava ERRADO). A causa real do "clico várias vezes e não entra":
+
+> **O `app/loading.tsx` (boundary de Suspense raiz) + `force-dynamic` em todas as páginas faz o router de PRODUÇÃO do Next 15.5 NÃO confirmar a navegação ~50-70% das vezes.** O clique dispara, o fetch RSC responde **200 OK**, mas o URL nunca muda. Sem erro, sem redirect. **Só em `next start`, NUNCA em `next dev`** (streaming diferente).
+
+**Como foi encontrado** (Playwright, A/B com rebuild entre cada): DB descartada (0 ligações presas) · prefetch={false} descartado (não mudou) · reduced-motion/.rise descartado · **dev=0/12 hangs vs prod=7/12** → localizou em produção · remover `loading.tsx` → **prod=0/12**. Confirmado também no Chrome REAL do Mateus (3 vagas seguidas, todas à 1ª).
+
+**Fix:** removido `apps/web/app/loading.tsx` (`60789ce`). Servidor <1s → navegar sem skeleton é aceitável. Follow-up opcional: barra de progresso de navegação client-side (sem Suspense boundary) se quiserem feedback. Detalhe na memória `gotcha-nextjs-loadingtsx-breaks-nav-prod`.
+
+---
+
 ## ═══ Sessão 2026-06-21 (tarde) — dados reais + profundidade + diagnóstico do "bug dos cliques" ═══
 **Feito e committado (`phase3/product`, HEAD `9468230`, pushed):**
 - **Dados REAIS de PT** (`seed-real.ts`) — 6 empresas tech portuguesas (Feedzai, Talkdesk, Unbabel, OutSystems, Sword Health, Remote) com **logos reais** (icon.horse), perfis fundos (sede/fundação/equipa/stack/LinkedIn), 12 vagas representativas, factos/critérios/reunião de intake, candidatos demo ligados aos funis. Idempotente.
