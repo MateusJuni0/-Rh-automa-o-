@@ -1,4 +1,4 @@
-import { Chip, EmptyState } from "@rh/ui";
+import { EmptyState } from "@rh/ui";
 import Link from "next/link";
 import { CreateForm } from "@/components/CreateForm";
 import { listClientes } from "@/lib/clientes";
@@ -14,6 +14,7 @@ interface ClienteCardData {
   name: string;
   sector: string | null;
   numVagas: number;
+  numCandidatos: number;
   logoUrl: string | null;
 }
 
@@ -33,13 +34,17 @@ function ClienteCard({ c }: { c: ClienteCardData }) {
           <p className="truncate text-ink-3 text-xs">{c.sector ?? "Setor por definir"}</p>
         </div>
       </div>
-      <div className="mt-auto flex items-center justify-between border-line-subtle border-t pt-3">
-        <Chip tone="muted">
-          {c.numVagas} {c.numVagas === 1 ? "vaga" : "vagas"}
-        </Chip>
-        <span className="text-ink-3 text-xs transition-colors group-hover:text-accent-ink">
-          Abrir →
+      <div className="mt-auto flex items-center justify-between gap-2 border-line-subtle border-t pt-3 text-xs">
+        <span className="flex items-center gap-3 text-ink-3">
+          <span>
+            <span className="font-display font-medium text-ink">{c.numVagas}</span>{" "}
+            {c.numVagas === 1 ? "vaga" : "vagas"}
+          </span>
+          <span>
+            <span className="font-display font-medium text-ink">{c.numCandidatos}</span> no funil
+          </span>
         </span>
+        <span className="text-ink-3 transition-colors group-hover:text-accent-ink">Abrir →</span>
       </div>
     </Link>
   );

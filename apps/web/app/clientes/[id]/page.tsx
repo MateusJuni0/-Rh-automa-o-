@@ -1,7 +1,12 @@
 import { Chip, EmptyState } from "@rh/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { type ClienteFacto, getCliente } from "@/lib/clientes";
+import {
+  type ClienteCriterio,
+  type ClienteFacto,
+  type ClienteReuniao,
+  getCliente,
+} from "@/lib/clientes";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { ClientLogo, clientColor } from "../../components/ClientLogo";
@@ -46,6 +51,70 @@ function FactosReuniao({ factos }: { factos: ClienteFacto[] }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** Critérios que o cliente pede sempre — viram linhas de rubric. Must em destaque. */
+function CriteriosSection({ criterios }: { criterios: ClienteCriterio[] }) {
+  if (criterios.length === 0) {
+    return null;
+  }
+  const must = criterios.filter((c) => c.peso === "must");
+  const outros = criterios.filter((c) => c.peso !== "must");
+  return (
+    <section className="elev elev-top relative rounded-card border border-line bg-card p-4">
+      <h2 className="font-medium text-ink text-sm">Critérios que pedem sempre</h2>
+      <p className="mt-0.5 text-ink-3 text-xs">
+        Viram linhas de rubric na avaliação dos candidatos.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {must.map((c) => (
+          <Chip key={c.criterio} tone="strong">
+            {c.criterio}
+          </Chip>
+        ))}
+        {outros.map((c) => (
+          <Chip key={c.criterio} tone="muted">
+            {c.criterio}
+          </Chip>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Reuniões/intake com o cliente — nota + excerto da transcrição (colapsável). */
+function ReunioesSection({ reunioes }: { reunioes: ClienteReuniao[] }) {
+  if (reunioes.length === 0) {
+    return null;
+  }
+  return (
+    <section className="elev elev-top relative overflow-hidden rounded-card border border-line bg-card">
+      <header className="flex items-center justify-between border-line-subtle border-b px-4 py-3">
+        <h2 className="font-medium text-ink text-sm">Reuniões & intake</h2>
+        <span className="text-ink-3 text-xs">transcrições</span>
+      </header>
+      <ul className="flex flex-col divide-y divide-line-subtle">
+        {reunioes.map((r) => (
+          <li key={r.titulo} className="px-4 py-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-ink text-sm">{r.titulo}</p>
+              {r.data ? <Chip tone="muted">{r.data}</Chip> : null}
+            </div>
+            {r.excerto ? (
+              <details className="mt-2">
+                <summary className="cursor-pointer list-none text-accent-ink text-xs hover:underline [&::-webkit-details-marker]:hidden">
+                  Ver excerto da transcrição
+                </summary>
+                <blockquote className="mt-2 rounded-md bg-raised p-3 text-ink-2 text-sm italic leading-relaxed">
+                  {r.excerto}
+                </blockquote>
+              </details>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -110,6 +179,10 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <FactosReuniao factos={cliente.factos} />
+
+      <CriteriosSection criterios={cliente.criterios} />
+
+      <ReunioesSection reunioes={cliente.reunioes} />
 
       <section className="flex flex-col gap-3">
         <h2 className="font-medium text-ink text-sm">Vagas deste cliente</h2>

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, isNull } from "drizzle-orm";
 
 type Db = DbHandle["db"];
 
@@ -29,9 +29,10 @@ export interface ClienteRow {
   sector: string | null;
   logoUrl: string | null;
   numVagas: number;
+  numCandidatos: number;
 }
 
-/** Lista os clientes (não apagados) da agência, com setor + nº de vagas abertas. */
+/** Lista os clientes (não apagados) da agência, com setor + nº de vagas + candidatos no funil. */
 export function listClientes(db: Db, agencyId: string): Promise<ClienteRow[]> {
   return db
     .select({
@@ -39,12 +40,17 @@ export function listClientes(db: Db, agencyId: string): Promise<ClienteRow[]> {
       name: schema.client.name,
       sector: schema.client.sector,
       logoUrl: schema.client.logoUrl,
-      numVagas: count(schema.job.id),
+      numVagas: countDistinct(schema.job.id),
+      numCandidatos: countDistinct(schema.process.id),
     })
     .from(schema.client)
     .leftJoin(
       schema.job,
       and(eq(schema.job.clientId, schema.client.id), isNull(schema.job.deletedAt)),
+    )
+    .leftJoin(
+      schema.process,
+      and(eq(schema.process.jobId, schema.job.id), isNull(schema.process.deletedAt)),
     )
     .where(and(eq(schema.client.agencyId, agencyId), isNull(schema.client.deletedAt)))
     .groupBy(schema.client.id)
@@ -63,6 +69,18 @@ export interface ClienteFacto {
   factText: string;
 }
 
+export interface ClienteCriterio {
+  criterio: string;
+  peso: string; // must | normal | nice
+}
+
+/** Reunião/intake com o cliente — nota + excerto da transcrição (proveniência do facto). */
+export interface ClienteReuniao {
+  titulo: string;
+  data: string | null;
+  excerto: string | null;
+}
+
 export interface ClienteDetail {
   id: string;
   name: string;
@@ -73,6 +91,10 @@ export interface ClienteDetail {
   vagas: ClienteVaga[];
   /** O que sabemos deste cliente (de reuniões/intake): valoriza, não aceita, contexto. */
   factos: ClienteFacto[];
+  /** Critérios que este cliente pede sempre (viram rubric). */
+  criterios: ClienteCriterio[];
+  /** Reuniões/intake registadas (com excerto de transcrição). */
+  reunioes: ClienteReuniao[];
 }
 
 /** Ficha do cliente: perfil + as suas vagas (cada uma com nº de candidatos no funil). */
@@ -123,10 +145,12 @@ export async function getCliente(
     .groupBy(schema.job.id)
     .orderBy(desc(schema.job.createdAt));
 
-  const factos = await db
+  const allFacts = await db
     .select({
       factType: schema.clientMemoryFact.factType,
       factText: schema.clientMemoryFact.factText,
+      sourceRef: schema.clientMemoryFact.sourceRef,
+      sourceSnippet: schema.clientMemoryFact.sourceSnippet,
     })
     .from(schema.clientMemoryFact)
     .where(
@@ -138,5 +162,27 @@ export async function getCliente(
     )
     .orderBy(desc(schema.clientMemoryFact.createdAt));
 
-  return { ...c, vagas, factos };
+  const factos: ClienteFacto[] = allFacts
+    .filter((f) => f.factType !== "meeting")
+    .map((f) => ({ factType: f.factType, factText: f.factText }));
+  const reunioes: ClienteReuniao[] = allFacts
+    .filter((f) => f.factType === "meeting")
+    .map((f) => ({ titulo: f.factText, data: f.sourceRef, excerto: f.sourceSnippet }));
+
+  const criterios: ClienteCriterio[] = await db
+    .select({
+      criterio: schema.clientCriteria.criterio,
+      peso: schema.clientCriteria.peso,
+    })
+    .from(schema.clientCriteria)
+    .where(
+      and(
+        eq(schema.clientCriteria.clientId, id),
+        eq(schema.clientCriteria.agencyId, agencyId),
+        isNull(schema.clientCriteria.deletedAt),
+      ),
+    )
+    .orderBy(desc(schema.clientCriteria.createdAt));
+
+  return { ...c, vagas, factos, criterios, reunioes };
 }

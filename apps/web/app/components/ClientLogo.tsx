@@ -1,3 +1,4 @@
+import { ClientLogoImg } from "./ClientLogoImg";
 import { initials } from "./EntityList";
 
 /**
@@ -39,20 +40,8 @@ interface ClientLogoProps {
 }
 
 export function ClientLogo({ name, logoUrl, size = 36 }: ClientLogoProps) {
-  if (logoUrl) {
-    return (
-      // biome-ignore lint/performance/noImgElement: logo externo do cliente (futuro), sem otimização Next.
-      <img
-        src={logoUrl}
-        alt=""
-        aria-hidden="true"
-        className="flex-none rounded-[10px] border border-line object-cover"
-        style={{ width: size, height: size }}
-      />
-    );
-  }
   const c = colorFor(name);
-  return (
+  const monogram = (
     <span
       aria-hidden="true"
       className="inline-flex flex-none items-center justify-center rounded-[10px] font-display font-semibold uppercase"
@@ -67,4 +56,12 @@ export function ClientLogo({ name, logoUrl, size = 36 }: ClientLogoProps) {
       {initials(name)}
     </span>
   );
+  if (logoUrl) {
+    return (
+      <ClientLogoImg src={logoUrl} size={size}>
+        {monogram}
+      </ClientLogoImg>
+    );
+  }
+  return monogram;
 }
