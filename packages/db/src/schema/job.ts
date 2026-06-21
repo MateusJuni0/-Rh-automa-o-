@@ -30,6 +30,9 @@ export const job = pgTable("job", {
   title: text("title").notNull(),
   roleTypeSlug: text("role_type_slug").notNull(),
   requirements: jsonb("requirements").notNull().default({}),
+  // Ficha completa da vaga (recrutador): condições, processo, responsabilidades — tudo o que a
+  // Filipa precisa para responder ao candidato. Preenchida pela Vera (do pedido do cliente) e editável.
+  details: jsonb("details").notNull().default({}),
   status: text("status").notNull().default("active"), // active|closed|paused
   nVagas: integer("n_vagas").notNull().default(1), // §11 contratação em volume
   createdAt: createdAt(),

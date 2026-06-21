@@ -7,7 +7,7 @@
  *     pnpm --filter web exec tsx scripts/seed-real.ts
  */
 import { createDb, schema } from "@rh/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 const AGENCY = "11111111-0000-4000-8000-000000000001";
 const FILIPA = "22222222-0000-4000-8000-000000000001";
@@ -254,6 +254,123 @@ const COMPANIES: Company[] = [
   },
 ];
 
+interface CompanyDetails {
+  modeloTrabalho: string;
+  horario: string;
+  contrato: string;
+  idiomas: string[];
+  visaRelocation: string;
+  beneficios: string[];
+  processoEntrevista: string[];
+  equipa: string;
+}
+
+const DETAILS_BY_COMPANY: Record<string, CompanyDetails> = {
+  Feedzai: {
+    modeloTrabalho: "Híbrido (Coimbra/Lisboa, 2 dias no escritório)",
+    horario: "Flexível, core 11h-16h (WET). 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Apoio a relocation para Portugal; sem patrocínio de visto fora da UE",
+    beneficios: [
+      "Seguro de saúde",
+      "Stock options",
+      "Orçamento de formação + conferências",
+      "25 dias de férias",
+    ],
+    processoEntrevista: [
+      "Triagem de CV (Filipa)",
+      "Entrevista técnica (1h)",
+      "Case / system design",
+      "Cultural + oferta",
+    ],
+    equipa: "Squad de 6-8 engenheiros; reporta ao Engineering Manager",
+  },
+  Talkdesk: {
+    modeloTrabalho: "Remoto na Europa, ou híbrido em Lisboa",
+    horario: "Flexível; equipa global, sobreposição com fuso da Europa",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês fluente"],
+    visaRelocation: "Sem patrocínio de visto fora da UE",
+    beneficios: ["Seguro de saúde", "RSUs (ações)", "Orçamento de equipamento", "Férias flexíveis"],
+    processoEntrevista: [
+      "Triagem",
+      "Entrevista técnica",
+      "System design",
+      "Hiring manager + oferta",
+    ],
+    equipa: "Equipa distribuída; reporta a Engineering Manager",
+  },
+  Unbabel: {
+    modeloTrabalho: "Híbrido em Lisboa (2 dias no escritório)",
+    horario: "Flexível, core 10h-16h. 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Apoio a relocation para Lisboa",
+    beneficios: ["Seguro de saúde", "Stock options", "Almoços no escritório", "Formação"],
+    processoEntrevista: [
+      "Triagem",
+      "Entrevista técnica",
+      "Conversa com a equipa de research",
+      "Oferta",
+    ],
+    equipa: "Equipa de research + produto (NLP)",
+  },
+  OutSystems: {
+    modeloTrabalho: "Híbrido em Lisboa (3 dias no escritório)",
+    horario: "Flexível, com presença no horário central. 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)"],
+    visaRelocation: "Apoio a relocation para Portugal",
+    beneficios: ["Seguro de saúde", "Bónus anual", "Plano de carreira estruturado", "Ginásio"],
+    processoEntrevista: [
+      "Triagem",
+      "Problema de algoritmia",
+      "Entrevista técnica + design",
+      "Oferta",
+    ],
+    equipa: "Equipa de core product; reporta a Tech Lead",
+  },
+  "Sword Health": {
+    modeloTrabalho: "Remoto, ou híbrido no Porto",
+    horario: "Flexível. Ambiente de hiper-crescimento.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Sem patrocínio de visto",
+    beneficios: ["Seguro de saúde", "Stock options", "Programa de bem-estar", "Trabalho remoto"],
+    processoEntrevista: ["Triagem", "Entrevista técnica", "Case prático", "Cultural + oferta"],
+    equipa: "Squad clínico (produto); reporta a Engineering Manager",
+  },
+  Remote: {
+    modeloTrabalho: "100% remoto (qualquer país com fuso compatível)",
+    horario: "Assíncrono; sem horário fixo. Documentação no centro.",
+    contrato: "Contractor ou efetivo, via Remote (conforme o país)",
+    idiomas: ["Inglês fluente (escrito)"],
+    visaRelocation: "Trabalha de qualquer parte do mundo",
+    beneficios: ["Remoto total", "Stock options", "Orçamento de coworking", "Férias flexíveis"],
+    processoEntrevista: [
+      "Candidatura + take-home",
+      "Entrevista técnica",
+      "Conversa de equipa",
+      "Oferta",
+    ],
+    equipa: "Equipa totalmente distribuída e assíncrona",
+  },
+};
+
+/** Faixa salarial bruta anual (EUR) por nível — realista para tech sénior em PT. */
+function salarioFor(nivel: string, company: string): [number, number] {
+  const base: Record<string, [number, number]> = {
+    lead: [62000, 95000],
+    senior: [48000, 72000],
+    pleno: [40000, 58000],
+    junior: [30000, 42000],
+  };
+  const [lo, hi] = base[nivel] ?? base.pleno ?? [40000, 58000];
+  // Remote (remote-first global) paga acima da média do mercado PT.
+  return company === "Remote" ? [lo + 12000, hi + 18000] : [lo, hi];
+}
+
 const hex = (n: number, len: number): string => String(n).padStart(len, "0");
 
 async function main(): Promise<void> {
@@ -290,6 +407,15 @@ async function main(): Promise<void> {
         .set({ name: co.name, ...profile })
         .where(eq(schema.client.id, clientId));
 
+      const oldJobIds = (
+        await db
+          .select({ id: schema.job.id })
+          .from(schema.job)
+          .where(eq(schema.job.clientId, clientId))
+      ).map((r) => r.id);
+      if (oldJobIds.length > 0) {
+        await db.delete(schema.process).where(inArray(schema.process.jobId, oldJobIds));
+      }
       await db.delete(schema.job).where(eq(schema.job.clientId, clientId));
       let ji = 0;
       for (const role of co.roles) {
@@ -302,9 +428,36 @@ async function main(): Promise<void> {
           .replace(/[̀-ͯ]/g, "")
           .replace(/[^a-z0-9]+/g, "_")
           .slice(0, 40);
-        const nivel = /senior|sénior|staff|lead|principal/.test(role.title.toLowerCase())
-          ? "senior"
-          : "pleno";
+        const lower = role.title.toLowerCase();
+        const nivel = /staff|lead|head|principal/.test(lower)
+          ? "lead"
+          : /senior|sénior/.test(lower)
+            ? "senior"
+            : "pleno";
+        const [salarioMin, salarioMax] = salarioFor(nivel, co.name);
+        const cd = DETAILS_BY_COMPANY[co.name];
+        const details = cd
+          ? {
+              modeloTrabalho: cd.modeloTrabalho,
+              localizacao: co.location,
+              horario: cd.horario,
+              salarioMin,
+              salarioMax,
+              moeda: "EUR",
+              contrato: cd.contrato,
+              idiomas: cd.idiomas,
+              visaRelocation: cd.visaRelocation,
+              dataInicio: "ASAP",
+              beneficios: cd.beneficios,
+              processoEntrevista: cd.processoEntrevista,
+              responsabilidades: [
+                role.contexto,
+                `Domínio diário de ${role.must.slice(0, 2).join(" e ")}.`,
+                "Colaboração próxima com produto e a equipa de engenharia.",
+              ],
+              equipa: cd.equipa,
+            }
+          : {};
         await db
           .insert(schema.job)
           .values({
@@ -320,11 +473,14 @@ async function main(): Promise<void> {
               skills: { must: role.must, nice: role.nice },
               contexto: role.contexto,
             },
+            details,
           })
           .onConflictDoNothing();
       }
 
-      await db.delete(schema.clientMemoryFact).where(eq(schema.clientMemoryFact.clientId, clientId));
+      await db
+        .delete(schema.clientMemoryFact)
+        .where(eq(schema.clientMemoryFact.clientId, clientId));
       const facts: Array<{ t: string; text: string; ref?: string; snippet?: string }> = [
         ...co.valoriza.map((text) => ({ t: "preference", text })),
         { t: "rejection_reason", text: co.naoAceita },

@@ -6,6 +6,7 @@ import { schema } from "@rh/db";
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { aiOptions } from "./ai";
 import { heuristicRequirements } from "./cv-heuristics";
+import { heuristicVagaDetails, type JobDetails, parseJobDetails } from "./vaga-details";
 
 type Db = DbHandle["db"];
 
@@ -45,8 +46,23 @@ export async function createVaga(
     title: input.title,
     roleTypeSlug: requirements.roleType,
     requirements,
+    // Auto-preenchimento da ficha (heurístico sem chave; IA real com chave). A Filipa revê/edita.
+    details: heuristicVagaDetails(input.requirementsText),
   });
   return { id, requirements };
+}
+
+/** A Filipa atualiza a ficha da vaga (condições/processo/responsabilidades). Predicado por agência. */
+export async function updateVagaDetails(
+  db: Db,
+  agencyId: string,
+  id: string,
+  details: JobDetails,
+): Promise<void> {
+  await db
+    .update(schema.job)
+    .set({ details })
+    .where(and(eq(schema.job.id, id), eq(schema.job.agencyId, agencyId)));
 }
 
 export interface VagaRow {
@@ -142,6 +158,8 @@ export interface VagaDetail {
   clientSector: string | null;
   clientLocation: string | null;
   requirements: JobRequirements;
+  /** Ficha completa da vaga (condições, processo, responsabilidades) — o que a Filipa precisa. */
+  details: JobDetails;
   /** Critérios que o cliente pede sempre (rubric herdada da ficha do cliente). */
   clientCriterios: VagaCriterio[];
 }
@@ -161,6 +179,7 @@ export async function getVaga(db: Db, agencyId: string, id: string): Promise<Vag
       title: schema.job.title,
       roleTypeSlug: schema.job.roleTypeSlug,
       requirements: schema.job.requirements,
+      details: schema.job.details,
       clientId: schema.client.id,
       clientName: schema.client.name,
       clientLogoUrl: schema.client.logoUrl,
@@ -201,6 +220,7 @@ export async function getVaga(db: Db, agencyId: string, id: string): Promise<Vag
     clientSector: row.clientSector,
     clientLocation: row.clientLocation,
     requirements: parsed.success ? parsed.data : EMPTY_REQUIREMENTS,
+    details: parseJobDetails(row.details),
     clientCriterios,
   };
 }

@@ -36,6 +36,13 @@
       "when": 1782047510869,
       "tag": "0004_lazy_chronomancer",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782050573980,
+      "tag": "0005_keen_rocket_racer",
+      "breakpoints": true
     }
   ]
 }

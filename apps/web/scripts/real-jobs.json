@@ -28,26 +28,12 @@
       {
         "title": "Senior Independent AI Engineer / Architect",
         "requirements": "Senior Independent AI Engineer / Architect Remote | Americas, Europe, or Israel Most AI engineers can find work. Finding work worth doing is harder. A.Team is an invite-only network of senior AI engineers, ML engineers, and AI architects building production AI systems for startups, enterprises, and global companies. Since 2020, builders in the network have earned more than $200M working with companies including Lyft, Google X, HCA, Unilever, Sightful, D-ID, and others. The Work You'll join small teams solving real problems. Not demos. Not proof-of-concepts that never ship. Not another thin wrapper around an API. Recent work has included: AI-native products built from 0→1 Agent architectures and orchestration systems Enterprise AI deployment",
-        "tags": [
-          "go",
-          "UI/UX",
-          "wordpress",
-          "chat",
-          "apple",
-          "testing"
-        ]
+        "tags": ["go", "UI/UX", "wordpress", "chat", "apple", "testing"]
       },
       {
         "title": "Senior Independent Software Developer",
         "requirements": "You must be located in the Americas, Europe, or Israel to apply. A·Team is a VC-backed, stealth, application-only home on the internet for senior independent software builders to team up with hand-picked, high-growth companies on their next big thing. After talking with hundreds of independent engineers, designers, and product folks, we heard over and over that finding vetted, high-quality, consistent clients is hard, and projects are often too small to be rewarding. A·Team matches small teams of the most talented builders in the world with companies backed by a16z, YC, Softbank, General Catalyst, etc. on a contract basis for many of their most important initiatives. We quietly launched in May 2020, and have helped A·Teamers earn $85+ milli",
-        "tags": [
-          "go",
-          "wordpress",
-          "chat",
-          "apple",
-          "testing",
-          "catalyst"
-        ]
+        "tags": ["go", "wordpress", "chat", "apple", "testing", "catalyst"]
       }
     ]
   },
@@ -60,14 +46,7 @@
       {
         "title": "Frontend Developer",
         "requirements": "(All applications will be considered ONLY through Wellfound. Please do not contact any employee of the company as no such contact/connection will be considered as an application for the job.) This posting is for a Frontend Developer, you would work alongside our team. We are a fully remote team so it does not matter which country or time zone you are in, as long as you are available from 10 AM to 1 PM (EST). We are NOT looking for part-time work, contractors, software development companies or consultants, so please only apply if you're looking for a full-time position. Quinncia is a career readiness platform that improves college student outcomes by improving students' resumes and interview skills using our AI. Quinncia allows career servic",
-        "tags": [
-          "CSS",
-          "docker",
-          "frontend",
-          "graphql",
-          "javascript",
-          "react js"
-        ]
+        "tags": ["CSS", "docker", "frontend", "graphql", "javascript", "react js"]
       }
     ]
   },
@@ -80,14 +59,7 @@
       {
         "title": "Tech Lead Full-Stack Rails Engineer",
         "requirements": "About Mitre Media Mitre Media is redefining FinTech with AI-driven tools that empower millions of investors. Our portfolio, including Dividend.com and MutualFunds.com, leverages LLMs to deliver novel data insights and visually rich user experiences. For over a decade, we’ve served individual investors, financial advisors, and top asset managers like BlackRock and Vanguard through our premium data, tools, and advertising solutions. Join our lean, entrepreneurial team to shape the future of AI-powered investing from your location ±3 hours from Eastern Time. Our users are deeply engaged, spending over 5 minutes per visit with a bounce rate below 10%, researching investments across hundreds of different categories. With 40 million brokerage acc",
-        "tags": [
-          "api",
-          "CSS",
-          "docker",
-          "elasticsearch",
-          "fullstack",
-          "html"
-        ]
+        "tags": ["api", "CSS", "docker", "elasticsearch", "fullstack", "html"]
       }
     ]
   },
@@ -100,24 +72,12 @@
       {
         "title": "Head of Engineering",
         "requirements": "About Lemon.io Lemon.io is a profitable, growing talent marketplace that connects vetted senior engineers with companies that need them. We’ve been in business for 10 years, have 60 people across Ukraine, Europe, Canada, and the US, and process over $16M in annual GMV. We compress the traditional 2–5 week hiring timeline down to 24–48 hours through a curated, pre-vetted supply of developers. Hiring is still broken. Recruiters spend weeks building candidate pipelines on traditional platforms, burning energy on unqualified leads. We’re building the product that changes that. Giving recruiters qualified, vetted candidates within 24 hours without the grind. This is a pivotal moment: we’re transitioning from a services-driven marketplace to a te",
-        "tags": [
-          "AI/ML",
-          "startup",
-          "marketplace",
-          "fundraising"
-        ]
+        "tags": ["AI/ML", "startup", "marketplace", "fundraising"]
       },
       {
         "title": "Senior Data Scientist",
         "requirements": "Are you a talented Senior Data Scientist looking for a remote job that lets you show your skills and get decent compensation? Look no further than Lemon.io — the marketplace that connects you with hand-picked startups in the US and Europe. What we offer: The rate depends on your skills and experience. We've already paid out over $11M to our engineers. No more hunting for clients or negotiating rates — let us handle the business side of things so you can focus on what you do best. Choose a schedule that works best for you. It’s possible to communicate async or minimally overlap within team working hours. We respect your seniority so you can expect no micromanagement or screen trackers. Communicate directly with the clients. Most of them have",
-        "tags": [
-          "android",
-          "AWS",
-          "azure",
-          "C++",
-          "data science",
-          "golang"
-        ]
+        "tags": ["android", "AWS", "azure", "C++", "data science", "golang"]
       }
     ]
   },
@@ -130,14 +90,7 @@
       {
         "title": "iOS Developer",
         "requirements": "WHO ARE WE? At nooro, we're revolutionizing pain management for seniors. Our platform is transforming how older adults engage with pain management at home. We're on a mission to make wellness more accessible and effective through technology. Check our website here: https://nooro-us.com/ We're a fast-moving startup that works on quick iteration and bold decisions. Our team is lean, agile, and empowered to make meaningful impacts daily. If you enjoy a dynamic environment where ideas become a reality at lightning speed and you're not afraid to wear multiple hats, you'll fit right in. WHAT WILL YOU DO? - Own and drive the development of our iOS application - Build elegant, performant features using **Swift (We’re 100% Swift!)** and **SwiftUI** ",
-        "tags": [
-          "api",
-          "backend",
-          "git",
-          "ios",
-          "security",
-          "swift"
-        ]
+        "tags": ["api", "backend", "git", "ios", "security", "swift"]
       }
     ]
   }
