@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  Inbox,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { href: "/clientes", label: "Clientes", Icon: Building2 },
   { href: "/vagas", label: "Vagas", Icon: Briefcase },
   { href: "/candidatos", label: "Candidatos", Icon: Users },
+  { href: "/intake", label: "Entrada", Icon: Inbox },
   { href: "/assistente", label: "Assistente", Icon: MessageSquare },
   { href: "/onboarding", label: "Primeiros passos", Icon: Sparkles },
   { href: "/definicoes", label: "Definições", Icon: Settings },

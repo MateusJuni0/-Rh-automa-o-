@@ -34,7 +34,9 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 - **#9 SSRF guard em funil único** — `lib/net/guarded-fetch.ts`: `assertSafeUrl`/`isInternalHost` (recusa não-http(s), localhost, RFC1918/loopback/link-local/metadata `169.254.169.254`, IPv6 ULA/link-local, IPv4-mapped) + `guardedFetch` (redirect MANUAL + re-valida CADA `Location` → bloqueia bypass por 30x→IP interno). `vaga-import.ts` refatorado para o funil único. 5 testes (esquemas/IPs internos/públicos/mapped/malformado). SEGURANCA §2. Nota: pinning de IP pós-DNS (anti-rebinding total) = Fase Ω.
 
-Próximo na fila (loop): #3 porta de confirmação do Intake na WEB → #5b anonimizar cascata RGPD → #8 serialização família G → P2 (realtime-config, comparar selector, …).
+- **#3 Porta de confirmação do Intake na WEB** — `app/intake` (página + `IntakeInbox`): caixa de entrada que mostra o que a Vera ENTENDEU (alvo + intenção + excerto) de cada mensagem por confirmar e exige **[Confirmar]** antes de gravar (porta de segurança INTAKE Parte A — nada durável sem o OK da Filipa). Encaminhar mensagem → ingerir/classificar (stub); confirmar → cria candidato. `listPendingIntake` novo. Link "Entrada" na Sidebar (Inbox). 2 testes integração (pending→confirmado + idempotência). INTAKE Parte A.
+
+**RESTAM (fatias mais sensíveis/complexas — merecem contexto dedicado/fresco):** #5b anonimizar a cascata RGPD (preservar `placement_outcome`/`client_verdict` sem PII + redigir `assistant_action` — reescrita que muda o teste rgpd) · #8 serialização família G (§11.1: fila de re-atribuição + encerramento CAS + advisory-lock) · P2 (`realtime-config.ts`, selector no Comparar, candidato por LinkedIn+dedup, crons retenção, webhook Telegram, vaga por PDF, contexto ativo do assistente, `contradiction` write-path).
 
 ---
 

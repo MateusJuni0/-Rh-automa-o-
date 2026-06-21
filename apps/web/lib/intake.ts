@@ -3,7 +3,7 @@ import { classifyIntake } from "@rh/ai";
 import { type IntakeEnvelope, intakeEnvelope } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { aiOptions } from "./ai";
 import { createCandidato } from "./candidatos";
 import { DEV_RECRUITER_ID } from "./vagas";
@@ -57,6 +57,39 @@ export async function ingerirMensagem(
     entityType: entityTypeFor(envelope),
   });
   return { messageId, envelope };
+}
+
+export interface PendingIntake {
+  id: string;
+  source: string; // telegram|web_upload|email
+  alvo: string | null; // candidato|vaga|cliente
+  intencao: string | null; // novo_candidato|pergunta|…
+  /** Excerto do que chegou (para a Filipa rever antes de confirmar). */
+  preview: string;
+}
+
+/** Mensagens de intake POR CONFIRMAR (a porta de segurança: nada se grava sem a Filipa rever). */
+export async function listPendingIntake(db: Db, agencyId: string): Promise<PendingIntake[]> {
+  const rows = await db
+    .select({
+      id: schema.intakeMessage.id,
+      source: schema.intakeMessage.source,
+      alvo: schema.intakeMessage.alvo,
+      intencao: schema.intakeMessage.intencao,
+      rawText: schema.intakeMessage.rawText,
+    })
+    .from(schema.intakeMessage)
+    .where(
+      and(eq(schema.intakeMessage.agencyId, agencyId), isNull(schema.intakeMessage.confirmedAt)),
+    )
+    .orderBy(desc(schema.intakeMessage.createdAt));
+  return rows.map((r) => ({
+    id: r.id,
+    source: r.source,
+    alvo: r.alvo,
+    intencao: r.intencao,
+    preview: (r.rawText ?? "").trim().slice(0, 280),
+  }));
 }
 
 export interface ConfirmarParams {
