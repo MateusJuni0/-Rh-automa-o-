@@ -14,6 +14,23 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-21 (noite, cont.) — #5b anonimizar a cascata RGPD ═══
+**Feito + committado (`phase3/product`, `8f4c51e`).** `purgeCandidate` deixou de hard-deletar tudo: **apagar candidato = ANONIMIZAR** (DATA-RETENTION §3.2/§6, TESTES-ACEITACAO §277).
+- 🟢 **Preserva sem PII** o ground-truth: `client_verdict`+`placement_outcome` (limpa `reason`/`decline_reason`), `report` anonimizado (NULL no conteúdo livre, mantém veredito — §4 "report existe sem PII"), a `interview` do parecer (limpa `livekit_room`), o `interview_tick` das preservadas (limpa `live_state`/`suggestion`, **mantém custo/tokens** §1.6) e o `process`.
+- 🔴 **Apaga** a PII bruta: `transcript_chunk`, factos, CVs/docs, source-docs, `intake_message`, conversa do assistente, async-jobs, `agenda_event`, `contradiction`, e as entrevistas **sem parecer**.
+- ⚖️ **Redige** (mantém a linha): `assistant_action` (`args`/`result_ref`, solta `thread_id`) + `intake_session` (`messages_raw`/`extraction`).
+- **Anonimiza** o `candidate` (âncora anónima dos outcomes): `name`→`[anonimizado]`, email/phone/linkedin/nameNorm→NULL, `profile`→`{}`, carimba `anonymized_at`/`deleted_at`. Rota DELETE usa `summary.anonymized` p/ o 404.
+
+**Decisão (correção ao próprio handoff):** o RETOMA.md dizia "apagar reports + nullar `client_verdict.report_id`". Segui a **spec literal** (§4/§6 "report existe sem PII") e **anonimizei o report in-place** (mais fiel; dispensa mexer na FK). **Partição keep/drop:** preservam-se as entrevistas COM parecer (FK report→interview); apagam-se as sem parecer (inclui órfãs).
+
+**Review adversarial** (security-reviewer + code-reviewer, paralelos): **0 CRITICAL**. Corrigidos os HIGH/MEDIUM de PII (`livekit_room`, `result_ref`, `intake_session.messages_raw`, `interview_tick` custo §1.6) e contagens de auditoria fiáveis (`contradiction`/`async_job` sem double-count). **Rejeitada** (com razão) a sugestão de pôr `agencyId` no NULL-out de `based_on_document_id` (limpar cross-agency é necessário p/ não deixar FK pendente). **Diferido p/ Ω:** redação-com-hash do `transcript_chunk`, isolamento SERIALIZABLE.
+
+**Verde:** 173 testes (44 ficheiros), typecheck, Biome (363 fich.), `next build`. Também `chore eb51b6e`: formatou `transcript.integration.test.ts` (lapso da #6 que falhava o `biome check .` completo).
+
+**RESTAM:** #8 serialização família G (§11.1) · P2.
+
+---
+
 ## ═══ Sessão 2026-06-21 (noite) — LOOP de fecho de gaps vs specs (análise 360 + implementação) ═══
 **Análise completa spec↔código (3 agentes paralelos: web/UI · dados/realtime · auth/segurança/RGPD).** Veredito: o **schema (35 tabelas) está ~100%** e a jornada Triagem→Briefing→Entrevista→Parecer está demonstrável. Os gaps reais (v1, construíveis com MOCK, SEM chaves) são fluxos human-in-the-loop sem UI + write-paths de runtime + gates que ficaram por ligar:
 
@@ -26,7 +43,7 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 - **#2 Onboarding 1º uso (Tela 11)** — lista CONVERSACIONAL que aprende o estilo/preferências do recrutador → `recruiter_memory_fact` (kinds style/preference/pattern/template), com eco "Anotei que…", saltável + removível, e painel "O que a Vera já sabe de ti". Reusa o backend de memória (`saveMemoryFact`/`listMemoryFacts`) + novos `getMemoryFactById`/`deleteMemoryFact` (soft-delete, isolado por agency+recruiter). Rota `app/api/onboarding` (GET/POST/DELETE), `lib/onboarding.ts` (7 perguntas testáveis), link "Primeiros passos" na Sidebar (ícone Sparkles). TDD 6 testes (3 puros + 3 integração c/ isolamento) + review adversarial (0 CRITICAL; HIGH=corrida no eco → busca por id exato; MEDIUM enum→derivado de `MEMORY_FACT_KINDS` — corrigidos). E2E verificado no Chrome. ASSISTENTE-PESSOAL §4.1 / UI-DESIGN Tela 11.
 - **#4 Gate de consentimento (`assertCaptureAllowed`)** — `apps/web/lib/consent.ts` (puro: captura real `bot_online`/`local_mic` exige `consent='dado'`; `none` passa sempre). Ligado a `createInterview` (lê `process.consent_status`, recusa captura sem consentimento). TDD: 5 testes unitários + 2 de integração, todos verdes. SEGURANCA §5 / LEGAL §6 / TESTES-ACEITACAO §275/§308.
 
-- **#5 Purga RGPD executável (rota + porta de confirmação)** — `DELETE /api/candidatos/[id]` torna o direito ao esquecimento (Art.17, DATA-RETENTION §3) ACIONÁVEL: exige `{confirm:true}` (irreversível), chama `purgeCandidate` (cascata transacional isolada por agência). E2E: sem confirm→400, confirm+inexistente→404 (no-op isolado), id malformado→400. ⚠️ **#5b POR FAZER (DATA-RETENTION §3.2):** a cascata hard-deleta `placement_outcome`/`client_verdict`; o contrato pede ANONIMIZAR o candidato preservando esse ground-truth da calibração (sem PII) + REDIGIR `assistant_action` (não apagar a linha). É reescrita sensível (muda o teste rgpd) → fatia dedicada. A atual é PII-safe (apaga a mais, nunca vaza).
+- **#5 Purga RGPD executável (rota + porta de confirmação)** — `DELETE /api/candidatos/[id]` torna o direito ao esquecimento (Art.17, DATA-RETENTION §3) ACIONÁVEL: exige `{confirm:true}` (irreversível), chama `purgeCandidate` (cascata transacional isolada por agência). E2E: sem confirm→400, confirm+inexistente→404 (no-op isolado), id malformado→400. ✅ **#5b FEITA** (`8f4c51e`, ver entrada no topo): a cascata passou a ANONIMIZAR o candidato preservando o ground-truth (`placement_outcome`/`client_verdict`/`report`) sem PII + REDIGIR `assistant_action`.
 
 - **#6 Persistência da Camada A (`transcript_chunk`)** — `lib/transcript.ts`: `persistChunk` (write-path da FONTE DE VERDADE, com selo de não-repúdio hash-chain por entrevista §15.8: `content_hash = sha256(prev_hash | conteúdo canónico)`) + `verifyChunkChain` (tamper-evident: editar um chunk no Postgres quebra a cadeia). 2 testes de integração (encadeamento + prova de adulteração, SEGURANCA §13.b). Falta só o wiring ao TickEngine/STT mock (Fase Ω alimenta) — o write-path + a verificação estão prontos. ARQUITETURA-TEMPO-REAL §8 / MODELO-DADOS §2/§15.8.
 
@@ -36,7 +53,7 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 
 - **#3 Porta de confirmação do Intake na WEB** — `app/intake` (página + `IntakeInbox`): caixa de entrada que mostra o que a Vera ENTENDEU (alvo + intenção + excerto) de cada mensagem por confirmar e exige **[Confirmar]** antes de gravar (porta de segurança INTAKE Parte A — nada durável sem o OK da Filipa). Encaminhar mensagem → ingerir/classificar (stub); confirmar → cria candidato. `listPendingIntake` novo. Link "Entrada" na Sidebar (Inbox). 2 testes integração (pending→confirmado + idempotência). INTAKE Parte A.
 
-**RESTAM (fatias mais sensíveis/complexas — merecem contexto dedicado/fresco):** #5b anonimizar a cascata RGPD (preservar `placement_outcome`/`client_verdict` sem PII + redigir `assistant_action` — reescrita que muda o teste rgpd) · #8 serialização família G (§11.1: fila de re-atribuição + encerramento CAS + advisory-lock) · P2 (`realtime-config.ts`, selector no Comparar, candidato por LinkedIn+dedup, crons retenção, webhook Telegram, vaga por PDF, contexto ativo do assistente, `contradiction` write-path).
+**RESTAM (fatias mais sensíveis/complexas — merecem contexto dedicado/fresco):** #8 serialização família G (§11.1: fila de re-atribuição + encerramento CAS + advisory-lock) · P2 (`realtime-config.ts`, selector no Comparar, candidato por LinkedIn+dedup, crons retenção, webhook Telegram, vaga por PDF, contexto ativo do assistente, `contradiction` write-path).
 
 ---
 
