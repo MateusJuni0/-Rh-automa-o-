@@ -14,6 +14,12 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 (cont.) — P2: dedup de candidatos ═══
+**Feito + committado (`phase3/product`, `81027e9`).** `createCandidato` faz **dedup** (§12 ALTO5) por chaves FORTES (linkedinUrl/email) antes de criar — resolve para o candidato existente (`deduped:true`) em vez de duplicar o talent pool global; o nome NÃO funde (homónimos). Persiste `email`/`phone` nas colunas (chaves de resolução). Anonimizados (chaves NULL pós-#5b) nunca são re-encontrados (RGPD-safe). `confirmarIntake` + rota POST refletem `deduped` (created:false / 200). Auto-revisão (fatia contida, 5 testes). Conhecido p/ Fase N: `UNIQUE` em email/linkedin (race em criação concorrente — irrelevante em v1, criação human-in-the-loop).
+**Verde:** 183 testes (46 ficheiros), typecheck, Biome (366 fich.), `next build`.
+
+---
+
 ## ═══ Sessão 2026-06-22 — #8 serialização família G (§11.1) ═══
 **Feito + committado (`phase3/product`, `ec61091`).** Primitivas de serialização da família G (invariante de runtime, SEM schema novo):
 - **Guard do escritor único pós-encerramento** (§11.1/1+3): `persistTick`/`persistChunk` serializam numa transação com **FOR UPDATE** na entrevista — o CAS de encerramento (`transitionInterview`, já existia) concorrente espera; após `done` a escrita recusa-se (`persistTick`→`{persisted:false, reason}`; `persistChunk`→lança `InterviewClosedError`). Fecha a janela check-then-insert + serializa a hash-chain (sem `seq` duplicado).
