@@ -14,6 +14,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 — #8 serialização família G (§11.1) ═══
+**Feito + committado (`phase3/product`, `ec61091`).** Primitivas de serialização da família G (invariante de runtime, SEM schema novo):
+- **Guard do escritor único pós-encerramento** (§11.1/1+3): `persistTick`/`persistChunk` serializam numa transação com **FOR UPDATE** na entrevista — o CAS de encerramento (`transitionInterview`, já existia) concorrente espera; após `done` a escrita recusa-se (`persistTick`→`{persisted:false, reason}`; `persistChunk`→lança `InterviewClosedError`). Fecha a janela check-then-insert + serializa a hash-chain (sem `seq` duplicado).
+- **`withCandidateLock`** (§11.1/4, `lib/serialize.ts`): advisory lock por `candidate_id` (`pg_advisory_xact_lock` + `hashtextextended`) p/ a entidade global partilhada.
+- **`createTickPersister`** só avança o contador quando o tick é escrito (sem buracos na sequência monótona).
+
+Review adversarial (database-reviewer + code-reviewer, paralelos): **0 CRITICAL**. Aplicadas: FOR UPDATE (TOCTOU), `hashtextextended` (colisões int4), contador monótono, `reason`s distintos, teste de lock-em-erro. **Diferido p/ Ω:** fila de re-atribuição (§11.1/2 — precisa do worker realtime). §11.1/5 (destilação durável) já foi a #7.
+
+**Verde:** 178 testes (45 ficheiros), typecheck, Biome (365 fich.), `next build`.
+
+**RESTAM:** P2 (`realtime-config.ts`, selector no Comparar, LinkedIn+dedup, crons retenção, webhook Telegram, vaga por PDF, contexto ativo do assistente, ligar persistChunk/distillFinal ao TickEngine).
+
+---
+
 ## ═══ Sessão 2026-06-21 (noite, cont.) — #5b anonimizar a cascata RGPD ═══
 **Feito + committado (`phase3/product`, `8f4c51e`).** `purgeCandidate` deixou de hard-deletar tudo: **apagar candidato = ANONIMIZAR** (DATA-RETENTION §3.2/§6, TESTES-ACEITACAO §277).
 - 🟢 **Preserva sem PII** o ground-truth: `client_verdict`+`placement_outcome` (limpa `reason`/`decline_reason`), `report` anonimizado (NULL no conteúdo livre, mantém veredito — §4 "report existe sem PII"), a `interview` do parecer (limpa `livekit_room`), o `interview_tick` das preservadas (limpa `live_state`/`suggestion`, **mantém custo/tokens** §1.6) e o `process`.

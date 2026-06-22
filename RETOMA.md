@@ -2,10 +2,10 @@
 
 > Handoff do loop de fecho de gaps da Vera. Lê isto + o **topo do `BUILD-LOG.md`** (tem a fila completa + os contratos exatos de cada fatia que falta). Detalhe total: `~/.claude/sessions/2026-06-21-vera-gaps-loop-session.tmp`.
 
-## Estado (2026-06-21)
-- Branch **`phase3/product`**, HEAD `eb51b6e` (`8f4c51e` #5b + `eb51b6e` chore format). **Committado localmente — ⚠️ PUSH PENDENTE do OK do Mateus.**
-- **9 fatias de gaps FEITAS + verdes:** bug-dos-cliques (loading.tsx) · #4 consentimento · #1 Q&A por entidade (Tela 8) · #2 onboarding (Tela 11) · #5 purga RGPD (rota) · **#5b anonimizar a cascata RGPD** · #6 Camada A (hash-chain) · #7 destilação durável · #9 SSRF · #3 intake confirm UI.
-- **Verde:** 173 testes (44 ficheiros) · `next build` · typecheck · Biome (363 fich.).
+## Estado (2026-06-22)
+- Branch **`phase3/product`**, HEAD `ec61091`, tudo pushed, árvore limpa.
+- **10 fatias de gaps FEITAS + verdes:** bug-dos-cliques (loading.tsx) · #4 consentimento · #1 Q&A por entidade (Tela 8) · #2 onboarding (Tela 11) · #5 purga RGPD (rota) · **#5b anonimizar a cascata RGPD** · **#8 serialização família G (§11.1)** · #6 Camada A (hash-chain) · #7 destilação durável · #9 SSRF · #3 intake confirm UI.
+- **Verde:** 178 testes (45 ficheiros) · `next build` · typecheck · Biome (365 fich.).
 
 ## ⚠️ Regras que NÃO podes esquecer
 - **NÃO recriar `apps/web/app/loading.tsx`** — era a causa do "bug dos cliques" em produção (boundary Suspense raiz + force-dynamic faz o `next start` engolir a navegação ~50%). Servidor é `next start` SEM ele.
@@ -13,13 +13,14 @@
 - Disciplina por fatia: karpathy → TDD onde aplicável → typecheck/Biome/`next build` verdes → review adversarial (code-reviewer) → commit em `phase3/product` → atualiza `BUILD-LOG.md`.
 - O heartbeat autónomo (cron/ScheduleWakeup) **não dispara** neste setup — continuação é por nudge.
 
-## ✅ #5b FEITA (`8f4c51e`) — anonimizar a cascata RGPD
-`purgeCandidate` deixou de hard-deletar tudo: apagar candidato = **ANONIMIZAR** (DATA-RETENTION §3.2/§6). Preserva o ground-truth sem PII (`client_verdict`/`placement_outcome`/`report` anonimizado/`interview` do parecer/`interview_tick` com custo §1.6), redige a auditoria (`assistant_action`+`intake_session`), apaga a PII bruta, anonimiza o candidato (âncora). **Nota:** divergi do plano antigo (que dizia "apagar reports") — segui a spec literal §4/§6 ("report existe sem PII") e anonimizei o report in-place. Review adversarial 0 CRITICAL. Detalhe no topo do `BUILD-LOG.md`.
+## ✅ FEITAS recentemente (detalhe no topo do `BUILD-LOG.md`)
+- **#5b** (`8f4c51e`) — apagar candidato = **ANONIMIZAR** (preserva calibração sem PII; report anonimizado in-place, spec §4/§6). 0 CRITICAL no review.
+- **#8** (`ec61091`) — serialização família G (§11.1): guard do escritor único pós-encerramento (`persistTick`/`persistChunk` com FOR UPDATE → recusam pós-`done`) + `withCandidateLock` (advisory lock por candidate) + contador de ticks monótono. **Fila de re-atribuição (§11.1/2) diferida p/ Ω** (precisa do worker realtime). 0 CRITICAL.
 
-## ▶️ PRÓXIMA fatia: #8 — serialização família G (ARQ §11.1) (COMPLEXO)
-Encerramento de processo com **CAS** (compare-and-set sobre `process.stage`/`closed_at`) + **fila de re-atribuição** de candidatos + **advisory-lock por candidate** (evita corridas em re-atribuição concorrente). Ler **ARQUITETURA-TEMPO-REAL §11.1** + **MODELO-DADOS** família G antes de tocar; mapear o que já existe (`process.stage`/`closedAt`, `async_job`) vs o que falta. TDD + review adversarial como nas anteriores.
-
-Depois: **P2** (`realtime-config.ts`, selector no Comparar, LinkedIn+dedup, crons retenção, webhook Telegram, vaga por PDF, contexto ativo do assistente, ligar `persistChunk`/`distillFinal` ao TickEngine).
+## ▶️ PRÓXIMA: P2 — gaps menores, escolher por valor/demonstrabilidade
+**v1-construíveis (sem chave):** selector no Comparar (UI) · candidato por LinkedIn+dedup (mock extração) · vaga por PDF (unpdf, como o CV) · contexto ativo do assistente (`active_context`) · crons de retenção (funções de purga por TTL testáveis; o *agendamento* é Ω).
+**Dependem de chave/infra (Ω):** `realtime-config.ts` (LiveKit/Soniox) · webhook Telegram (secret) · ligar `persistChunk`/`distillFinal` ao TickEngine (STT real).
+TDD + review adversarial por fatia, como nas anteriores.
 
 ## Ambiente
 ```
