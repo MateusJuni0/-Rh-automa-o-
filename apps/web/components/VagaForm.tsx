@@ -8,7 +8,7 @@ interface ClienteOption {
   id: string;
   name: string;
 }
-type Modo = "escrever" | "link";
+type Modo = "escrever" | "link" | "pdf";
 
 /**
  * Criar vaga: "Escrever" (cola/escreve os requisitos) OU "Importar de link" (a Vera vai buscar o
@@ -22,6 +22,7 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
   const [title, setTitle] = useState("");
   const [requirementsText, setRequirementsText] = useState("");
   const [url, setUrl] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [fetching, setFetching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,38 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
       setInfo("Importado. Revê e ajusta antes de criar.");
     } catch {
       setError("Erro de rede a buscar o link.");
+    } finally {
+      setFetching(false);
+    }
+  }
+
+  async function importarPdf(): Promise<void> {
+    if (!pdfFile || fetching) {
+      return;
+    }
+    setFetching(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", pdfFile);
+      const res = await fetch("/api/vagas/from-pdf", { method: "POST", body: fd });
+      const json: {
+        ok: boolean;
+        data?: { text: string; title: string | null };
+        error?: { message?: string };
+      } = await res.json().catch(() => ({ ok: false }));
+      if (!res.ok || !json.ok || !json.data) {
+        setError(json.error?.message ?? "Não consegui ler esse PDF.");
+        return;
+      }
+      setRequirementsText(json.data.text);
+      if (json.data.title && !title) {
+        setTitle(json.data.title);
+      }
+      setInfo("Importado do PDF. Revê e ajusta antes de criar.");
+    } catch {
+      setError("Erro de rede a ler o PDF.");
     } finally {
       setFetching(false);
     }
@@ -115,7 +148,7 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
         </Field>
 
         <div className="inline-flex gap-1 rounded-md border border-line bg-raised p-0.5 text-sm">
-          {(["escrever", "link"] as const).map((m) => (
+          {(["escrever", "link", "pdf"] as const).map((m) => (
             <button
               key={m}
               type="button"
@@ -124,7 +157,11 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
                 modo === m ? "bg-card text-ink" : "text-ink-2 hover:text-ink"
               }`}
             >
-              {m === "escrever" ? "Escrever" : "Importar de link"}
+              {m === "escrever"
+                ? "Escrever"
+                : m === "link"
+                  ? "Importar de link"
+                  : "Importar de PDF"}
             </button>
           ))}
         </div>
@@ -148,6 +185,40 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
                 disabled={fetching}
               >
                 {fetching ? "A buscar…" : "Buscar"}
+              </Button>
+            </div>
+          </Field>
+        ) : null}
+
+        {modo === "pdf" ? (
+          <Field label="PDF da vaga" hint="O descritivo/pedido em PDF. A Vera lê e pré-preenche.">
+            <div className="flex flex-col gap-2">
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-line border-dashed bg-surface px-3 py-5 text-center text-ink-3 text-sm transition-colors hover:border-accent hover:text-ink">
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="sr-only"
+                  onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
+                />
+                {pdfFile ? (
+                  <span className="text-ink">📄 {pdfFile.name}</span>
+                ) : (
+                  <>
+                    <span className="text-lg" aria-hidden="true">
+                      📎
+                    </span>
+                    <span>Escolhe um PDF</span>
+                  </>
+                )}
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => void importarPdf()}
+                disabled={fetching || !pdfFile}
+                className="self-start"
+              >
+                {fetching ? "A ler…" : "Importar do PDF"}
               </Button>
             </div>
           </Field>
