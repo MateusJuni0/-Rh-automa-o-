@@ -3,9 +3,9 @@
 > Handoff do loop de fecho de gaps da Vera. Lê isto + o **topo do `BUILD-LOG.md`** (tem a fila completa + os contratos exatos de cada fatia que falta). Detalhe total: `~/.claude/sessions/2026-06-21-vera-gaps-loop-session.tmp`.
 
 ## Estado (2026-06-22)
-- Branch **`phase3/product`**, HEAD `ac4524b` (+ docs), tudo pushed, árvore limpa.
-- **12 fatias de gaps FEITAS + verdes:** bug-dos-cliques (loading.tsx) · #4 consentimento · #1 Q&A por entidade (Tela 8) · #2 onboarding (Tela 11) · #5 purga RGPD (rota) · **#5b anonimizar a cascata RGPD** · **#8 serialização família G (§11.1)** · **dedup de candidatos (P2)** · **selector no Comparar (P2)** · #6 Camada A (hash-chain) · #7 destilação durável · #9 SSRF · #3 intake confirm UI.
-- **Verde:** 196 testes (47 ficheiros) · `next build` · typecheck · Biome.
+- Branch **`phase3/product`**, HEAD `327e390` (+ docs), tudo pushed, árvore limpa.
+- **13 fatias de gaps FEITAS + verdes:** bug-dos-cliques (loading.tsx) · #4 consentimento · #1 Q&A por entidade (Tela 8) · #2 onboarding (Tela 11) · #5 purga RGPD (rota) · **#5b anonimizar a cascata RGPD** · **#8 serialização família G (§11.1)** · **dedup de candidatos (P2)** · **selector no Comparar (P2)** · **vaga por PDF (P2)** · #6 Camada A (hash-chain) · #7 destilação durável · #9 SSRF · #3 intake confirm UI.
+- **Verde:** 205 testes (48 ficheiros) · `next build` · typecheck · Biome.
 
 ## ⚠️ Regras que NÃO podes esquecer
 - **NÃO recriar `apps/web/app/loading.tsx`** — era a causa do "bug dos cliques" em produção (boundary Suspense raiz + force-dynamic faz o `next start` engolir a navegação ~50%). Servidor é `next start` SEM ele.
@@ -19,7 +19,7 @@
 - **#8** (`ec61091`) — serialização família G (§11.1): guard do escritor único pós-encerramento (`persistTick`/`persistChunk` com FOR UPDATE → recusam pós-`done`) + `withCandidateLock` (advisory lock por candidate) + contador de ticks monótono. **Fila de re-atribuição (§11.1/2) diferida p/ Ω** (precisa do worker realtime). 0 CRITICAL.
 
 ## ▶️ PRÓXIMA: P2 — gaps menores restantes (escolher por valor/demonstrabilidade)
-**v1-construíveis (sem chave):** ✅ ~~dedup de candidatos~~ (FEITO `81027e9`) · ✅ ~~selector no Comparar~~ (FEITO `ac4524b`) · vaga por PDF (`unpdf`, como o CV — nota: o CV por PDF já existe via `extractCvFromFile`) · contexto ativo do assistente (`active_context`) · crons de retenção (funções de purga por TTL testáveis; o *agendamento* é Ω).
+**v1-construíveis (sem chave):** ✅ ~~dedup de candidatos~~ (FEITO `81027e9`) · ✅ ~~selector no Comparar~~ (FEITO `ac4524b`) · ✅ ~~vaga por PDF~~ (FEITO `327e390`; funil `extractPdfText` partilhado c/ o CV) · contexto ativo do assistente (`active_context`) · crons de retenção (funções de purga por TTL testáveis; o *agendamento* é Ω).
 **Dependem de chave/infra (Ω):** `realtime-config.ts` (LiveKit/Soniox) · webhook Telegram (secret) · ligar `persistChunk`/`distillFinal` ao TickEngine (STT real) · fila de re-atribuição (§11.1/2).
 TDD + review adversarial por fatia, como nas anteriores.
 

@@ -14,6 +14,20 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 (cont.) — P2: importar vaga por PDF ═══
+**Feito + committado (`phase3/product`, `327e390`).** Espelha o "vaga por LINK": a Filipa anexa o PDF do descritivo e a Vera extrai o texto p/ pré-preencher o form (human-in-loop, **não grava nada**).
+- **`lib/pdf-text.ts`** (NOVO): funil partilhado `extractPdfText` (`validateUpload` magic-bytes+tamanho+agency → unpdf). **Extraído do `cv-extract`** (DRY, 2ª utilização da extração PDF).
+- **`lib/cv-extract.ts`**: passou a ser um wrapper fino de `extractPdfText` (só renomeia `text`→`cvText`). Contrato preservado — 9 testes integração candidatos/vagas verdes.
+- **`lib/vaga-pdf.ts`** (NOVO): `importVagaFromPdf` (delega no funil) + `titleFromPdfText` (puro: 1ª linha de jeito; exige ≥1 letra → ignora separadores `---`/números de página).
+- **`app/api/vagas/from-pdf/route.ts`** (NOVO): POST multipart, exige sessão, cap 10MB, `runtime=nodejs`. Devolve `{text,title}`.
+- **`VagaForm.tsx`**: 3ª aba "Importar de PDF" (file input + botão → `/from-pdf`, mesmo padrão do `buscarLink`).
+
+**Review adversarial** (code-reviewer): **0 CRITICAL/HIGH**. Aplicado o filtro de letra no título (MEDIUM). Upload protegido pelo `validateUpload` (magic-bytes, ext==mime, agency UUID, 10MB); texto extraído nunca é gravado. MEDIUM custo-memória (double-read 10MB) e LOWs (getSession 500-vs-401, pdfFile entre abas) = aceitáveis/iguais à rota de CV → diferidos.
+
+**Smoke E2E no browser** (login Filipa): a aba renderiza (input + botão disabled sem ficheiro), e a **rota end-to-end** via PDF gerado → 200 com texto extraído + título inferido; rejeições → 400 (`conteúdo não corresponde` p/ não-PDF, `anexa um PDF` sem ficheiro). **Verde: 205 testes (48 fich.) — incl. extração unpdf REAL (1º teste real de PDF no repo, tranca CV+vaga) — typecheck, Biome, `next build`.**
+
+---
+
 ## ═══ Sessão 2026-06-22 (cont.) — P2: selector no Comparar ═══
 **Feito + committado (`phase3/product`, `ac4524b`).** A Tela 10 (Comparar) só comparava os primeiros 4 candidatos por match (slice silencioso) — sem UI para escolher QUAIS. Agora há um **selector** para a Filipa escolher até `MAX_COMPARE` (4) candidatos lado a lado.
 - **`lib/comparar-select.ts`** (NOVO, client-safe — sem DB/React, padrão `parecer-view.ts`): `MAX_COMPARE` (fonte única do limite), `toggleCompareSelection` (imutável, respeita o cap), `buildCompareHref` (`?job=…&c=id1,id2`), `sameSelection` (ordem-independente).
