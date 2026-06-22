@@ -14,6 +14,17 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 (cont.) — P2: contexto ativo do assistente (`active_context`) ═══
+**Feito + committado (`phase3/product`, `648fd99`).** O `assistant_thread.active_context` (JSONB `{client_id?,job_id?,candidate_id?,process_id?}`) existia no schema mas **ninguém o lia/escrevia** — a rota chamava `runMessage` sem `ctx`, o assistente nunca sabia a entidade. Agora (ASSISTENTE-PESSOAL §"dia caótico"): cada turno **resolve** a entidade em foco da mensagem, **persiste-a** na thread e os turnos seguintes **herdam-na** até mudar — evita pedir o alvo a cada frase E evita colar tudo ao 1º candidato.
+- **`lib/assistant/active-context.ts`** (NOVO, puro): `parseActiveContext` (Zod na fronteira), `resolveActiveContext` (nome completo único → 1º nome único ≥3 letras → **ambíguo/nenhum = NÃO foca, herda**; por palavra, não substring; imutável), `contextNames` (ids→nomes p/ o planner). **Chaves snake_case** (`candidate_id`/`client_id`) — alinhadas com a query da purga RGPD (`active_context->>'candidate_id'`); camelCase partiria o RGPD.
+- **`lib/assistant/run.ts`**: `ensureThread` devolve `{id, activeContext}`; novo `knownEntities` (candidatos **não-anonimizados** `isNull(deletedAt)` + clientes, scoped por agência); `runMessage` resolve → persiste-só-se-mudou → deriva `ctx` → planeia. UPDATE com predicado agência+recruiter+thread.
+
+**Review adversarial** (code-reviewer): **0 CRITICAL/HIGH**. Isolamento multi-tenant (knownEntities + SELECT/UPDATE scoped) e coerência RGPD (snake_case, anonimizados excluídos do foco) confirmados. Aplicado LOW (check de mudança por valor, não por identidade de referência). **Diferido p/ Ω:** cache de `knownEntities` por turno (MEDIUM perf — negligenciável à escala demo). Limitação-v1 consciente: não há comando "esquece o foco".
+
+**Smoke E2E pela rota real** (`/api/assistant/chat`, login Filipa): turno 1 "fala-me da Carla Mendes" → resposta menciona Carla; turno 2 "e o que achas dela?" (SEM menção) → resposta **HERDA** "Carla Mendes". **Verde: 18 testes active-context (14 puros + 4 integração) + 223 suite (50 fich.), typecheck, Biome, `next build`.**
+
+---
+
 ## ═══ Sessão 2026-06-22 (cont.) — P2: importar vaga por PDF ═══
 **Feito + committado (`phase3/product`, `327e390`).** Espelha o "vaga por LINK": a Filipa anexa o PDF do descritivo e a Vera extrai o texto p/ pré-preencher o form (human-in-loop, **não grava nada**).
 - **`lib/pdf-text.ts`** (NOVO): funil partilhado `extractPdfText` (`validateUpload` magic-bytes+tamanho+agency → unpdf). **Extraído do `cv-extract`** (DRY, 2ª utilização da extração PDF).
