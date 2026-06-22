@@ -1,8 +1,15 @@
 import { randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { AI_ENABLED, aiOptions } from "../ai";
+import {
+  type ActiveContext,
+  contextNames,
+  type KnownEntities,
+  parseActiveContext,
+  resolveActiveContext,
+} from "./active-context";
 import { type ChatContext, type ChatPlan, planResponse } from "./chat";
 import { createMemoryStore, executeToolCall } from "./gate";
 import { planResponseWithLlm } from "./llm";
@@ -38,10 +45,13 @@ async function ensureThread(
   agencyId: string,
   recruiterId: string,
   threadId?: string,
-): Promise<string> {
+): Promise<{ id: string; activeContext: ActiveContext }> {
   if (threadId) {
     const [t] = await db
-      .select({ id: schema.assistantThread.id })
+      .select({
+        id: schema.assistantThread.id,
+        activeContext: schema.assistantThread.activeContext,
+      })
       .from(schema.assistantThread)
       .where(
         and(
@@ -51,12 +61,27 @@ async function ensureThread(
         ),
       );
     if (t) {
-      return t.id;
+      return { id: t.id, activeContext: parseActiveContext(t.activeContext) };
     }
   }
   const id = randomUUID();
   await db.insert(schema.assistantThread).values({ id, agencyId, recruiterId });
-  return id;
+  return { id, activeContext: {} };
+}
+
+/** Candidatos (não anonimizados) + clientes da agência — universo p/ resolver o foco por nome. */
+async function knownEntities(db: Db, agencyId: string): Promise<KnownEntities> {
+  const [candidates, clients] = await Promise.all([
+    db
+      .select({ id: schema.candidate.id, name: schema.candidate.name })
+      .from(schema.candidate)
+      .where(and(eq(schema.candidate.agencyId, agencyId), isNull(schema.candidate.deletedAt))),
+    db
+      .select({ id: schema.client.id, name: schema.client.name })
+      .from(schema.client)
+      .where(eq(schema.client.agencyId, agencyId)),
+  ]);
+  return { candidates, clients };
 }
 
 /** Lista de ferramentas (nome + efeito) que o planner LLM pode escolher. */
@@ -89,7 +114,12 @@ export async function runMessage(
   recruiterId: string,
   params: { message: string; threadId?: string; ctx?: ChatContext },
 ): Promise<AssistantTurn> {
-  const threadId = await ensureThread(db, agencyId, recruiterId, params.threadId);
+  const { id: threadId, activeContext: prevContext } = await ensureThread(
+    db,
+    agencyId,
+    recruiterId,
+    params.threadId,
+  );
   await db.insert(schema.assistantMessage).values({
     id: randomUUID(),
     threadId,
@@ -98,7 +128,27 @@ export async function runMessage(
     content: params.message,
   });
 
-  const plan = await planFor(params.message, params.ctx ?? {});
+  // Contexto ativo (§"dia caótico"): resolve a entidade em foco da mensagem; herda se não houver
+  // menção; persiste só quando muda. Os nomes em foco alimentam o planner — sem pedir o alvo a cada frase.
+  const known = await knownEntities(db, agencyId);
+  const nextContext = resolveActiveContext(prevContext, params.message, known);
+  const focusChanged =
+    nextContext.candidate_id !== prevContext.candidate_id ||
+    nextContext.client_id !== prevContext.client_id;
+  if (focusChanged) {
+    await db
+      .update(schema.assistantThread)
+      .set({ activeContext: nextContext })
+      .where(
+        and(
+          eq(schema.assistantThread.id, threadId),
+          eq(schema.assistantThread.agencyId, agencyId),
+          eq(schema.assistantThread.recruiterId, recruiterId),
+        ),
+      );
+  }
+  const ctx: ChatContext = { ...contextNames(nextContext, known), ...(params.ctx ?? {}) };
+  const plan = await planFor(params.message, ctx);
   const actions: ActionView[] = [];
   const store = createMemoryStore();
   for (const call of plan.toolCalls) {
