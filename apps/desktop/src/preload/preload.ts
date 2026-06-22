@@ -9,6 +9,10 @@ const api = {
   sendAction(action: VeraAction): void {
     ipcRenderer.send(action.kind === "end" ? "vera:end" : "vera:action", action);
   },
+  /** Liga/desliga o click-through da janela: `true` quando o rato entra na Vera. */
+  setInteractive(on: boolean): void {
+    ipcRenderer.send("vera:interactive", on);
+  },
   /** Subscreve frames do WS de estado (inerte no v1 mock; ligado na Fase K). */
   onFrame(cb: (msg: unknown) => void): () => void {
     // `_event` é Electron.IpcRendererEvent; tipado unknown de propósito — o `sender`

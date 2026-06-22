@@ -1,13 +1,17 @@
 import path from "node:path";
 import { app, BrowserWindow, ipcMain, screen, session, shell } from "electron";
 import { veraAction } from "../shared/action";
-import { ALWAYS_ON_TOP_LEVEL, buildOverlayWindowOptions } from "../shared/windowConfig";
+import { ALWAYS_ON_TOP_LEVEL } from "../shared/windowConfig";
 import { buildCsp, navigationDecision, withCspHeader } from "./security";
 import { createTray } from "./tray";
-import { pickWindowPosition, readWindowState, writeWindowState } from "./windowState";
 
 // Hardening R2: sandbox por defeito p/ TODOS os processos renderer (não só o overlay).
 app.enableSandbox();
+
+// Single-instance: nunca empilhar Veras. Uma 2ª abertura foca a existente e sai (anti-pile-up).
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
 
 /** Só o nosso renderer (file:) pode mandar IPC (anti-sender-spoofing). */
 function fromOwnRenderer(event: { senderFrame: { url: string } | null }): boolean {
@@ -23,20 +27,42 @@ const CSP = buildCsp({ connectSrc: [WS_ORIGIN, API_ORIGIN].filter(Boolean) });
 const dir = import.meta.dirname;
 let overlay: BrowserWindow | null = null;
 
-function statePath(): string {
-  return path.join(app.getPath("userData"), "window-state.json");
-}
-
+/**
+ * A janela do overlay cobre o ecrã inteiro, transparente e SEM moldura, com **click-through** por
+ * defeito: os cliques passam para a chamada (Meet/Zoom) por baixo. O renderer liga a interatividade
+ * (`vera:interactive`) só quando o rato está em cima da Vera (ícone/balão/painel). Assim a Vera pode
+ * flutuar e voar para qualquer ponto do ecrã sem roubar o rato à entrevista.
+ */
 function createOverlay(): BrowserWindow {
-  const opts = buildOverlayWindowOptions(path.join(dir, "../preload/preload.js"));
-  const displays = screen.getAllDisplays().map((d) => ({ id: d.id, bounds: d.bounds }));
-  const pos = pickWindowPosition(readWindowState(statePath()), displays, {
-    width: opts.width,
-    height: opts.height,
+  const { x, y, width, height } = screen.getPrimaryDisplay().workArea;
+  const win = new BrowserWindow({
+    x,
+    y,
+    width,
+    height,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    skipTaskbar: false,
+    hasShadow: false,
+    focusable: true,
+    show: false,
+    icon: path.join(dir, "../assets/tray.png"),
+    webPreferences: {
+      preload: path.join(dir, "../preload/preload.js"),
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: true,
+    },
   });
-  const win = new BrowserWindow({ ...opts, x: pos.x, y: pos.y, show: false });
   win.setAlwaysOnTop(true, ALWAYS_ON_TOP_LEVEL);
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  win.setIgnoreMouseEvents(true, { forward: true });
 
   // Hardening R2: negar janelas novas + navegação/redireção fora da allowlist.
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
@@ -47,12 +73,6 @@ function createOverlay(): BrowserWindow {
   };
   win.webContents.on("will-navigate", guardNavigation);
   win.webContents.on("will-redirect", guardNavigation);
-
-  win.on("moved", () => {
-    const bounds = win.getBounds();
-    const display = screen.getDisplayMatching(bounds);
-    writeWindowState(statePath(), { displayId: display.id, x: bounds.x, y: bounds.y });
-  });
 
   void win.loadFile(path.join(dir, "../renderer/index.html"));
   win.once("ready-to-show", () => win.show());
@@ -105,6 +125,8 @@ app.whenReady().then(() => {
     onEnd: endInterview,
     onQuit: () => app.quit(),
   });
+  // 2ª abertura (single-instance) → traz a Vera existente para a frente.
+  app.on("second-instance", () => overlay?.focus());
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       overlay = createOverlay();
@@ -133,4 +155,13 @@ ipcMain.on("vera:end", (event) => {
   if (fromOwnRenderer(event)) {
     endInterview();
   }
+});
+
+// O renderer liga/desliga o click-through: `true` quando o rato entra na Vera (apanha cliques),
+// `false` quando sai (o rato volta a passar para a chamada por baixo).
+ipcMain.on("vera:interactive", (event, on) => {
+  if (!fromOwnRenderer(event)) {
+    return;
+  }
+  overlay?.setIgnoreMouseEvents(on !== true, { forward: true });
 });

@@ -1,0 +1,363 @@
+/*
+ * Overlay flutuante da Vera (white-label IRIS). Tema navy/dourado da marca IRIS.
+ * Flat (sem gradientes decorativos nossos; o globo IRIS é o único asset com gradiente).
+ * A janela é full-screen transparente click-through: só os elementos da Vera têm pointer-events.
+ */
+:root {
+  --iris-navy-1: #0c1726;
+  --iris-navy-2: #0e1a29;
+  --iris-border: #243349;
+  --iris-border-soft: #1c2941;
+  --iris-text: #e6eaef;
+  --iris-text-2: #9aa6b4;
+  --iris-text-3: #6b7888;
+  --iris-gold: #d9a64b;
+  --iris-gold-soft: #f0cd86;
+  --iris-green: #5dcaa5;
+  --iris-green-soft: #9fe1cb;
+  --iris-red: #e24b4a;
+  --iris-red-soft: #f09595;
+  --iris-gray: #5f6b7a;
+  --iris-font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--iris-font);
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Camada que cobre o ecrã; só os filhos da Vera capturam o rato. */
+.vera-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Ícone IRIS flutuante */
+.vera-icon {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 0.5px solid #2e3f57;
+  background: #0a1422;
+  pointer-events: auto;
+  cursor: grab;
+  will-change: transform;
+  transform-origin: center bottom;
+  user-select: none;
+}
+.vera-icon:active {
+  cursor: grabbing;
+}
+.vera-icon svg {
+  display: block;
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+}
+
+/* Faíscas da reação (fogo verde) */
+.vera-sparks {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.vera-spark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+}
+
+/* Balão "a falar" ao lado do ícone */
+.vera-bubble {
+  position: absolute;
+  width: 250px;
+  background: var(--iris-navy-2);
+  border: 0.5px solid #26344a;
+  border-radius: 13px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.vera-bubble__flag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  font-size: 11px;
+}
+.vera-bubble__flag .ct {
+  flex: 1;
+}
+.vera-bubble__flag .ct2 {
+  color: var(--iris-text-2);
+}
+.vera-bubble__flag--red {
+  background: #2a1410;
+  border-bottom: 0.5px solid #4a2118;
+  color: var(--iris-red-soft);
+}
+.vera-bubble__flag--green {
+  background: #0c2018;
+  border-bottom: 0.5px solid #1d4636;
+  color: var(--iris-green-soft);
+}
+.vera-bubble__body {
+  padding: 9px 11px;
+}
+.vera-bubble__q {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--iris-text);
+}
+.vera-bubble__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+}
+.vera-bubble__count {
+  font-size: 11px;
+  color: var(--iris-text-3);
+}
+
+/* Botões partilhados */
+.vera-nbtn {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #16202c;
+  border: 0.5px solid #28323f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--iris-text-2);
+  cursor: pointer;
+  font-size: 13px;
+}
+.vera-nbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.vera-gold {
+  background: var(--iris-gold);
+  color: #1a1206;
+  border: none;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.vera-ghost {
+  background: transparent;
+  color: var(--iris-text-2);
+  border: 0.5px solid #28384e;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Painel expandido */
+.vera-panel {
+  position: absolute;
+  width: 332px;
+  background: var(--iris-navy-1);
+  border: 0.5px solid var(--iris-border);
+  border-radius: 16px;
+  overflow: hidden;
+  pointer-events: auto;
+  color: var(--iris-text);
+}
+.vera-panel__hd {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border-bottom: 0.5px solid var(--iris-border-soft);
+  cursor: grab;
+}
+.vera-panel__hd:active {
+  cursor: grabbing;
+}
+.vera-panel__hdmark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 0.5px solid #33424a;
+  background: #0a1422;
+  flex: none;
+}
+.vera-panel__hdmark svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+.vera-panel__hdname {
+  flex: 1;
+  min-width: 0;
+}
+.vera-panel__hdname b {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--iris-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vera-panel__hdname span {
+  font-size: 11px;
+  color: var(--iris-text-3);
+}
+.vera-panel__time {
+  font-size: 12px;
+  color: var(--iris-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.vera-iconbtn {
+  background: transparent;
+  border: none;
+  color: var(--iris-text-3);
+  cursor: pointer;
+  display: flex;
+  padding: 2px;
+}
+.vera-panel__hero {
+  padding: 14px;
+}
+.vera-panel__cue {
+  font-size: 11px;
+  color: var(--iris-gold);
+  margin-bottom: 7px;
+}
+.vera-panel__q {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  color: #f3f5f7;
+  font-weight: 500;
+}
+.vera-panel__calm {
+  margin: 0;
+  font-size: 14px;
+  color: var(--iris-green-soft);
+}
+.vera-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.vera-panel__verdict {
+  padding: 0 14px 14px;
+}
+.vera-panel__vhd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+.vera-panel__vhd .l {
+  font-size: 11px;
+  color: var(--iris-text-3);
+}
+/* Opção A — barómetro de proporção + chips */
+.vera-bar {
+  display: flex;
+  gap: 3px;
+  height: 9px;
+  margin-bottom: 12px;
+}
+.vera-bar > span {
+  border-radius: 999px;
+}
+.vera-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.vera-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 7px;
+}
+.vera-chip--green {
+  background: #0e2a20;
+  color: var(--iris-green-soft);
+}
+.vera-chip--red {
+  background: #2a1414;
+  color: var(--iris-red-soft);
+}
+.vera-chip--gray {
+  background: #1a2330;
+  color: var(--iris-text-2);
+}
+
+/* Chat */
+.vera-panel__chat {
+  padding: 12px 14px;
+  border-top: 0.5px solid var(--iris-border-soft);
+}
+.vera-chat__log {
+  list-style: none;
+  margin: 0 0 9px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.vera-chat__turn b {
+  font-weight: 400;
+  color: var(--iris-text-3);
+}
+.vera-chat__turn--bot {
+  color: var(--iris-green-soft);
+}
+.vera-chat__turn--filipa {
+  color: var(--iris-text-2);
+}
+.vera-chat__form {
+  display: flex;
+  gap: 7px;
+}
+.vera-chat__input {
+  flex: 1;
+  min-width: 0;
+  background: #0a1422;
+  border: 0.5px solid #28384e;
+  border-radius: 8px;
+  color: var(--iris-text);
+  font-family: var(--iris-font);
+  font-size: 12px;
+  padding: 8px 11px;
+}
+.vera-chat__input:focus {
+  outline: none;
+  border-color: var(--iris-gold);
+}
+.vera-chat__input::placeholder {
+  color: var(--iris-text-3);
+}

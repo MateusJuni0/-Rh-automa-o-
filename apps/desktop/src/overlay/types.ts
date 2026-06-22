@@ -42,4 +42,6 @@ export type HudAction =
   | { kind: "server"; msg: ServerMessage }
   | { kind: "conn"; status: ConnStatus }
   /** Timer de ~30s do cliente: descarta a sugestão atual e promove a próxima. */
-  | { kind: "dismissSuggestion" };
+  | { kind: "dismissSuggestion" }
+  /** Reinicia o estado ao inicial (v1: re-correr o guião golden em ciclo no demo). */
+  | { kind: "reset" };

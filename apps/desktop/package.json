@@ -5,6 +5,9 @@
   "type": "module",
   "main": "dist-build/main/main.js",
   "scripts": {
+    "build": "node build.mjs",
+    "start": "electron .",
+    "app": "node build.mjs && electron .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

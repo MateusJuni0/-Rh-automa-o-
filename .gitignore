@@ -4,6 +4,7 @@ node_modules/
 
 # build
 dist/
+dist-build/
 .next/
 out/
 *.tsbuildinfo
@@ -28,6 +29,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# local agent state (Claude Code)
+.claude/
 
 # Python (services/)
 __pycache__/

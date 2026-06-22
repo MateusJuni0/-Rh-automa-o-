@@ -198,5 +198,7 @@ export function hudReduce(state: HudState, action: HudAction): HudState {
     }
     case "server":
       return applyServer(state, action.msg);
+    case "reset":
+      return initialHudState;
   }
 }

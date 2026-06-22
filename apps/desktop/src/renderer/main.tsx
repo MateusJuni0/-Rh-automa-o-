@@ -1,30 +1,26 @@
-import "@rh/ui/styles/tokens.css";
-import "@rh/ui/styles/ui.css";
-import "./hud/hud.css";
+import "./vera-overlay.css";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { goldenInterviewScript } from "../overlay/mockFeed";
 import { hudReduce, initialHudState } from "../overlay/reducer";
-import type { VeraBridge } from "../preload/preload";
-import { Hud } from "./hud/Hud";
+import { FloatingVera } from "./FloatingVera";
 import { playScript } from "./hud/player";
 import type { ChatTurn, HudCallbacks } from "./hud/types";
 
-declare global {
-  interface Window {
-    vera?: VeraBridge;
-  }
-}
-
+/**
+ * Overlay flutuante da Vera (white-label IRIS). Feed MOCK no v1 (o guião "golden" do `mockFeed`);
+ * na Fase Ω troca-se por `window.vera.onFrame` (WS real). A janela é full-screen transparente
+ * click-through; o `FloatingVera` gere a posição (arrasto), o expandir e as animações.
+ */
 function App() {
   const [state, dispatch] = useReducer(hudReduce, initialHudState);
-  const [expanded, setExpanded] = useState(true);
   const [chat, setChat] = useState<ChatTurn[]>([]);
   const startRef = useRef<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
 
-  // Feed MOCK no v1 (substituível pelo WS real via window.vera.onFrame na Fase K).
   useEffect(() => {
+    // Corre o guião golden UMA vez e assenta (estável). Na vida real o estado muda com a fala
+    // do candidato, não cicla. Para re-ver a reação, basta relançar a Vera (atalho de teste).
     startRef.current = Date.now();
     const cancel = playScript(goldenInterviewScript(), (msg) => dispatch({ kind: "server", msg }));
     const timer = setInterval(() => {
@@ -39,8 +35,8 @@ function App() {
   }, []);
 
   const callbacks: HudCallbacks = {
-    onExpand: () => setExpanded(true),
-    onCollapse: () => setExpanded(false),
+    onExpand: () => {},
+    onCollapse: () => {},
     onUsei: () => window.vera?.sendAction({ kind: "usei" }),
     onPular: () => {
       dispatch({ kind: "dismissSuggestion" });
@@ -51,7 +47,7 @@ function App() {
     onSendChat: (text) => {
       setChat((c) => [...c, { id: `f-${c.length}`, role: "filipa", text }]);
       window.vera?.sendAction({ kind: "chat", text });
-      // Resposta MOCK local — o WS congelado não tem frame de chat (decisão na Fase K).
+      // Resposta MOCK local (o WS congelado não tem frame de chat — decisão na Fase K).
       setTimeout(() => {
         setChat((c) => [
           ...c,
@@ -62,11 +58,10 @@ function App() {
   };
 
   return (
-    <Hud
+    <FloatingVera
       state={state}
-      expanded={expanded}
       elapsedMs={elapsedMs}
-      contexto="Frontend Sr — João Silva"
+      contexto="Frontend Sr · João Silva"
       chat={chat}
       callbacks={callbacks}
     />
