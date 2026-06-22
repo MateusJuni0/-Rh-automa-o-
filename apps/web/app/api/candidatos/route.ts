@@ -68,7 +68,7 @@ export async function POST(req: Request): Promise<Response> {
       });
     }
     const res = await createCandidato(getDb(), agencyId, { name, cvText });
-    return Response.json(ok(res), { status: 201 });
+    return Response.json(ok(res), { status: res.deduped ? 200 : 201 });
   }
 
   const parsed = jsonSchema.safeParse(await req.json().catch(() => null));
@@ -76,5 +76,5 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json(err("validation", "name e cvText são obrigatórios"), { status: 400 });
   }
   const res = await createCandidato(getDb(), agencyId, parsed.data);
-  return Response.json(ok(res), { status: 201 });
+  return Response.json(ok(res), { status: res.deduped ? 200 : 201 });
 }

@@ -146,7 +146,7 @@ export async function confirmarIntake(
   }
 
   if (env.alvo === "candidato" && env.intencao === "novo_candidato") {
-    const { id } = await createCandidato(db, agencyId, {
+    const { id, deduped } = await createCandidato(db, agencyId, {
       name: params.name ?? "Candidato (intake)",
       cvText: env.conteudo,
     });
@@ -154,7 +154,13 @@ export async function confirmarIntake(
       .update(schema.intakeMessage)
       .set({ confirmedAt: sql`now()`, entityId: id, entityType: "candidate_cv" })
       .where(eq(schema.intakeMessage.id, params.messageId));
-    return { created: true, entityType: "candidate", entityId: id };
+    // `deduped` → a mensagem ligou-se a um candidato JÁ existente (resolução de entidade §12).
+    return {
+      created: !deduped,
+      entityType: "candidate",
+      entityId: id,
+      reason: deduped ? "candidato já existia — resolvido por dedup (§12)" : undefined,
+    };
   }
 
   await db

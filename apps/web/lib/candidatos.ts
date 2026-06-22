@@ -3,7 +3,7 @@ import { extractCandidateProfile } from "@rh/ai";
 import { type CandidateProfile, candidateProfile } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 import { aiOptions } from "./ai";
 import { heuristicProfile } from "./cv-heuristics";
 
@@ -12,8 +12,17 @@ type Db = DbHandle["db"];
 export interface NewCandidato {
   name: string;
   linkedinUrl?: string;
+  /** Email explícito (chave de dedup §12); se ausente, é extraído do CV. */
+  email?: string;
   /** Texto do CV — o cérebro extrai o perfil estruturado. */
   cvText: string;
+}
+
+export interface CreatedCandidato {
+  id: string;
+  profile: CandidateProfile;
+  /** `true` se resolveu para um candidato JÁ EXISTENTE (dedup §12) em vez de criar um novo. */
+  deduped: boolean;
 }
 
 /** Perfil de fallback (sem chave de IA): deteção determinística por palavra-chave do CV. */
@@ -26,19 +35,71 @@ function normalizeName(name: string): string {
   return name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
-/** Cria um candidato GLOBAL, extraindo o perfil do CV via `@rh/ai` (real com chave; stub sem). */
+/**
+ * Resolução de entidade (§12 ALTO5): procura um candidato existente na agência por chaves FORTES
+ * (linkedinUrl, email). O nome NÃO entra — homónimos dariam falsos positivos. Candidatos anonimizados
+ * têm estas chaves a NULL (RGPD #5b) → nunca são re-encontrados.
+ */
+async function findCandidateByKeys(
+  db: Db,
+  agencyId: string,
+  keys: { linkedinUrl: string | null; email: string | null },
+): Promise<{ id: string; profile: unknown } | null> {
+  const keyConds = [
+    ...(keys.linkedinUrl ? [eq(schema.candidate.linkedinUrl, keys.linkedinUrl)] : []),
+    ...(keys.email ? [eq(schema.candidate.email, keys.email)] : []),
+  ];
+  if (keyConds.length === 0) {
+    return null;
+  }
+  const [row] = await db
+    .select({ id: schema.candidate.id, profile: schema.candidate.profile })
+    .from(schema.candidate)
+    .where(
+      and(
+        eq(schema.candidate.agencyId, agencyId),
+        isNull(schema.candidate.deletedAt),
+        or(...keyConds),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+/**
+ * Cria um candidato GLOBAL, extraindo o perfil do CV via `@rh/ai` (real com chave; stub sem). Antes
+ * de criar, faz DEDUP por chaves fortes (§12): se já existe um candidato com o mesmo linkedinUrl/email
+ * na agência, devolve-o (`deduped:true`) em vez de duplicar o talent pool. Persiste email/phone
+ * (extraídos do CV) nas colunas — são as chaves de resolução de entidade.
+ */
 export async function createCandidato(
   db: Db,
   agencyId: string,
   input: NewCandidato,
-): Promise<{ id: string; profile: CandidateProfile }> {
+): Promise<CreatedCandidato> {
+  const contact = extractContact(input.cvText);
+  const email = (input.email ?? contact.email)?.toLowerCase() ?? null;
+  const linkedinUrl = input.linkedinUrl ?? null;
+
+  const existing = await findCandidateByKeys(db, agencyId, { linkedinUrl, email });
+  if (existing) {
+    const parsed = candidateProfile.safeParse(existing.profile);
+    return {
+      id: existing.id,
+      profile: parsed.success ? parsed.data : EMPTY_PROFILE,
+      deduped: true,
+    };
+  }
+
   const profile = await extractCandidateProfile(input.cvText, aiOptions(stubProfile(input)));
   const id = randomUUID();
   await db.insert(schema.candidate).values({
     id,
     agencyId,
     name: input.name,
-    linkedinUrl: input.linkedinUrl ?? null,
+    linkedinUrl,
+    email,
+    phone: contact.phone,
     nameNormalized: normalizeName(input.name),
     profile,
   });
@@ -53,7 +114,7 @@ export async function createCandidato(
       title: `CV — ${input.name}`,
     });
   }
-  return { id, profile };
+  return { id, profile, deduped: false };
 }
 
 export interface CandidatoRow {
