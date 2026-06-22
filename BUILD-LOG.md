@@ -14,6 +14,17 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 (cont.) — P2: crons de retenção por TTL ═══
+**Feito + committado (`phase3/product`, `7cf6e28`).** As funções de purga por TTL (DATA-RETENTION §1/§3). **v1 = funções determinísticas, testáveis, agency-scoped**; o *agendamento* (timers diários) + o monitor "correu nas últimas 24h" + a cascata Storage/RAG ficam para a Fase Ω. (O `purge_candidate` Art.17/evento já existe no `rgpd.ts`, #5b — não é cron.)
+- **`lib/retention.ts`** (NOVO): `purgeExpiredPersonalFacts` (apaga `candidate_memory_fact` `classificacao LIKE 'personal%'` após `retain_until`; o embedding cai por cascata FK; os `professional*` de valor NUNCA saem por tempo), `redactExpiredSourceDocs` (NULL no `raw_text` após `expires_at`, mantém title/url/**summary**), `redactExpiredIntakeRaw` (NULL no raw/doc/áudio 30d após `confirmed_at`, mantém `entity_id`/`extracted`), `purgeOldAsyncJobs` (apaga `done`/`failed` >30d). `runRetention` orquestra as 4. `now` é injetado (testável).
+- **Escopo consciente:** só o que é DB-only e schema-backed em v1. **Diferido p/ Ω:** redação de `transcript_chunk.text` (é `notNull` + falta `redacted_at` → precisa migração), purga de `intake_session` (FK com messages), cascata Storage/RAG, e o agendamento.
+
+**Review adversarial** (database-reviewer): **0 CRITICAL/HIGH**. Data-safety confirmada (`LIKE 'personal%'` não apanha `professional`/`professional_clinico`; `async_job` nunca apaga `running`/`pending_confirm`; os sinais `summary`/`extracted`/`entity_id` preservados; `isNotNull` nos TTLs evita apagar à toa). Aplicados os 2 MEDIUM: **guard anti-falha-silenciosa** no `runRetention` (`agencyId` vazio → lança, em vez de purgar nada em silêncio — o trauma do claude-mem) + documentado o pressuposto UTC do `daysBefore`. LOW (PII em `async_job.args` no `purge_candidate`) já coberto pelo #5b.
+
+**Verde: 6 testes retenção (5 integração por TTL + 1 guard) + 229 suite (51 fich.), typecheck, Biome, `next build`.** Sem UI/rota → backend puro (sem smoke).
+
+---
+
 ## ═══ Sessão 2026-06-22 (cont.) — P2: contexto ativo do assistente (`active_context`) ═══
 **Feito + committado (`phase3/product`, `648fd99`).** O `assistant_thread.active_context` (JSONB `{client_id?,job_id?,candidate_id?,process_id?}`) existia no schema mas **ninguém o lia/escrevia** — a rota chamava `runMessage` sem `ctx`, o assistente nunca sabia a entidade. Agora (ASSISTENTE-PESSOAL §"dia caótico"): cada turno **resolve** a entidade em foco da mensagem, **persiste-a** na thread e os turnos seguintes **herdam-na** até mudar — evita pedir o alvo a cada frase E evita colar tudo ao 1º candidato.
 - **`lib/assistant/active-context.ts`** (NOVO, puro): `parseActiveContext` (Zod na fronteira), `resolveActiveContext` (nome completo único → 1º nome único ≥3 letras → **ambíguo/nenhum = NÃO foca, herda**; por palavra, não substring; imutável), `contextNames` (ids→nomes p/ o planner). **Chaves snake_case** (`candidate_id`/`client_id`) — alinhadas com a query da purga RGPD (`active_context->>'candidate_id'`); camelCase partiria o RGPD.
