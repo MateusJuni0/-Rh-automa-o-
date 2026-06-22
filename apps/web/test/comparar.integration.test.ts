@@ -72,5 +72,38 @@ describe.skipIf(!url)("integração — comparar (Tela 10)", () => {
     const matrix = await buildComparisonMatrix(handle.db, AG, randomUUID());
     expect(matrix.requisitos).toHaveLength(0);
     expect(matrix.columns).toHaveLength(0);
+    expect(matrix.available).toHaveLength(0);
+  });
+
+  it("`available` expõe TODOS os triados mesmo com seleção parcial (alimenta o selector)", async () => {
+    const matrix = await buildComparisonMatrix(handle.db, AG, JOB, [CAND1]);
+    // só 1 coluna mostrada…
+    expect(matrix.columns).toHaveLength(1);
+    expect(matrix.columns[0]?.candidateId).toBe(CAND1);
+    // …mas o universo escolhível tem os dois candidatos
+    const ids = matrix.available.map((a) => a.candidateId).sort();
+    expect(ids).toEqual([CAND1, CAND2].sort());
+    const ana = matrix.available.find((a) => a.candidateId === CAND1);
+    expect(ana?.name).toBe("Ana React");
+    expect(typeof ana?.matchScore).toBe("number");
+  });
+
+  it("isolamento: id de candidato de OUTRA agência no `c` → ignorado (0 colunas, available intacto)", async () => {
+    // candidato real, mas noutra agência → nunca entra na triagem desta agência
+    const OTHER_AG = randomUUID();
+    const OTHER_CAND = randomUUID();
+    await handle.db.insert(schema.candidate).values({
+      id: OTHER_CAND,
+      agencyId: OTHER_AG,
+      name: "Intruso Outra Agência",
+      nameNormalized: `intruso-${OTHER_CAND}`,
+      profile: { skillsDeclaradas: ["React"], experienciaAnos: 9, gapsCv: [], resumo: "" },
+    });
+    const matrix = await buildComparisonMatrix(handle.db, AG, JOB, [OTHER_CAND]);
+    expect(matrix.columns).toHaveLength(0); // o intruso não vira coluna
+    // available continua a ser só os triados desta agência (sem o intruso)
+    const ids = matrix.available.map((a) => a.candidateId);
+    expect(ids).not.toContain(OTHER_CAND);
+    expect(ids.sort()).toEqual([CAND1, CAND2].sort());
   });
 });

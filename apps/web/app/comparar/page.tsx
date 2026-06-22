@@ -7,6 +7,7 @@ import { buildComparisonMatrix, type ComparisonColumn } from "@/lib/comparar";
 import { getDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getVaga } from "@/lib/vagas";
+import { CompararSelector } from "./CompararSelector";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Comparar · Vera" };
@@ -90,24 +91,24 @@ async function MatrizComparacao({ job, ids }: { job: string; ids: string[] }) {
     ? `${vaga.title}${vaga.clientName ? ` (${vaga.clientName})` : ""}: cobertura dos critérios, candidato a candidato.`
     : "Cobertura dos critérios, candidato a candidato.";
 
+  const selectedIds = matrix.columns.map((c) => c.candidateId);
+  // Key ordem-independente: a mesma seleção (mesmo em ordem diferente) não força remount do selector.
+  const selectorKey = [...selectedIds].sort().join(",");
+
   return (
     <>
       <PageHeader eyebrow="Comparar" title="Comparar candidatos" description={descricao} />
 
-      {matrix.columns.length === 0 ? (
-        <EmptyState
-          title="Sem candidatos para comparar"
-          description="Esta vaga ainda não tem candidatos triados. Volta à triagem da vaga para começar."
-          action={
-            <Link
-              href={`/vagas/${job}/triagem`}
-              className="text-accent-ink text-sm hover:underline"
-            >
-              Abrir triagem →
-            </Link>
-          }
+      {matrix.available.length > 1 ? (
+        <CompararSelector
+          key={selectorKey}
+          job={job}
+          available={matrix.available}
+          selectedIds={selectedIds}
         />
-      ) : (
+      ) : null}
+
+      {matrix.columns.length > 0 ? (
         <div className="flex flex-col gap-4">
           <Card className="elev elev-top relative" bodyClassName="p-0">
             <div className="overflow-x-auto">
@@ -191,7 +192,20 @@ async function MatrizComparacao({ job, ids }: { job: string; ids: string[] }) {
             </p>
           ) : null}
         </div>
-      )}
+      ) : matrix.available.length === 0 ? (
+        <EmptyState
+          title="Sem candidatos para comparar"
+          description="Esta vaga ainda não tem candidatos triados. Volta à triagem da vaga para começar."
+          action={
+            <Link
+              href={`/vagas/${job}/triagem`}
+              className="text-accent-ink text-sm hover:underline"
+            >
+              Abrir triagem →
+            </Link>
+          }
+        />
+      ) : null}
     </>
   );
 }
@@ -213,6 +227,9 @@ function MatrizSkeleton() {
     </Card>
   );
 }
+
+/** `c` vem do URL (input do utilizador): só aceitamos UUIDs — descarta lixo/injeção no parse. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Tela 10 — Comparar candidatos: matriz critério × candidato (entra via ?job=<id>&c=id1,id2). */
 export default async function CompararPage({
@@ -243,7 +260,7 @@ export default async function CompararPage({
     );
   }
 
-  const ids = c ? c.split(",").filter(Boolean) : [];
+  const ids = c ? c.split(",").filter((s) => UUID_RE.test(s)) : [];
 
   return (
     <div className="flex flex-col gap-6">

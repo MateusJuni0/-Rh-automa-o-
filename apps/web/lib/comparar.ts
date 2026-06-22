@@ -2,13 +2,11 @@ import type { RequisitoStatus } from "@rh/core";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
 import { and, eq, inArray } from "drizzle-orm";
+import { MAX_COMPARE, type SelectableCandidate } from "./comparar-select";
 import { triageVaga } from "./triagem";
 import { getVaga } from "./vagas";
 
 type Db = DbHandle["db"];
-
-/** Máximo de candidatos por matriz: 4 colunas ainda lêem-se lado a lado no escuro. */
-const MAX_COLUMNS = 4;
 
 export interface ComparisonCell {
   requisito: string;
@@ -41,6 +39,11 @@ export interface ComparisonMatrix {
   columns: ComparisonColumn[];
   /** `true` se algum candidato ainda não tem entrevista (mostra a nota de funil). */
   algumSoCv: boolean;
+  /**
+   * Universo de candidatos escolhíveis (TODOS os triados, antes do filtro/limite) — alimenta o
+   * selector. As `columns` são o subconjunto efetivamente mostrado (até `MAX_COMPARE`).
+   */
+  available: SelectableCandidate[];
 }
 
 /** Linha de prova curta, em PT-PT, coerente com o estado (sem em-dash). */
@@ -102,7 +105,7 @@ export async function buildComparisonMatrix(
 ): Promise<ComparisonMatrix> {
   const vaga = await getVaga(db, agencyId, jobId);
   if (!vaga) {
-    return { rows: [], requisitos: [], columns: [], algumSoCv: false };
+    return { rows: [], requisitos: [], columns: [], algumSoCv: false, available: [] };
   }
   const { must, nice } = vaga.requirements.skills;
   const rows: ComparisonRow[] = [
@@ -111,9 +114,17 @@ export async function buildComparisonMatrix(
   ];
 
   const triados = await triageVaga(db, agencyId, jobId);
+  // Universo escolhível: todos os triados (nome + match) → o selector mostra-os, as colunas são o subconjunto.
+  const available = triados.map(
+    (r): SelectableCandidate => ({
+      candidateId: r.candidateId,
+      name: r.name,
+      matchScore: r.matchScore,
+    }),
+  );
   const filtrados =
     candidateIds.length > 0 ? triados.filter((r) => candidateIds.includes(r.candidateId)) : triados;
-  const selecionados = filtrados.slice(0, MAX_COLUMNS);
+  const selecionados = filtrados.slice(0, MAX_COMPARE);
 
   const comEntrevista = await candidatosComEntrevista(
     db,
@@ -144,5 +155,5 @@ export async function buildComparisonMatrix(
   });
 
   const algumSoCv = columns.some((c) => !c.temEntrevista);
-  return { rows, requisitos: must, columns, algumSoCv };
+  return { rows, requisitos: must, columns, algumSoCv, available };
 }
