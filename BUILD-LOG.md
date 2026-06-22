@@ -14,6 +14,21 @@ Método e regras: `PROMPT-FASE-3-LOOP.md` + `FASE-3-ARRANQUE.md`.
 > + completar funcionalidades das specs. Mapa de specs feito por workflow (6 agentes). Direção: **evoluir o web
 > além do flat** (.elev/sombras subtis; overlay desktop fica flat/LOCKED). Vera = a "secretária" (avatar animado).
 
+## ═══ Sessão 2026-06-22 (cont.) — P2: selector no Comparar ═══
+**Feito + committado (`phase3/product`, `ac4524b`).** A Tela 10 (Comparar) só comparava os primeiros 4 candidatos por match (slice silencioso) — sem UI para escolher QUAIS. Agora há um **selector** para a Filipa escolher até `MAX_COMPARE` (4) candidatos lado a lado.
+- **`lib/comparar-select.ts`** (NOVO, client-safe — sem DB/React, padrão `parecer-view.ts`): `MAX_COMPARE` (fonte única do limite), `toggleCompareSelection` (imutável, respeita o cap), `buildCompareHref` (`?job=…&c=id1,id2`), `sameSelection` (ordem-independente).
+- **`buildComparisonMatrix`** devolve `available` (TODOS os triados, antes do filtro/limite) p/ alimentar o selector; passou a usar `MAX_COMPARE` (era `MAX_COLUMNS` local).
+- **`CompararSelector.tsx`** (client): seleção local (`useState`), cap desativa os toggles não-selecionados a 4/4, navega **1×** no "Comparar" via `router.push(buildCompareHref(...))` (padrão URL-driven; o servidor re-renderiza a matriz dentro do `<Suspense>`).
+- **`page.tsx`**: renderiza o selector quando `available.length > 1`, com `key` ordem-independente (`[...selectedIds].sort()`) p/ repor o estado local pós-navegação; valida `c` como **UUID** no parse (fronteira de confiança — `c` é input do utilizador); o EmptyState "sem triados" só aparece quando `available.length === 0`.
+
+**Review adversarial** (code-reviewer): **0 CRITICAL / 0 HIGH**. Isolamento multi-tenant confirmado (o `c` do URL filtra sobre `triados` já scoped por `agencyId` — id de outra agência nunca vira coluna). Aplicados: MEDIUM (UUID-filter no parse, `key` ordenada) + LOW (gating do EmptyState, teste de isolamento cross-agency). Saltado LOW (validar `max≤0` — `MAX_COMPARE` é constante).
+
+**Smoke E2E no browser** (dev, login Filipa): selector renderiza os 7 triados (top-4 pré-selecionados), cap desativa a 4/4, desmarcar re-ativa, "Comparar" navega (`?c=` reescrito) e a matriz **troca o candidato** (Sofia→João), estado repõe-se pós-nav, zero erros de consola. **Verde: 196 testes (47 fich.), typecheck, Biome, `next build`.**
+
+**⚠️ Gotcha novo:** NÃO correr `next build` enquanto o `next dev` está a correr — partilham `apps/web/.next` e corrompem-se (erros `Cannot find module './NNNN.js'` + manifest → 500 no dev). Fix: parar o dev → `rm -rf .next` → rearrancar. (Recuperado nesta sessão.)
+
+---
+
 ## ═══ Sessão 2026-06-22 (cont.) — P2: dedup de candidatos ═══
 **Feito + committado (`phase3/product`, `81027e9`).** `createCandidato` faz **dedup** (§12 ALTO5) por chaves FORTES (linkedinUrl/email) antes de criar — resolve para o candidato existente (`deduped:true`) em vez de duplicar o talent pool global; o nome NÃO funde (homónimos). Persiste `email`/`phone` nas colunas (chaves de resolução). Anonimizados (chaves NULL pós-#5b) nunca são re-encontrados (RGPD-safe). `confirmarIntake` + rota POST refletem `deduped` (created:false / 200). Auto-revisão (fatia contida, 5 testes). Conhecido p/ Fase N: `UNIQUE` em email/linkedin (race em criação concorrente — irrelevante em v1, criação human-in-the-loop).
 **Verde:** 183 testes (46 ficheiros), typecheck, Biome (366 fich.), `next build`.
