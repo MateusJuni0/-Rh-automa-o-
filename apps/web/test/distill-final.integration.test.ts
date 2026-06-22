@@ -34,10 +34,11 @@ describe.skipIf(!url)("integração — destilação-final durável (distill_fin
       agencyId: AG,
       recruiterId: REC,
       candidateId,
-      status: "done",
+      status: "live",
       captureType: "none",
     });
-    // Camada A: 1 do recrutador + 2 do candidato (só estes viram facto).
+    // Camada A: 1 do recrutador + 2 do candidato (só estes viram facto). Escrita enquanto VIVA
+    // (família G §11.1: o escritor único só escreve antes do encerramento); encerra-se abaixo.
     await persistChunk(handle.db, AG, {
       interviewId,
       seq: 1,
@@ -59,6 +60,11 @@ describe.skipIf(!url)("integração — destilação-final durável (distill_fin
       tsStart: "00:12",
       text: "Construí um design system com 80 componentes.",
     });
+    // Encerrar DEPOIS de a Camada A estar escrita — a destilação-final é pós-call (§11.1/5).
+    await handle.db
+      .update(s.interview)
+      .set({ status: "done", endedAt: new Date() })
+      .where(eq(s.interview.id, interviewId));
   });
   afterAll(() => handle?.close());
 

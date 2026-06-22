@@ -1,9 +1,22 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { DbHandle } from "@rh/db";
 import { schema } from "@rh/db";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 type Db = DbHandle["db"];
+
+/**
+ * Tentou-se escrever na Camada A de uma entrevista já ENCERRADA (status='done'). Família G
+ * (ARQUITETURA-TEMPO-REAL §11.1/1): o escritor único só possui o estado enquanto a entrevista vive;
+ * a transcrição é fonte-de-verdade imutável (hash-chain) → escrever pós-encerramento é violação de
+ * integridade, não um no-op tolerável.
+ */
+export class InterviewClosedError extends Error {
+  constructor(readonly interviewId: string) {
+    super(`entrevista encerrada — Camada A é imutável após o encerramento: ${interviewId}`);
+    this.name = "InterviewClosedError";
+  }
+}
 
 /**
  * Camada A (ARQUITETURA-TEMPO-REAL §8, MODELO-DADOS §2): persistência da transcrição — a FONTE DE
@@ -69,47 +82,64 @@ export async function persistChunk(
   agencyId: string,
   input: NewChunk,
 ): Promise<PersistedChunk> {
-  const [prev] = await db
-    .select({ contentHash: schema.transcriptChunk.contentHash })
-    .from(schema.transcriptChunk)
-    .where(eq(schema.transcriptChunk.interviewId, input.interviewId))
-    .orderBy(desc(schema.transcriptChunk.seq))
-    .limit(1);
-  const prevHash = prev?.contentHash ?? null;
-  const classificacao = input.classificacao ?? "professional";
-  const contentHash = chainHash(
-    prevHash,
-    canonicalContent({
+  // Família G (§11.1/1): escrita serializada numa transação que TRANCA a entrevista (FOR UPDATE).
+  //  (a) recusa pós-encerramento — a Camada A é imutável depois de 'done' (`created_at > ended_at`
+  //      seria estado impossível, e poluiria a hash-chain tamper-evident);
+  //  (b) serializa a cadeia — dois `persistChunk` concorrentes na MESMA entrevista não competem pelo
+  //      `prev_hash` (lido e estendido atomicamente) → sem `seq`/hash duplicado.
+  return db.transaction(async (tx) => {
+    const [iv] = await tx
+      .select({ status: schema.interview.status })
+      .from(schema.interview)
+      .where(
+        and(eq(schema.interview.id, input.interviewId), eq(schema.interview.agencyId, agencyId)),
+      )
+      .for("update");
+    if (!iv || iv.status === "done") {
+      throw new InterviewClosedError(input.interviewId);
+    }
+    const [prev] = await tx
+      .select({ contentHash: schema.transcriptChunk.contentHash })
+      .from(schema.transcriptChunk)
+      .where(eq(schema.transcriptChunk.interviewId, input.interviewId))
+      .orderBy(desc(schema.transcriptChunk.seq))
+      .limit(1);
+    const prevHash = prev?.contentHash ?? null;
+    const classificacao = input.classificacao ?? "professional";
+    const contentHash = chainHash(
+      prevHash,
+      canonicalContent({
+        interviewId: input.interviewId,
+        seq: input.seq,
+        speaker: input.speaker,
+        tsStart: input.tsStart,
+        text: input.text,
+        classificacao,
+      }),
+    );
+    const id = randomUUID();
+    await tx.insert(schema.transcriptChunk).values({
+      id,
+      agencyId,
       interviewId: input.interviewId,
       seq: input.seq,
       speaker: input.speaker,
+      speakerLabel: input.speakerLabel ?? null,
       tsStart: input.tsStart,
+      tsEnd: input.tsEnd ?? null,
       text: input.text,
       classificacao,
-    }),
-  );
-  const id = randomUUID();
-  await db.insert(schema.transcriptChunk).values({
-    id,
-    agencyId,
-    interviewId: input.interviewId,
-    seq: input.seq,
-    speaker: input.speaker,
-    speakerLabel: input.speakerLabel ?? null,
-    tsStart: input.tsStart,
-    tsEnd: input.tsEnd ?? null,
-    text: input.text,
-    classificacao,
-    isFinal: input.isFinal ?? true,
-    sttConfidence: input.sttConfidence ?? null,
-    speakerConfidence: input.speakerConfidence ?? null,
-    startMs: input.startMs ?? null,
-    endMs: input.endMs ?? null,
-    sourceStreamId: input.sourceStreamId ?? null,
-    contentHash,
-    prevHash,
+      isFinal: input.isFinal ?? true,
+      sttConfidence: input.sttConfidence ?? null,
+      speakerConfidence: input.speakerConfidence ?? null,
+      startMs: input.startMs ?? null,
+      endMs: input.endMs ?? null,
+      sourceStreamId: input.sourceStreamId ?? null,
+      contentHash,
+      prevHash,
+    });
+    return { id, contentHash, prevHash };
   });
-  return { id, contentHash, prevHash };
 }
 
 export interface ChainVerdict {

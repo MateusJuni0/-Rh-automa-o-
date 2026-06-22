@@ -31,6 +31,12 @@ export async function nextTickN(db: Db, interviewId: string): Promise<number> {
  * NOTA: a unicidade forte `UNIQUE(interview_id, tick_n)` fica para o lote de endurecimento DB (FASE N);
  * o escritor único + esta verificação cobrem o risco real no v1.
  */
+export type PersistTickResult = {
+  persisted: boolean;
+  tickN: number;
+  reason?: "not_found" | "interview_closed" | "duplicate";
+};
+
 export async function persistTick(
   db: Db,
   agencyId: string,
@@ -38,31 +44,51 @@ export async function persistTick(
   tickN: number,
   out: TickOutput,
   meta: TickMeta = {},
-): Promise<{ persisted: boolean; tickN: number }> {
-  const existing = await db
-    .select({ id: schema.interviewTick.id })
-    .from(schema.interviewTick)
-    .where(
-      and(eq(schema.interviewTick.interviewId, interviewId), eq(schema.interviewTick.tickN, tickN)),
-    );
-  if (existing.length > 0) {
-    return { persisted: false, tickN };
-  }
-  await db.insert(schema.interviewTick).values({
-    id: randomUUID(),
-    interviewId,
-    agencyId,
-    tickN,
-    liveState: out.estado,
-    suggestion: out.suggestion ?? null,
-    tokensIn: meta.tokensIn ?? null,
-    tokensOut: meta.tokensOut ?? null,
-    costUsd: meta.costUsd != null ? String(meta.costUsd) : null,
-    modelUsed: meta.modelUsed ?? null,
-    tickLatencyMs: meta.tickLatencyMs ?? null,
-    degraded: meta.degraded ?? false,
+): Promise<PersistTickResult> {
+  // Família G (§11.1/1+3): a escrita serializa-se numa transação que TRANCA a linha da entrevista
+  // (FOR UPDATE) → o CAS de encerramento concorrente espera, e se já encerrou esta vê 'done' e
+  // recusa-se (fecha a janela check-then-insert). Permitido enquanto NÃO encerrada (live/scheduled/
+  // unstructured — a entrevista órfã também grava); só 'done' é recusado.
+  return db.transaction(async (tx) => {
+    const [iv] = await tx
+      .select({ status: schema.interview.status })
+      .from(schema.interview)
+      .where(and(eq(schema.interview.id, interviewId), eq(schema.interview.agencyId, agencyId)))
+      .for("update");
+    if (!iv) {
+      return { persisted: false, tickN, reason: "not_found" };
+    }
+    if (iv.status === "done") {
+      return { persisted: false, tickN, reason: "interview_closed" };
+    }
+    const existing = await tx
+      .select({ id: schema.interviewTick.id })
+      .from(schema.interviewTick)
+      .where(
+        and(
+          eq(schema.interviewTick.interviewId, interviewId),
+          eq(schema.interviewTick.tickN, tickN),
+        ),
+      );
+    if (existing.length > 0) {
+      return { persisted: false, tickN, reason: "duplicate" };
+    }
+    await tx.insert(schema.interviewTick).values({
+      id: randomUUID(),
+      interviewId,
+      agencyId,
+      tickN,
+      liveState: out.estado,
+      suggestion: out.suggestion ?? null,
+      tokensIn: meta.tokensIn ?? null,
+      tokensOut: meta.tokensOut ?? null,
+      costUsd: meta.costUsd != null ? String(meta.costUsd) : null,
+      modelUsed: meta.modelUsed ?? null,
+      tickLatencyMs: meta.tickLatencyMs ?? null,
+      degraded: meta.degraded ?? false,
+    });
+    return { persisted: true, tickN };
   });
-  return { persisted: true, tickN };
 }
 
 export interface PersistedTick {
@@ -106,7 +132,11 @@ export function createTickPersister(
 ): (out: TickOutput) => Promise<void> {
   let n = 0;
   return async (out: TickOutput): Promise<void> => {
-    await persistTick(db, agencyId, interviewId, n, out);
-    n += 1;
+    const result = await persistTick(db, agencyId, interviewId, n, out);
+    // Só avança o contador quando o tick É escrito — um tick recusado (duplicate/closed/not_found)
+    // não pode abrir um buraco na sequência monótona que o replay da reconexão assume.
+    if (result.persisted) {
+      n += 1;
+    }
   };
 }
