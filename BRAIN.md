@@ -6,6 +6,23 @@
 Copiloto de IA para **agência de RH** (a Filipa intermédia profissionais para empresas-clientes).
 Jornada: **Ingestão de docs → Briefing (roteiro) → Copiloto AO VIVO → Relatório → Memória**.
 
+## Status (2026-06-23 — desktop overlay ✅ build verde, bugs críticos corrigidos)
+
+### Sessão 2026-06-23 — correções overnight
+- **FloatingVera.tsx**: estado idle (bolha conn dot quando sem entrevista), ponto 🔴 de gravação, botão ✕ fechar no painel expandido + na bolha idle, badge ● no subtítulo do header, footer "Terminar entrevista"
+- **preload.ts**: exposto `wsUrl`, `wsToken`, `wsInterviewId` (para ligação WS real na Fase K)
+- **renderer/main.tsx**: suporte a WS real com handshake JWT + reconnect automático; fallback para mock feed quando sem URL
+- **main.ts**: corrigido `skipTaskbar: false` → `true` (conforme APP-DESKTOP.md)
+- **packages/db**: `pg.Pool` agora com `connectionTimeoutMillis: 8000` (fix freeze /vagas)
+- **web/supabase/middleware.ts + server.ts**: fetch com timeout 6s/8s (fix freeze quando Docker Supabase not running)
+- **web/.env.local**: adicionado `ALLOW_DEV_SESSION=1` + comentário de setup
+- **Build monorepo**: verde ✅ (desktop + web + packages)
+
+**Pendente / próximos passos:**
+- Endpoint web para gerar JWT do WS e passar `interviewId` ao desktop (Fase K)
+- Fase K: audio capture (LiveKit), transcrição real (Soniox), ticks ao vivo
+- `/vagas` freeze: com ALLOW_DEV_SESSION=1 + timeout fetch, deve resolver quando Docker down; se ainda travar investigar cookies Supabase no browser local
+
 ## Status (2026-06-17 — spec FECHADA, dispatch-ready)
 
 **Fase: spec 100% completa, decisões D1–D5 LOCKED, doc de integração escrito.

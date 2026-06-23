@@ -269,6 +269,11 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
   useEffect(() => setSugIdx(0), [state.suggestion?.pergunta]);
   const sug = suggestions[Math.min(sugIdx, suggestions.length - 1)] ?? null;
 
+  /* Sincroniza o estado de gravação com o tray (tooltip actualizado no processo main). */
+  useEffect(() => {
+    window.vera?.setStatus(state.recording ?? false);
+  }, [state.recording]);
+
   /* Click-through robusto: a janela só apanha o rato quando está EM CIMA da Vera (hit-test
      contínuo do cursor — mais fiável que onMouseEnter/Leave); fora dela, os cliques passam para a
      chamada. Durante o arrasto fica sempre interativa. */
@@ -399,7 +404,43 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
       {/* ── colapsado: ícone + balão ── */}
       {!expanded && (
         <>
-          {sug && (
+          {/* Bolha: estado idle/ligação quando sem entrevista; sugestão ativa quando ao vivo */}
+          {!state.interviewActive || state.conn !== "live" ? (
+            <div className="vera-bubble" style={bubbleStyle}>
+              <div className="vera-bubble__flag" style={{ gap: 8 }}>
+                <span
+                  className="vera-conn-dot"
+                  data-status={
+                    state.conn === "live"
+                      ? "wait"
+                      : state.conn === "reconnecting"
+                        ? "reconnecting"
+                        : state.conn === "offline"
+                          ? "offline"
+                          : "connecting"
+                  }
+                />
+                <span className="ct" style={{ color: "var(--iris-text-2)" }}>
+                  {state.conn === "reconnecting"
+                    ? "A religar…"
+                    : state.conn === "offline"
+                      ? "Sem ligação ao servidor"
+                      : state.conn === "connecting"
+                        ? "A ligar…"
+                        : "Aguardando entrevista…"}
+                </span>
+                <button
+                  type="button"
+                  className="vera-iconbtn"
+                  aria-label="Fechar Vera"
+                  style={{ marginLeft: "auto", padding: "2px 4px" }}
+                  onClick={callbacks.onEnd}
+                >
+                  <Ico n="x" s={13} />
+                </button>
+              </div>
+            </div>
+          ) : sug ? (
             <div className="vera-bubble" style={bubbleStyle}>
               <div
                 className={`vera-bubble__flag ${flagStatus === "contradito" ? "vera-bubble__flag--red" : flagStatus === "coberto-com-prova" ? "vera-bubble__flag--green" : ""}`}
@@ -422,6 +463,16 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                 <span className="vera-bubble__count">
                   {suggestions.length > 1 ? `${sugIdx + 1}/${suggestions.length}` : ""}
                 </span>
+                {/* Botão X para fechar o balão de sugestão sem abrir o painel */}
+                <button
+                  type="button"
+                  className="vera-iconbtn"
+                  aria-label="Fechar Vera"
+                  style={{ marginLeft: "auto", padding: "2px 4px" }}
+                  onClick={callbacks.onEnd}
+                >
+                  <Ico n="x" s={13} />
+                </button>
               </div>
               <div className="vera-bubble__body">
                 <p className="vera-bubble__q">{sug.pergunta}</p>
@@ -455,7 +506,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
 
           <button
             type="button"
@@ -476,6 +527,16 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
           >
             <IrisMark size={ICON} />
           </button>
+
+          {/* Ponto 🔴 de gravação — sobreposto ao ícone quando está a gravar (APP-DESKTOP §3) */}
+          {state.recording && (
+            <span
+              className="vera-recording-dot"
+              style={{ left: pos.x + ICON - 5, top: pos.y - 5 }}
+              role="img"
+              aria-label="A gravar"
+            />
+          )}
         </>
       )}
 
@@ -493,7 +554,14 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
             </span>
             <span className="vera-panel__hdname">
               <b>{contexto ?? "Entrevista"}</b>
-              <span>{state.recording ? "ao vivo · IRIS" : "IRIS"}</span>
+              <span>
+                {state.recording && (
+                  <span className="vera-rec-badge" aria-hidden="true">
+                    ●{" "}
+                  </span>
+                )}
+                {state.recording ? "ao vivo · IRIS" : "IRIS"}
+              </span>
             </span>
             <span className="vera-panel__time">{fmt(elapsedMs)}</span>
             <button
@@ -504,6 +572,15 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
               onClick={() => setExpanded(false)}
             >
               <Ico n="min" s={16} />
+            </button>
+            <button
+              type="button"
+              className="vera-iconbtn"
+              aria-label="Terminar e fechar"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={callbacks.onEnd}
+            >
+              <Ico n="x" s={16} />
             </button>
           </div>
 
@@ -595,6 +672,22 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
               ))}
             </div>
           )}
+
+          <div className="vera-panel__footer">
+            <button
+              type="button"
+              className="vera-ghost"
+              style={{
+                width: "100%",
+                fontSize: 12,
+                padding: "8px 0",
+                color: "var(--iris-red-soft)",
+              }}
+              onClick={callbacks.onEnd}
+            >
+              Terminar entrevista
+            </button>
+          </div>
 
           <div className="vera-panel__chat">
             {chat.length > 0 && (

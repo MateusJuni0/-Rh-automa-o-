@@ -1,5 +1,6 @@
 import path from "node:path";
-import { app, BrowserWindow, ipcMain, screen, session, shell } from "electron";
+import { app, BrowserWindow, ipcMain, screen, session, shell, type Tray } from "electron";
+import { createLoginWindow } from "../login/loginMain";
 import { veraAction } from "../shared/action";
 import { ALWAYS_ON_TOP_LEVEL } from "../shared/windowConfig";
 import { buildCsp, navigationDecision, withCspHeader } from "./security";
@@ -26,6 +27,7 @@ const CSP = buildCsp({ connectSrc: [WS_ORIGIN, API_ORIGIN].filter(Boolean) });
 
 const dir = import.meta.dirname;
 let overlay: BrowserWindow | null = null;
+let tray: Tray | null = null;
 
 /**
  * A janela do overlay cobre o ecrã inteiro, transparente e SEM moldura, com **click-through** por
@@ -47,7 +49,7 @@ function createOverlay(): BrowserWindow {
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
-    skipTaskbar: false,
+    skipTaskbar: true,
     hasShadow: false,
     focusable: true,
     show: false,
@@ -106,21 +108,37 @@ function endInterview(): void {
 
 function openWebPanel(): void {
   // Só http/https — `shell.openExternal` num file:/custom-scheme podia executar ficheiros.
+  // Se API_ORIGIN estiver vazio (demo/dev), abre localhost:3000 como fallback de desenvolvimento.
+  const target = API_ORIGIN || "http://localhost:3000";
   try {
-    const url = new URL(API_ORIGIN);
+    const url = new URL(target);
     if (url.protocol === "https:" || url.protocol === "http:") {
-      void shell.openExternal(API_ORIGIN);
+      void shell.openExternal(target);
     }
   } catch {
-    // URL inválida → ignorar.
+    // URL inválida → ignorar sem crash.
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   installCsp();
   denySensitivePermissions();
+
+  // Fluxo de login: só pede se não houver token já injectado (e.g. lançado da web ou modo dev inline).
+  // ALLOW_DEV_SESSION=1 aceita qualquer credencial no login sem Supabase.
+  if (!process.env.VERA_ACCESS_TOKEN) {
+    const loginResult = await createLoginWindow();
+    if (!loginResult) {
+      // Utilizador fechou a janela de login sem entrar → sair.
+      app.quit();
+      return;
+    }
+    // Propagar o token para que o preload do overlay o leia no createOverlay().
+    process.env.VERA_ACCESS_TOKEN = loginResult.accessToken;
+  }
+
   overlay = createOverlay();
-  createTray({
+  tray = createTray({
     onOpenWeb: openWebPanel,
     onEnd: endInterview,
     onQuit: () => app.quit(),
@@ -134,11 +152,8 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+// Handler `window-all-closed` removido: a app não deve fechar quando o overlay fecha —
+// o tray fica sempre visível até o utilizador clicar "Sair". A saída acontece só em `onQuit`.
 
 // Ações do overlay — só do nosso renderer + payload validado (stub até à API/WS da Fase K).
 ipcMain.on("vera:action", (event, raw) => {
@@ -164,4 +179,13 @@ ipcMain.on("vera:interactive", (event, on) => {
     return;
   }
   overlay?.setIgnoreMouseEvents(on !== true, { forward: true });
+});
+
+// Actualiza o tooltip do tray consoante o estado da entrevista (recording = true/false).
+// O renderer envia `vera:status` quando o estado muda (entrevista a decorrer / em espera).
+ipcMain.on("vera:status", (event, payload: { recording: boolean }) => {
+  if (!fromOwnRenderer(event) || !tray) {
+    return;
+  }
+  tray.setToolTip(payload.recording ? "Vera — 🔴 a gravar" : "Vera — em espera");
 });

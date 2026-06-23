@@ -14,7 +14,15 @@ export async function getSupabaseUserForMiddleware(
   let response = NextResponse.next({ request: req });
   const url = process.env.SUPABASE_URL ?? "";
   const anonKey = process.env.SUPABASE_ANON_KEY ?? "";
+  // fetch com timeout de 6s — evita que o middleware trave indefinidamente se o GoTrue local
+  // estiver down (ex.: Docker não iniciado). Falha rápida → redireciona para /login em vez de congelar.
+  const timeoutFetch: typeof fetch = (input, init) => {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 6000);
+    return fetch(input, { ...init, signal: ac.signal }).finally(() => clearTimeout(t));
+  };
   const supabase = createServerClient(url, anonKey, {
+    global: { fetch: timeoutFetch },
     cookies: {
       getAll: () => req.cookies.getAll(),
       setAll: (toSet: CookieToSet[]) => {
@@ -28,8 +36,13 @@ export async function getSupabaseUserForMiddleware(
       },
     },
   });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: { id: string } | null = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Timeout ou GoTrue inacessível — trata como não-autenticado (redireciona para /login).
+    user = null;
+  }
   return { userId: user?.id ?? null, response };
 }

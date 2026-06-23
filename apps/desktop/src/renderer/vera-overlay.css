@@ -361,3 +361,61 @@ body {
 .vera-chat__input::placeholder {
   color: var(--iris-text-3);
 }
+
+/* Ponto de gravação — posicionado em absolute sobre o ícone (APP-DESKTOP §3) */
+.vera-recording-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e24b4a;
+  box-shadow:
+    0 0 0 2.5px #0a1422,
+    0 0 7px 1px rgba(226, 75, 74, 0.55);
+  pointer-events: none;
+  z-index: 4;
+  animation: vera-pulse-rec 2s ease-in-out infinite;
+}
+
+@keyframes vera-pulse-rec {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Badge "●" inline no subtítulo do cabeçalho do painel */
+.vera-rec-badge {
+  color: #e24b4a;
+  font-size: 9px;
+  vertical-align: middle;
+}
+
+/* Ponto de estado de ligação na bolha idle */
+.vera-conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--iris-text-3);
+}
+.vera-conn-dot[data-status="connecting"],
+.vera-conn-dot[data-status="reconnecting"] {
+  background: var(--iris-gold);
+  animation: vera-pulse-rec 1s ease-in-out infinite;
+}
+.vera-conn-dot[data-status="offline"] {
+  background: #e24b4a;
+}
+.vera-conn-dot[data-status="wait"] {
+  background: var(--iris-green);
+}
+
+/* Rodapé do painel expandido (botão Terminar) */
+.vera-panel__footer {
+  padding: 10px 14px;
+  border-top: 0.5px solid var(--iris-border-soft);
+}

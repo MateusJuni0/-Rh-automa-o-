@@ -53,7 +53,11 @@ export interface DbHandle {
  * (NUNCA hardcoded). O `db` satisfaz `TransactionalDb` → usar SEMPRE com `withAgencySession`.
  */
 export function createDb(connectionString: string): DbHandle {
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: 8000,
+    idleTimeoutMillis: 30000,
+  });
   const db = drizzle(pool, { schema });
   return { db, close: () => pool.end() };
 }

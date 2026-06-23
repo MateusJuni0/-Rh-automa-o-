@@ -13,7 +13,8 @@
       "!**/.next",
       "!**/migrations",
       "!**/node_modules",
-      "!apps/web/app/globals.css"
+      "!apps/web/app/globals.css",
+      "!vera-iris-v3-preview.html"
     ]
   },
   "formatter": {

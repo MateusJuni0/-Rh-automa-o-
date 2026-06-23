@@ -15,7 +15,14 @@ export async function createSupabaseServerClient() {
   const url = process.env.SUPABASE_URL ?? "";
   const anonKey = process.env.SUPABASE_ANON_KEY ?? "";
   const jar = await cookies();
+  // fetch com timeout de 8s — evita congelamento se GoTrue local estiver down.
+  const timeoutFetch: typeof fetch = (input, init) => {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 8000);
+    return fetch(input, { ...init, signal: ac.signal }).finally(() => clearTimeout(t));
+  };
   return createServerClient(url, anonKey, {
+    global: { fetch: timeoutFetch },
     cookies: {
       getAll: () => jar.getAll(),
       setAll: (toSet: CookieToSet[]) => {
