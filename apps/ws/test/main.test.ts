@@ -24,6 +24,11 @@ describe("resolveConfig", () => {
   it("ALLOW_DEV_SESSION=1 → devSession true", () => {
     expect(resolveConfig({ ALLOW_DEV_SESSION: "1" }).devSession).toBe(true);
   });
+  it("ALLOW_DEV_SESSION=1 mas NODE_ENV=production → devSession false (hard-gate anti-bypass)", () => {
+    expect(resolveConfig({ ALLOW_DEV_SESSION: "1", NODE_ENV: "production" }).devSession).toBe(
+      false,
+    );
+  });
   it("DATABASE_URL vazio/espaços → undefined (cai no mock)", () => {
     expect(resolveConfig({ DATABASE_URL: "   " }).databaseUrl).toBeUndefined();
   });

@@ -30,7 +30,8 @@ export const wsAuth = z.object({
 /** Ack do cliente: último `seq` recebido → o servidor faz replay do que faltou na reconexão. */
 export const wsAck = z.object({
   type: z.literal("ack"),
-  lastSeq: z.number().int().nonnegative(),
+  // .max(int32): teto defensivo — um lastSeq gigante suprimiria o replay (o seq do servidor nunca lá chega).
+  lastSeq: z.number().int().nonnegative().max(2_147_483_647),
 });
 
 export const clientMessage = z.discriminatedUnion("type", [wsAuth, wsAck]);

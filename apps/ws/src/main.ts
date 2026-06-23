@@ -21,7 +21,8 @@ export function resolveConfig(env: NodeJS.ProcessEnv): WsConfig {
     port: Number.isInteger(parsed) && parsed >= 0 ? parsed : 18792,
     secret: env.WS_JWT_SECRET ?? "",
     databaseUrl: databaseUrl ? databaseUrl : undefined,
-    devSession: env.ALLOW_DEV_SESSION === "1",
+    // Hard-gate por NODE_ENV: o bypass "dev-token" NUNCA liga em produção, mesmo que a flag vaze p/ lá.
+    devSession: env.ALLOW_DEV_SESSION === "1" && env.NODE_ENV !== "production",
   };
 }
 
