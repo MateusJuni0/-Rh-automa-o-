@@ -125,9 +125,13 @@ function handleVeraUrl(url: string): void {
     if (interviewId) process.env.VERA_INTERVIEW_ID = interviewId;
     if (token) process.env.VERA_ACCESS_TOKEN = token;
     if (wsUrl) process.env.VERA_WS_ORIGIN = wsUrl;
-    // Recarrega o renderer para que o preload leia os env vars atualizados.
-    overlay?.webContents.reload();
-    overlay?.focus();
+    // Recria o overlay se foi fechado (ex.: após "Terminar"); senão recarrega p/ reler os env vars.
+    if (!overlay || overlay.isDestroyed()) {
+      overlay = createOverlay();
+    } else {
+      overlay.webContents.reload();
+      overlay.focus();
+    }
   } catch {
     // URL inválida — ignorar sem crash.
   }
@@ -138,6 +142,16 @@ app.on("open-url", (event, url) => {
   event.preventDefault();
   handleVeraUrl(url);
 });
+
+/** Mostra a IRIS (recria o overlay se foi fechado por "Terminar"). Rede de segurança da tray. */
+function showOverlay(): void {
+  if (!overlay || overlay.isDestroyed()) {
+    overlay = createOverlay();
+  } else {
+    overlay.show();
+    overlay.focus();
+  }
+}
 
 function endInterview(): void {
   // TODO Fase K: POST /api/interviews/:id/report (o parecer é gerado no backend).
@@ -178,6 +192,7 @@ app.whenReady().then(async () => {
 
   overlay = createOverlay();
   tray = createTray({
+    onShow: showOverlay,
     onOpenWeb: openWebPanel,
     onEnd: endInterview,
     onQuit: () => app.quit(),

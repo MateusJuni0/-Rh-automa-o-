@@ -2,6 +2,7 @@ import path from "node:path";
 import { Menu, nativeImage, Tray } from "electron";
 
 export interface TrayHandlers {
+  onShow: () => void;
   onOpenWeb: () => void;
   onEnd: () => void;
   onQuit: () => void;
@@ -22,13 +23,14 @@ export function createTray(handlers: TrayHandlers): Tray {
   tray.setToolTip("IRIS — copiloto");
   tray.setContextMenu(
     Menu.buildFromTemplate([
+      { label: "Mostrar a IRIS", click: handlers.onShow },
       { label: "Abrir o painel web", click: handlers.onOpenWeb },
       { label: "Terminar entrevista", click: handlers.onEnd },
       { type: "separator" },
       { label: "Sair (fechar a IRIS)", click: handlers.onQuit },
     ]),
   );
-  // Clique no ícone do tray também fecha o menu/foca — duplo-clique sai (atalho de teste).
-  tray.on("double-click", handlers.onQuit);
+  // Duplo-clique no ícone do tray MOSTRA a IRIS (não sai — evita fechar a app sem querer).
+  tray.on("double-click", handlers.onShow);
   return tray;
 }
