@@ -25,7 +25,9 @@ working tree mas não committa).
 4. **Rename Vera → IRIS (web) — commit `fc6fb65`:** todas as strings/títulos/labels visíveis → IRIS (Sidebar, `<title>`, "Perguntar à IRIS", etc.). Identificadores internos (`VeraAvatar`/`VeraState`/`role:'vera'`) ficam como nome de código (padrão hermes→Lince). **Zero "Vera" visível na web.**
 5. **OpenRouter pronto (Onda D) — já estava feito e confirmado:** `apps/web/lib/ai.ts` `aiOptions()` — sem `OPENROUTER_API_KEY` corre **mock €0**; com a chave usa `createOpenRouterTransport` real (defaults haiku-4-5/opus-4-8/sonnet-4-6, gate ZDR). **Amanhã é só colar a chave no `.env`** — nada a reescrever.
 
-Todos os passos: typecheck + lint verdes antes de cada commit.
+6. **Extras úteis (Onda F) — commits `ab52669`, `c53adce`:** página + item de nav **"Entrevistas"** (lista global → transcrição) + **snapshot de evidência** no candidato ("X competências fortes · Y lacunas", derivado dos factos, sem achismo). Verificado: João = "2 fortes · 1 lacuna", Marta = "2 lacunas". (Pesquisei produtos de copiloto de RH 2026 — este "veredito glanceável" é o padrão deles, e nós fazemo-lo ancorado em evidência, não num score opaco.)
+
+Todos os passos: typecheck + lint verdes antes de cada commit. **Repo TODO verde** (typecheck 11/11 + lint 388 + todos os testes).
 
 ## 🤝 O que o Codex fez (desktop + ws) — eu integrei e verifiquei
 - **Overlay**: botão **"Fechar"** + dot **🔴 "A gravar"** + dot de ligação (queixas 2 e 5 ✅), cliente WebSocket real com handshake JWT + reconnect (cai no mock golden sem URL).
