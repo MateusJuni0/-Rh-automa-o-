@@ -34,10 +34,12 @@ Todos os passos: typecheck + lint verdes antes de cada commit.
 - Eu corrigi um **erro real** que uma edição concorrente introduziu (frame WS validado no boundary com Zod, não cast) — o build voltou a verde.
 
 ## ⚠️ O que FALTA (priorizado) — honesto
-**Desktop (área ativa do Codex — não mexi para não colidir):**
-- **A1 — iniciar/reabrir a entrevista pelo tray.** Hoje "Terminar" fecha o overlay (`overlay.close()`) e no Windows **não há item de tray para reabrir/iniciar** — só via deep-link da web. Falta "Iniciar entrevista (teste)" / "Mostrar a IRIS" no tray.
-- **Rename do desktop** — o overlay/tray ainda dizem "Vera" (aria "Fechar Vera", título, tray "Vera — copiloto IRIS"). Tem de ser um commit coordenado (renderer+preload+main+css acoplados ao hit-test). Recomendo fazê-lo quando o Codex parar de editar o desktop.
-- **A2** — o overlay auto-arranca a demo no mount (devia ficar "em espera" até iniciar).
+**Desktop — ATUALIZADO 02:30 (o Codex ficou idle às 01:18; fiz coordenado, build verde):**
+- ✅ **Rename do desktop FEITO** (commit `6204c66`) — overlay/tray/login dizem **IRIS** (build confirma: 0 "Vera" no bundle do renderer). Identificadores (`FloatingVera`), canais IPC `vera:*` e classes CSS `.vera-*` mantidos (nome de código).
+- ✅ **A1 FEITO** (commit `035c23d`) — `showOverlay()` + item de tray **"Mostrar a IRIS"** + duplo-clique seguro + o deep-link recria o overlay se foi fechado. **Acabou o beco sem saída** depois de "Terminar".
+- ✅ **Dev-token WS** (commit `19ca482`) — o overlay liga ao servidor WS em dev (`apps/desktop/.env.example` documenta `VERA_WS_ORIGIN`/`dev-token`).
+- ⚠️ **A2 (menor)** — o overlay ainda auto-arranca a demo no mount (devia ficar "em espera" até iniciar). Polish, não bloqueia.
+- ⚠️ **QA live do Electron** — continua a precisar de ti (`cd apps/desktop && node build.mjs && pnpm exec electron .`), não dá headless. O build bundla verde.
 
 **Backend (eu, opcional):** orquestrador realtime→ws (C2) e filtro do broadcast por `interviewId` (C7) — o Codex está agora no `apps/ws`, por isso deixei para evitar colisão.
 
