@@ -59,3 +59,17 @@ Todos os passos: typecheck + lint verdes antes de cada commit. **Repo TODO verde
 1. Tu testas a transcrição na web (deve estar ótima).
 2. Coordenar com o Codex o **fecho do desktop**: A1 (iniciar/reabrir no tray) + rename → e aí o desktop fica redondo.
 3. Quando tiveres crédito OpenRouter, colas a chave e a IA fica real sem mais nada.
+
+---
+
+## Conclusão do loop (03:10 — concluído)
+Parei por decisão consciente: **as 9 queixas estão resolvidas e o repo está TODO verde** (typecheck 11/11 + lint 388 + testes). O que resta é **deferido-por-design (Ω)** ou polish de baixo valor/risco — não justifica mexer mais no teu melhor projeto às 3 da manhã.
+
+**Deferido (com razão, não esquecido):**
+- **Anel AO VIVO realtime→ws (ticks do servidor a chegarem ao overlay)** — os adapters (Soniox/LiveKit/TickEngine/frames) existem e estão testados; falta só o *runtime* que os liga. Por design fecha-se no **handover das chaves**, porque só se valida de verdade com STT real (`KEYS-TODO.md` Ω-2 C). Hoje o overlay JÁ liga ao WS (dev-token) e o deep-link lança-o da web — a **ligação está provada**; faltam só os ticks ao vivo reais.
+- **A2** — o overlay auto-arranca a demo ao abrir (devia ficar "em espera"). Polish; o auto-play até ajuda a demo.
+- **QA live do Electron** — precisa de ti: `cd apps/desktop && node build.mjs && pnpm exec electron .` (matar instâncias por path `*rh-automacao*`, não o VS Code).
+
+**Para testares JÁ de manhã (web, mock €0):** `pnpm --filter web dev` → http://localhost:3000 → login **`filipa@iris.tech`** / qualquer password → **Candidatos → João/Marta → "Ver transcrição"** (a da Marta tem a contradição "⚠ vs CV"). O modo mock está ativo via `apps/web/.env.development.local` (temporário); quando quiseres a auth Supabase real, apaga esse ficheiro.
+
+**Commits da noite (todos em `phase3/product`, + branch `backup/overnight-2026-06-23`):** backup `6b24aa1` · baseline+WS-boundary `9bb52eb` · transcrição/seed golden `3342d16` · rename web `fc6fb65` · lista entrevistas `ab52669` · dev-token WS `19ca482` · rename desktop `6204c66` · A1 desktop `035c23d` · snapshot evidência `c53adce` · docs `fcaf8b6`.
