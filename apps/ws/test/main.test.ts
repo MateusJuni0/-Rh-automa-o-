@@ -11,10 +11,18 @@ describe("resolveConfig", () => {
   it("lê WS_PORT/WS_JWT_SECRET/DATABASE_URL", () => {
     expect(
       resolveConfig({ WS_PORT: "1234", WS_JWT_SECRET: "s", DATABASE_URL: "postgres://x" }),
-    ).toEqual({ port: 1234, secret: "s", databaseUrl: "postgres://x" });
+    ).toEqual({ port: 1234, secret: "s", databaseUrl: "postgres://x", devSession: false });
   });
   it("defaults: porta 18792, segredo vazio, sem DATABASE_URL", () => {
-    expect(resolveConfig({})).toEqual({ port: 18792, secret: "", databaseUrl: undefined });
+    expect(resolveConfig({})).toEqual({
+      port: 18792,
+      secret: "",
+      databaseUrl: undefined,
+      devSession: false,
+    });
+  });
+  it("ALLOW_DEV_SESSION=1 → devSession true", () => {
+    expect(resolveConfig({ ALLOW_DEV_SESSION: "1" }).devSession).toBe(true);
   });
   it("DATABASE_URL vazio/espaços → undefined (cai no mock)", () => {
     expect(resolveConfig({ DATABASE_URL: "   " }).databaseUrl).toBeUndefined();

@@ -9,6 +9,16 @@ import { createTray } from "./tray";
 // Hardening R2: sandbox por defeito p/ TODOS os processos renderer (não só o overlay).
 app.enableSandbox();
 
+// Registar o protocolo `vera://` para que o browser abra a Vera ao clicar em links vera://.
+// Em dev (`process.defaultApp`), o executável é o Electron com o script como 2º argumento.
+if (process.defaultApp) {
+  if (process.argv.length >= 2 && process.argv[1]) {
+    app.setAsDefaultProtocolClient("vera", process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient("vera");
+}
+
 // Single-instance: nunca empilhar Veras. Uma 2ª abertura foca a existente e sai (anti-pile-up).
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -100,6 +110,35 @@ function denySensitivePermissions(): void {
   });
 }
 
+/**
+ * Processa um deep link `vera://interview/{id}?token={tok}&wsUrl={url}`:
+ * injeta os parâmetros nas env vars do processo e recarrega o overlay para que o preload os releia.
+ * v1: token é MOCK — Fase Ω substitui por JWT Supabase real.
+ */
+function handleVeraUrl(url: string): void {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== "interview") return;
+    const interviewId = u.pathname.replace(/^\//, "");
+    const token = u.searchParams.get("token") ?? "";
+    const wsUrl = u.searchParams.get("wsUrl") ?? "";
+    if (interviewId) process.env.VERA_INTERVIEW_ID = interviewId;
+    if (token) process.env.VERA_ACCESS_TOKEN = token;
+    if (wsUrl) process.env.VERA_WS_ORIGIN = wsUrl;
+    // Recarrega o renderer para que o preload leia os env vars atualizados.
+    overlay?.webContents.reload();
+    overlay?.focus();
+  } catch {
+    // URL inválida — ignorar sem crash.
+  }
+}
+
+// macOS: deep link chega via evento (a app já está a correr).
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  handleVeraUrl(url);
+});
+
 function endInterview(): void {
   // TODO Fase K: POST /api/interviews/:id/report (o parecer é gerado no backend).
   overlay?.close();
@@ -143,8 +182,15 @@ app.whenReady().then(async () => {
     onEnd: endInterview,
     onQuit: () => app.quit(),
   });
-  // 2ª abertura (single-instance) → traz a Vera existente para a frente.
-  app.on("second-instance", () => overlay?.focus());
+  // 2ª abertura (single-instance): Windows/Linux entregam o deep link via argv.
+  app.on("second-instance", (_event, argv) => {
+    const veraUrl = argv.find((a) => a.startsWith("vera://"));
+    if (veraUrl) {
+      handleVeraUrl(veraUrl);
+    } else {
+      overlay?.focus();
+    }
+  });
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       overlay = createOverlay();

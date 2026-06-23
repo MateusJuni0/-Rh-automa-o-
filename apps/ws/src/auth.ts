@@ -11,6 +11,11 @@ export interface WsAuthOptions {
   verifyOwnership(interviewId: string, recruiterId: string): Promise<boolean> | boolean;
   /** Relógio injetável (testes). Default: agora. */
   now?: () => number;
+  /**
+   * Bypass de dev: aceita o sentinel "dev-token" sem verificar JWT (ALLOW_DEV_SESSION=1 mode).
+   * NUNCA ativar em produção.
+   */
+  allowDevToken?: boolean;
 }
 
 /**
@@ -19,6 +24,16 @@ export interface WsAuthOptions {
  */
 export function createWsAuthenticate(opts: WsAuthOptions): WsServerHooks["authenticate"] {
   return async (accessToken, interviewId) => {
+    // Dev bypass: ALLOW_DEV_SESSION=1 aceita "dev-token" para testar o fluxo WS sem JWT real.
+    if (opts.allowDevToken && accessToken === "dev-token") {
+      let owns: boolean;
+      try {
+        owns = await opts.verifyOwnership(interviewId, "dev-user");
+      } catch {
+        return { ok: false, code: 4401 };
+      }
+      return owns ? { ok: true, actorId: "dev-user" } : { ok: false, code: 4403 };
+    }
     if (!opts.secret) {
       return { ok: false, code: 4401 };
     }

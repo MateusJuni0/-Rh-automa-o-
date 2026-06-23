@@ -57,6 +57,31 @@ describe("createWsAuthenticate (unidade)", () => {
     await auth(token(REC), IID);
     expect(seen).toEqual([[IID, REC]]);
   });
+
+  it("allowDevToken: dev-token sem JWT → ok com actorId dev-user", async () => {
+    const auth = createWsAuthenticate({
+      secret: SECRET,
+      now,
+      verifyOwnership: () => true,
+      allowDevToken: true,
+    });
+    expect(await auth("dev-token", IID)).toEqual({ ok: true, actorId: "dev-user" });
+  });
+
+  it("allowDevToken: dev-token sem posse → 4403", async () => {
+    const auth = createWsAuthenticate({
+      secret: SECRET,
+      now,
+      verifyOwnership: () => false,
+      allowDevToken: true,
+    });
+    expect(await auth("dev-token", IID)).toMatchObject({ ok: false, code: 4403 });
+  });
+
+  it("allowDevToken=false: dev-token ainda rejeitado como JWT inválido", async () => {
+    const auth = createWsAuthenticate({ secret: SECRET, verifyOwnership: () => true, now });
+    expect(await auth("dev-token", IID)).toMatchObject({ ok: false, code: 4401 });
+  });
 });
 
 let server: WsServer | undefined;

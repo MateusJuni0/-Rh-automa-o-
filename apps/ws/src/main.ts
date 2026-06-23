@@ -9,6 +9,8 @@ export interface WsConfig {
   secret: string;
   /** `DATABASE_URL` (opcional). Presente → posse REAL via @rh/db; ausente → mock (dev/testes). */
   databaseUrl: string | undefined;
+  /** `ALLOW_DEV_SESSION=1` → aceita "dev-token" sem verificar JWT (NUNCA ativar em prod). */
+  devSession?: boolean;
 }
 
 /** Config do servidor WS a partir do ambiente. SEM segredo hardcoded — `WS_JWT_SECRET` é obrigatório. */
@@ -19,6 +21,7 @@ export function resolveConfig(env: NodeJS.ProcessEnv): WsConfig {
     port: Number.isInteger(parsed) && parsed >= 0 ? parsed : 18792,
     secret: env.WS_JWT_SECRET ?? "",
     databaseUrl: databaseUrl ? databaseUrl : undefined,
+    devSession: env.ALLOW_DEV_SESSION === "1",
   };
 }
 
@@ -35,10 +38,14 @@ export function mockVerifyOwnership(interviewId: string, recruiterId: string): b
  * Só precisa de `port`+`secret` — a posse (mock OU @rh/db) é injetada por quem chama (config-not-code).
  */
 export async function startFromConfig(
-  cfg: Pick<WsConfig, "port" | "secret">,
+  cfg: Pick<WsConfig, "port" | "secret"> & { devSession?: boolean },
   verifyOwnership: (interviewId: string, recruiterId: string) => Promise<boolean> | boolean,
 ): Promise<WsServer> {
-  const authenticate = createWsAuthenticate({ secret: cfg.secret, verifyOwnership });
+  const authenticate = createWsAuthenticate({
+    secret: cfg.secret,
+    verifyOwnership,
+    allowDevToken: cfg.devSession,
+  });
   return WsServer.start({ port: cfg.port, hooks: { authenticate } });
 }
 
@@ -55,6 +62,9 @@ async function main(): Promise<void> {
   const handle = cfg.databaseUrl ? createDb(cfg.databaseUrl) : undefined;
   const verifyOwnership = handle ? dbVerifyOwnership(handle.db) : mockVerifyOwnership;
   process.stdout.write(`[ws] posse: ${handle ? "REAL (@rh/db)" : "MOCK (sem DATABASE_URL)"}\n`);
+  if (cfg.devSession) {
+    process.stdout.write("[ws] ⚠️  ALLOW_DEV_SESSION=1 — dev-token aceito (NUNCA em prod)\n");
+  }
   const server = await startFromConfig(cfg, verifyOwnership);
   process.stdout.write(`[ws] a ouvir em ws://127.0.0.1:${server.port}\n`);
   let closing = false;
