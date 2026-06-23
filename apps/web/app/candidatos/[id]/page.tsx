@@ -82,6 +82,9 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
     notFound();
   }
   const { skillsDeclaradas, experienciaAnos, gapsCv, resumo } = cand.profile;
+  // Snapshot anti-achismo: contagem de EVIDÊNCIA das entrevistas (forte/lacuna), não opinião.
+  const fortes = cand.factos.filter((f) => f.rubricLevel === "forte").length;
+  const lacunas = cand.factos.filter((f) => f.factType === "gap").length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,6 +105,21 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
                 ? `${experienciaAnos} anos de experiência`
                 : "Experiência n/d"}
             </p>
+            {cand.factos.length > 0 ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-ink-3">Das entrevistas:</span>
+                {fortes > 0 ? (
+                  <Chip tone="strong">
+                    {fortes} {fortes === 1 ? "competência forte" : "competências fortes"}
+                  </Chip>
+                ) : null}
+                {lacunas > 0 ? (
+                  <Chip tone="alert">
+                    {lacunas} {lacunas === 1 ? "lacuna" : "lacunas"}
+                  </Chip>
+                ) : null}
+              </div>
+            ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
               {cand.email ? (
                 <a
