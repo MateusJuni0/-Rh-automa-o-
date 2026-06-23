@@ -31,11 +31,11 @@ const SUGESTOES = [
   "Como está a agenda hoje?",
 ] as const;
 
-// Glifos do "wallpaper" temático (recrutamento) a flutuar atrás da Vera.
+// Glifos do "wallpaper" temático (recrutamento) a flutuar atrás da IRIS.
 const GLYPHS = ["📄", "✓", "★", "🗓", "✦", "📎"];
 
 function downloadArtefact(a: ActionView): void {
-  const body = `Artefacto gerado pela Vera (demo)\n\nFerramenta: ${a.tool}\nResumo: ${a.summary ?? "—"}\nReferência: ${a.resultRef ?? "—"}\n`;
+  const body = `Artefacto gerado pela IRIS (demo)\n\nFerramenta: ${a.tool}\nResumo: ${a.summary ?? "—"}\nReferência: ${a.resultRef ?? "—"}\n`;
   const url = URL.createObjectURL(new Blob([body], { type: "text/plain;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
@@ -150,7 +150,7 @@ export function AssistantChat() {
 
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[19rem_1fr]">
-      {/* ───────── Vera (persona) + contexto + artefactos ───────── */}
+      {/* ───────── IRIS (persona) + contexto + artefactos ───────── */}
       <aside className="flex flex-col gap-4">
         <div className="vera-stage flex flex-col items-center px-4 pt-5 pb-4">
           <div className="vera-wallpaper" aria-hidden="true">
@@ -172,7 +172,7 @@ export function AssistantChat() {
             <VeraAvatar state={veraState} />
           </div>
           <p className="relative mt-1 font-display font-semibold text-ink text-lg tracking-tight">
-            Vera
+            IRIS
           </p>
           <p className="relative text-ink-3 text-xs">
             {status === "sending" ? "a tratar do teu pedido…" : "a tua assistente · a postos"}
@@ -185,7 +185,7 @@ export function AssistantChat() {
           </header>
           <p className="px-4 py-3 text-ink-3 text-xs leading-relaxed">
             Sem entidade selecionada. Abre o assistente a partir de uma vaga ou candidato para a
-            Vera já saber de quem falas.
+            IRIS já saber de quem falas.
           </p>
         </div>
 
@@ -196,7 +196,7 @@ export function AssistantChat() {
           </header>
           {artefactos.length === 0 ? (
             <p className="px-4 py-3 text-ink-3 text-xs">
-              O que a Vera gerar (planilhas, emails) aparece aqui para baixares.
+              O que a IRIS gerar (planilhas, emails) aparece aqui para baixares.
             </p>
           ) : (
             <ul className="flex flex-col gap-1 p-2">
@@ -229,7 +229,7 @@ export function AssistantChat() {
           {messages.length === 0 ? (
             <div className="m-auto max-w-sm text-center">
               <p className="font-display font-semibold text-ink text-lg tracking-tight">
-                Olá, sou a Vera.
+                Olá, sou a IRIS.
               </p>
               <p className="mt-1 text-ink-2 text-sm">
                 Comparo candidatos, redijo emails, exporto planilhas. O que grava ou envia para fora
@@ -249,7 +249,7 @@ export function AssistantChat() {
                 key={m.id}
                 className={`flex flex-col gap-1.5 ${m.role === "filipa" ? "items-end" : "items-start"}`}
               >
-                {m.role === "vera" ? <span className="px-1 text-ink-3 text-xs">Vera</span> : null}
+                {m.role === "vera" ? <span className="px-1 text-ink-3 text-xs">IRIS</span> : null}
                 {m.text ? (
                   <div
                     className={`bubble ${m.role === "filipa" ? "bubble-filipa" : "bubble-vera"}`}
@@ -286,7 +286,7 @@ export function AssistantChat() {
             </div>
           ) : null}
           {status === "error" ? (
-            <p className="text-alert text-sm">Falha ao falar com a Vera. Tenta de novo.</p>
+            <p className="text-alert text-sm">Falha ao falar com a IRIS. Tenta de novo.</p>
           ) : null}
         </div>
 
@@ -325,8 +325,8 @@ export function AssistantChat() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Escreve à Vera…"
-              aria-label="Mensagem para a Vera"
+              placeholder="Escreve à IRIS…"
+              aria-label="Mensagem para a IRIS"
               disabled={status === "sending"}
             />
             <Button

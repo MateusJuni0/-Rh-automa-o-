@@ -1,7 +1,7 @@
 import { PageHeader } from "../components/PageHeader";
 import { AssistantChat } from "./AssistantChat";
 
-export const metadata = { title: "Assistente · Vera" };
+export const metadata = { title: "Assistente · IRIS" };
 
 /** Tela 9 — o assistente pessoal da Filipa (chat + artefactos + porta de confirmação). */
 export default function AssistentePage() {

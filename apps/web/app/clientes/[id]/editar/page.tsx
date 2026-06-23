@@ -23,7 +23,7 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
       <PageHeader
         eyebrow="Editar"
         title="Ficha do cliente"
-        description="Atualiza o que sabemos desta empresa. A Vera também enriquece automaticamente das reuniões."
+        description="Atualiza o que sabemos desta empresa. A IRIS também enriquece automaticamente das reuniões."
       />
       <ClienteEditForm cliente={cliente} />
     </div>

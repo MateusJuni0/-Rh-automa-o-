@@ -6,7 +6,7 @@ import { IntakeInbox } from "./IntakeInbox";
 
 export const dynamic = "force-dynamic";
 
-/** Intake Parte A — porta de segurança na WEB: a Vera classifica, a Filipa revê e CONFIRMA antes de gravar. */
+/** Intake Parte A — porta de segurança na WEB: a IRIS classifica, a Filipa revê e CONFIRMA antes de gravar. */
 export default async function IntakePage() {
   const { agencyId } = await getSession();
   const pending = await listPendingIntake(getDb(), agencyId);
@@ -16,7 +16,7 @@ export default async function IntakePage() {
         eyebrow="Entrada"
         title="Por confirmar"
         marker
-        description="Mensagens que a Vera classificou (Telegram, email, upload). Revê o que ela entendeu e confirma antes de gravar — nada se cria sem o teu OK."
+        description="Mensagens que a IRIS classificou (Telegram, email, upload). Revê o que ela entendeu e confirma antes de gravar — nada se cria sem o teu OK."
       />
       <IntakeInbox initialPending={pending} />
     </div>

@@ -243,8 +243,8 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
         </Card>
       ) : null}
 
-      {/* ── Q&A por entidade (Tela 8): perguntar à Vera sobre este candidato, com prova ── */}
-      <Card title={`Perguntar à Vera sobre ${cand.name}`}>
+      {/* ── Q&A por entidade (Tela 8): perguntar à IRIS sobre este candidato, com prova ── */}
+      <Card title={`Perguntar à IRIS sobre ${cand.name}`}>
         <EntityQA entityType="candidate" entityId={cand.id} entityName={cand.name} />
       </Card>
 
@@ -292,7 +292,7 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
         <div className="overflow-hidden rounded-card border border-line bg-card">
           <header className="border-line-subtle border-b px-4 py-3">
             <h2 className="font-medium text-ink text-sm">CV — texto original</h2>
-            <p className="text-ink-3 text-xs">Extraído automaticamente pela Vera</p>
+            <p className="text-ink-3 text-xs">Extraído automaticamente pela IRIS</p>
           </header>
           {cand.cvText ? (
             <div className="h-[480px] overflow-y-auto">

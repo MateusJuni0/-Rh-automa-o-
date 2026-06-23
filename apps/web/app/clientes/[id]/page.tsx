@@ -244,8 +244,8 @@ export default async function ClienteDetailPage({ params }: { params: Promise<{ 
 
       <ReunioesSection reunioes={cliente.reunioes} />
 
-      {/* ── Q&A por entidade (Tela 8): perguntar à Vera sobre este cliente, com prova ── */}
-      <Card title={`Perguntar à Vera sobre ${cliente.name}`}>
+      {/* ── Q&A por entidade (Tela 8): perguntar à IRIS sobre este cliente, com prova ── */}
+      <Card title={`Perguntar à IRIS sobre ${cliente.name}`}>
         <EntityQA entityType="client" entityId={cliente.id} entityName={cliente.name} />
       </Card>
 

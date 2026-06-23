@@ -11,7 +11,7 @@ interface ClienteOption {
 type Modo = "escrever" | "link" | "pdf";
 
 /**
- * Criar vaga: "Escrever" (cola/escreve os requisitos) OU "Importar de link" (a Vera vai buscar o
+ * Criar vaga: "Escrever" (cola/escreve os requisitos) OU "Importar de link" (a IRIS vai buscar o
  * texto da página — LinkedIn/site — e pré-preenche para a Filipa rever). A extração estruturada
  * acontece ao gravar (stub sem chave). Human-in-loop: ela vê e ajusta antes de criar.
  */
@@ -169,7 +169,7 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
         {modo === "link" ? (
           <Field
             label="Link da vaga"
-            hint="LinkedIn, site da empresa, Google… A Vera vai buscar o texto."
+            hint="LinkedIn, site da empresa, Google… A IRIS vai buscar o texto."
           >
             <div className="flex gap-2">
               <Input
@@ -191,7 +191,7 @@ export function VagaForm({ clientes }: { clientes: ClienteOption[] }) {
         ) : null}
 
         {modo === "pdf" ? (
-          <Field label="PDF da vaga" hint="O descritivo/pedido em PDF. A Vera lê e pré-preenche.">
+          <Field label="PDF da vaga" hint="O descritivo/pedido em PDF. A IRIS lê e pré-preenche.">
             <div className="flex flex-col gap-2">
               <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-line border-dashed bg-surface px-3 py-5 text-center text-ink-3 text-sm transition-colors hover:border-accent hover:text-ink">
                 <input

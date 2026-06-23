@@ -58,7 +58,7 @@ export function Sidebar({ userName }: { userName?: string }) {
     <aside className="sticky top-0 flex h-screen w-[216px] shrink-0 flex-col border-line border-r bg-raised px-3 py-4">
       <Link href="/" className="mb-5 flex items-center gap-2.5 px-2 py-1">
         <span className="live-dot size-2.5 rounded-sm bg-accent" aria-hidden="true" />
-        <span className="font-display font-semibold text-[17px] text-ink tracking-tight">Vera</span>
+        <span className="font-display font-semibold text-[17px] text-ink tracking-tight">IRIS</span>
       </Link>
 
       <nav className="flex flex-col gap-0.5">

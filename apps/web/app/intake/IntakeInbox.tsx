@@ -23,7 +23,7 @@ interface ResultLine {
 }
 
 /**
- * Caixa de entrada do Intake (porta de segurança, INTAKE Parte A): a Vera classifica cada mensagem;
+ * Caixa de entrada do Intake (porta de segurança, INTAKE Parte A): a IRIS classifica cada mensagem;
  * a Filipa REVÊ o que ela entendeu (alvo + intenção + excerto) e CONFIRMA antes de gravar. Sem confirmar,
  * nada durável é criado. 3 estados UX (vazio / a-processar / erro).
  */
@@ -114,14 +114,14 @@ export function IntakeInbox({ initialPending }: { initialPending: PendingIntake[
         {pending.length === 0 ? (
           <Card title="Sem mensagens por confirmar">
             <p className="text-ink-3 text-sm">
-              Tudo tratado. Encaminha uma mensagem ao lado para a Vera classificar.
+              Tudo tratado. Encaminha uma mensagem ao lado para a IRIS classificar.
             </p>
           </Card>
         ) : (
           pending.map((m) => (
             <Card
               key={m.id}
-              title={`A Vera entendeu: ${INTENCAO_LABEL[m.intencao ?? ""] ?? m.intencao ?? "—"}`}
+              title={`A IRIS entendeu: ${INTENCAO_LABEL[m.intencao ?? ""] ?? m.intencao ?? "—"}`}
             >
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-2">
@@ -135,7 +135,7 @@ export function IntakeInbox({ initialPending }: { initialPending: PendingIntake[
                   <Input
                     value={names[m.id] ?? ""}
                     onChange={(e) => setNames((n) => ({ ...n, [m.id]: e.target.value }))}
-                    placeholder="Nome do candidato (corrige se a Vera não apanhou)"
+                    placeholder="Nome do candidato (corrige se a IRIS não apanhou)"
                     aria-label="Nome do candidato"
                   />
                 ) : null}

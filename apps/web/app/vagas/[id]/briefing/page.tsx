@@ -206,7 +206,7 @@ export default async function BriefingPage({
 
       {isDemo ? (
         <p className="text-ink-3 text-xs">
-          Conteúdo de demonstração. Liga a chave (OpenRouter) para a Vera gerar o roteiro real a
+          Conteúdo de demonstração. Liga a chave (OpenRouter) para a IRIS gerar o roteiro real a
           partir do CV e do perfil do cliente.
         </p>
       ) : null}

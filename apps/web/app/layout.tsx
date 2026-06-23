@@ -19,8 +19,8 @@ const display = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Vera — copiloto de recrutamento",
-  description: "App interno da IRIS Tech (Vera / motor Lince).",
+  title: "IRIS — copiloto de recrutamento",
+  description: "App interno da IRIS Tech (IRIS / motor Lince).",
 };
 
 /** Nome do recrutador para a sidebar (undefined no login / sem sessão — falha silenciosa de propósito). */

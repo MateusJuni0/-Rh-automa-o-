@@ -17,7 +17,7 @@ export default async function CandidatosPage() {
         eyebrow="Talento"
         title="Candidatos"
         marker
-        description="Os perfis na tua base. Cola um CV e a Vera extrai competências e experiência."
+        description="Os perfis na tua base. Cola um CV e a IRIS extrai competências e experiência."
         stats={[{ value: rows.length, label: rows.length === 1 ? "perfil" : "perfis" }]}
       />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_20rem]">
@@ -25,7 +25,7 @@ export default async function CandidatosPage() {
           {rows.length === 0 ? (
             <EmptyState
               title="Sem candidatos ainda"
-              description="Cola um CV no painel ao lado — a Vera extrai o perfil automaticamente."
+              description="Cola um CV no painel ao lado — a IRIS extrai o perfil automaticamente."
             />
           ) : (
             <CandidatosFilter candidatos={rows} />

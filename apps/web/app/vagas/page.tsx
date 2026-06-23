@@ -24,7 +24,7 @@ export default async function VagasPage() {
         eyebrow="Processos"
         title="Vagas"
         marker
-        description="Cada vaga arranca de um texto do cliente: a Vera extrai requisitos, rubric e role profile."
+        description="Cada vaga arranca de um texto do cliente: a IRIS extrai requisitos, rubric e role profile."
         stats={[
           { value: vagas.length, label: vagas.length === 1 ? "vaga" : "vagas" },
           { value: comCandidatos, label: "ativas" },
@@ -35,7 +35,7 @@ export default async function VagasPage() {
           {vagas.length === 0 ? (
             <EmptyState
               title="Sem vagas ainda"
-              description="Cola a descrição do cliente no painel ao lado: a Vera extrai os requisitos."
+              description="Cola a descrição do cliente no painel ao lado: a IRIS extrai os requisitos."
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">

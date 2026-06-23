@@ -6,7 +6,7 @@ import { type FormEvent, useState } from "react";
 
 type State = "idle" | "busy" | "error";
 
-/** Login da Vera — email + palavra-passe (Supabase Auth real quando ligado; shim de sessão em dev). */
+/** Login da IRIS — email + palavra-passe (Supabase Auth real quando ligado; shim de sessão em dev). */
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("filipa@iris.tech");
@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-1.5 px-6 pt-8 pb-6">
           <div className="flex items-center gap-2.5">
             <span className="size-2.5 rounded-full bg-accent" aria-hidden="true" />
-            <span className="font-display font-semibold text-ink text-xl tracking-tight">Vera</span>
+            <span className="font-display font-semibold text-ink text-xl tracking-tight">IRIS</span>
           </div>
           <p className="text-ink-3 text-sm">Copiloto de recrutamento · IRIS</p>
         </div>

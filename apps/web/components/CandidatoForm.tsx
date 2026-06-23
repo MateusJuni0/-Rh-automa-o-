@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 /**
- * Form de candidato: anexa o CV em PDF (a Vera lê) OU cola o texto. Posta `multipart/form-data`
+ * Form de candidato: anexa o CV em PDF (a IRIS lê) OU cola o texto. Posta `multipart/form-data`
  * para `/api/candidatos` (que extrai o PDF server-side). 3 estados (idle/a-criar/erro).
  */
 export function CandidatoForm() {
@@ -43,7 +43,7 @@ export function CandidatoForm() {
       <header className="border-line-subtle border-b px-4 py-3">
         <h2 className="font-medium text-ink text-sm">Novo candidato</h2>
         <p className="mt-0.5 text-ink-3 text-xs">
-          Anexa o CV em PDF — a Vera lê — ou cola o texto.
+          Anexa o CV em PDF — a IRIS lê — ou cola o texto.
         </p>
       </header>
       <div className="flex flex-col gap-3.5 p-4">

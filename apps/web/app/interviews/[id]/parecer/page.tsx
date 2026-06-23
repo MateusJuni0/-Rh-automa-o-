@@ -27,13 +27,13 @@ export default async function ParecerPage({ params }: { params: Promise<{ id: st
       <PageHeader
         eyebrow="Pós-entrevista"
         title="Parecer"
-        description={`Leitura interna da Vera sobre ${candidateName}, e a versão polida para enviar ao cliente.`}
+        description={`Leitura interna da IRIS sobre ${candidateName}, e a versão polida para enviar ao cliente.`}
       />
 
       {demo ? (
         <p className="rounded-card border border-line-subtle bg-raised px-4 py-2.5 text-ink-3 text-xs">
           Demo: o parecer abaixo é um esqueleto determinístico. Liga a chave da IA (OpenRouter) para
-          a Vera cruzar a entrevista com os critérios do cliente e preencher a matriz.
+          a IRIS cruzar a entrevista com os critérios do cliente e preencher a matriz.
         </p>
       ) : null}
 

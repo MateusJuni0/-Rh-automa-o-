@@ -12,7 +12,7 @@ import { LogoutButton } from "./LogoutButton";
 import { SettingsTabs } from "./SettingsTabs";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Definições · Vera" };
+export const metadata = { title: "Definições · IRIS" };
 
 const TABS: TabItem[] = [
   { id: "conta", label: "Conta" },
@@ -69,7 +69,7 @@ export default async function DefinicoesPage() {
       className="elev elev-top relative"
     >
       <p className="mb-5 max-w-prose text-ink-2 text-sm">
-        A Vera usa três modelos, um por função. Cada slot só aceita modelos com as capacidades
+        A IRIS usa três modelos, um por função. Cada slot só aceita modelos com as capacidades
         certas e com retenção-zero (a transcrição e o CV nunca treinam o modelo).
       </p>
 
@@ -113,7 +113,7 @@ export default async function DefinicoesPage() {
       className="elev elev-top relative"
     >
       <p className="mb-5 max-w-prose text-ink-2 text-sm">
-        Liga o Google Calendar para a Vera agendar entrevistas e ler a tua disponibilidade. Fica do
+        Liga o Google Calendar para a IRIS agendar entrevistas e ler a tua disponibilidade. Fica do
         teu lado: nada é marcado sem a tua confirmação.
       </p>
       <button
@@ -155,7 +155,7 @@ export default async function DefinicoesPage() {
       <dl className="flex flex-col">
         <div className="flex items-center justify-between border-line-subtle border-b py-2.5 text-sm">
           <dt className="text-ink-2">Produto</dt>
-          <dd className="text-ink">Vera v1 · Lince</dd>
+          <dd className="text-ink">IRIS v1 · Lince</dd>
         </div>
         <div className="flex items-center justify-between border-line-subtle border-b py-2.5 text-sm">
           <dt className="text-ink-2">Ambiente</dt>

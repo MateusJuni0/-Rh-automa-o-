@@ -1,7 +1,7 @@
 export type VeraState = "idle" | "thinking" | "writing";
 
 /**
- * Vera — a "secretária" robô da Filipa. SVG + CSS (sem libs). 3 estados animados:
+ * IRIS — a "secretária" robô da Filipa. SVG + CSS (sem libs). 3 estados animados:
  * idle (pisca + respira), thinking (pontinhos + antena rápida), writing (mãos a teclar).
  * As animações vivem em globals.css (.vera-*); aqui é só a forma + o `data-state`.
  */
@@ -19,9 +19,9 @@ export function VeraAvatar({ state = "idle", size = 184 }: { state?: VeraState; 
       className="vera-bot"
       data-state={state}
       role="img"
-      aria-label="Vera, a tua assistente"
+      aria-label="IRIS, a tua assistente"
     >
-      <title>Vera</title>
+      <title>IRIS</title>
       {/* pontinhos "a pensar" */}
       <g>
         <circle className="vera-think-dot" cx="120" cy="26" r="3" fill={teal} />

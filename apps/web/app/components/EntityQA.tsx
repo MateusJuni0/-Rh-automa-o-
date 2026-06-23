@@ -34,7 +34,7 @@ const DEFAULT_SUGGESTIONS: Record<EntityQAProps["entityType"], string[]> = {
 /**
  * Q&A por entidade (Tela 8): chat factual sobre UM candidato/cliente. Reusa o estilo do assistente
  * (bolhas, typing-dots, 3 estados UX) mas é leitura pura — sem porta de confirmação nem artefactos.
- * A Vera responde a partir dos factos da entidade, SEMPRE com a prova (citação+minuto / excerto+fonte).
+ * A IRIS responde a partir dos factos da entidade, SEMPRE com a prova (citação+minuto / excerto+fonte).
  */
 export function EntityQA({ entityType, entityId, entityName, suggestions }: EntityQAProps) {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -108,7 +108,7 @@ export function EntityQA({ entityType, entityId, entityName, suggestions }: Enti
               key={m.id}
               className={`flex flex-col gap-1.5 ${m.role === "filipa" ? "items-end" : "items-start"}`}
             >
-              {m.role === "vera" ? <span className="px-1 text-ink-3 text-xs">Vera</span> : null}
+              {m.role === "vera" ? <span className="px-1 text-ink-3 text-xs">IRIS</span> : null}
               <div className={`bubble ${m.role === "filipa" ? "bubble-filipa" : "bubble-vera"}`}>
                 {m.text}
               </div>
@@ -135,7 +135,7 @@ export function EntityQA({ entityType, entityId, entityName, suggestions }: Enti
           </div>
         ) : null}
         {status === "error" ? (
-          <p className="text-alert text-sm">Falha ao perguntar à Vera. Tenta de novo.</p>
+          <p className="text-alert text-sm">Falha ao perguntar à IRIS. Tenta de novo.</p>
         ) : null}
         <div ref={bottomRef} />
       </div>

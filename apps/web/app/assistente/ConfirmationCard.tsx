@@ -10,7 +10,7 @@ export interface ConfirmationCardProps {
 }
 
 /**
- * Cartão da PORTA DE CONFIRMAÇÃO (Tela 9). Componente puro: a Filipa aprova ANTES de a Vera
+ * Cartão da PORTA DE CONFIRMAÇÃO (Tela 9). Componente puro: a Filipa aprova ANTES de a IRIS
  * gravar/enviar. Sem `onConfirm` nada acontece — espelha o gate do backend.
  */
 export function ConfirmationCard({
@@ -23,7 +23,7 @@ export function ConfirmationCard({
   return (
     <Card title="⚠ Confirmação necessária" className="vera-confirm">
       <p className="text-sm text-strong">
-        A Vera quer <strong>{efeitoVerbo(efeito)}</strong> com a ferramenta <code>{tool}</code>.
+        A IRIS quer <strong>{efeitoVerbo(efeito)}</strong> com a ferramenta <code>{tool}</code>.
       </p>
       <div className="mt-3 flex gap-2">
         <Button onClick={onConfirm} disabled={busy} size="sm">

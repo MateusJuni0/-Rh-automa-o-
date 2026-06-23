@@ -125,7 +125,7 @@ export function OnboardingFlow({ initialFacts }: { initialFacts: MemoryFact[] })
         ) : null}
       </Card>
 
-      <Card title="O que a Vera já sabe de ti">
+      <Card title="O que a IRIS já sabe de ti">
         {facts.length === 0 ? (
           <p className="text-ink-3 text-sm">
             Ainda nada. Responde às perguntas e vai aparecendo aqui.

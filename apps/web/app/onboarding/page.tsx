@@ -6,7 +6,7 @@ import { OnboardingFlow } from "./OnboardingFlow";
 
 export const dynamic = "force-dynamic";
 
-/** Tela 11 — Onboarding (1º uso): a Vera aprende o estilo/preferências do recrutador (conversa, não form). */
+/** Tela 11 — Onboarding (1º uso): a IRIS aprende o estilo/preferências do recrutador (conversa, não form). */
 export default async function OnboardingPage() {
   const { agencyId, recruiterId } = await getSession();
   const facts = await listMemoryFacts(getDb(), agencyId, recruiterId, { limit: 100 });
@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
         eyebrow="Primeiros passos"
         title="Conhece-te"
         marker
-        description="Quanto mais a Vera souber do teu estilo e do que valorizas, melhor te ajuda em tudo. Responde ao que quiseres — podes saltar e voltar aqui quando quiseres."
+        description="Quanto mais a IRIS souber do teu estilo e do que valorizas, melhor te ajuda em tudo. Responde ao que quiseres — podes saltar e voltar aqui quando quiseres."
       />
       <OnboardingFlow initialFacts={facts} />
     </div>

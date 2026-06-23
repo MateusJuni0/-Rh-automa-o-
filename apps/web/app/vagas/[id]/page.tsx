@@ -189,7 +189,7 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line-subtle bg-raised px-3 py-2 text-ink-3 text-xs">
         <span>
-          Ficha preenchida pela Vera a partir do pedido do cliente. Revê e completa o que falta.
+          Ficha preenchida pela IRIS a partir do pedido do cliente. Revê e completa o que falta.
         </span>
         <Link
           href={`/vagas/${vaga.id}/editar`}
@@ -247,7 +247,7 @@ export default async function VagaDetailPage({ params }: { params: Promise<{ id:
         )}
       </section>
 
-      <Card title="Requisitos (extraídos pela Vera)">
+      <Card title="Requisitos (extraídos pela IRIS)">
         <div className="flex flex-col gap-4">
           <Skills label="Must-have" items={skills.must} tone="strong" />
           <Skills label="Nice-to-have" items={skills.nice} tone="muted" />

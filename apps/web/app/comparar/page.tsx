@@ -10,7 +10,7 @@ import { getVaga } from "@/lib/vagas";
 import { CompararSelector } from "./CompararSelector";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Comparar · Vera" };
+export const metadata = { title: "Comparar · IRIS" };
 
 /** Glifo + rótulo + tom + cor do glifo de cada estado (fonte única: matriz, célula e legenda). */
 const STATUS: Record<

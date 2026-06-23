@@ -182,7 +182,7 @@ export default async function DashboardPage() {
         <section className={TILE}>
           <div className="flex items-center justify-between">
             <h2 className="font-medium text-ink text-sm">A precisar de atenção</h2>
-            <span className="text-ink-3 text-xs">A Vera antecipa</span>
+            <span className="text-ink-3 text-xs">A IRIS antecipa</span>
           </div>
           {suggestions.length === 0 ? (
             <p className="py-3 text-ink-3 text-sm">Tudo em dia.</p>

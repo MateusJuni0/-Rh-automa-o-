@@ -23,7 +23,7 @@ export default async function EditarVagaPage({ params }: { params: Promise<{ id:
       <PageHeader
         eyebrow="Editar"
         title="Ficha da vaga"
-        description="Completa as condições, o processo e as responsabilidades. A Vera preenche o que consegue do pedido do cliente; tu confirmas e completas."
+        description="Completa as condições, o processo e as responsabilidades. A IRIS preenche o que consegue do pedido do cliente; tu confirmas e completas."
       />
       <VagaEditForm vagaId={vaga.id} details={vaga.details} />
     </div>

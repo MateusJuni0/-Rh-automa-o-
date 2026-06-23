@@ -96,7 +96,7 @@ function Matriz({ view, titulo }: { view: ParecerView; titulo: string }) {
       <Card title={titulo} className="elev">
         <EmptyState
           title="Sem critérios avaliados"
-          description="Liga a chave da IA para a Vera cruzar a entrevista com os critérios do cliente."
+          description="Liga a chave da IA para a IRIS cruzar a entrevista com os critérios do cliente."
         />
       </Card>
     );
