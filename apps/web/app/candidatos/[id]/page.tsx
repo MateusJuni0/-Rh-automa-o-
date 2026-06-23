@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCandidato, getCandidatoProcessos } from "@/lib/candidatos";
 import { getDb } from "@/lib/db";
+import { getEntrevistasDoCandidato } from "@/lib/entrevistas";
 import { getSession } from "@/lib/session";
 import { CandidatoAvatar } from "../../components/CandidatoAvatar";
 import { EntityQA } from "../../components/EntityQA";
@@ -72,9 +73,10 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
   const { id } = await params;
   const { agencyId } = await getSession();
   const db = getDb();
-  const [cand, processos] = await Promise.all([
+  const [cand, processos, entrevistas] = await Promise.all([
     getCandidato(db, agencyId, id),
     getCandidatoProcessos(db, agencyId, id),
+    getEntrevistasDoCandidato(db, agencyId, id),
   ]);
   if (!cand) {
     notFound();
@@ -154,6 +156,42 @@ export default async function CandidatoDetailPage({ params }: { params: Promise<
                   {p.clientName ? <p className="text-ink-3 text-xs">{p.clientName}</p> : null}
                 </div>
                 <Chip tone="muted">{STAGE_LABEL[p.stage] ?? p.stage}</Chip>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
+
+      {/* ── entrevistas do candidato (transcrição separada por candidato) ── */}
+      {entrevistas.length > 0 ? (
+        <Card title="Entrevistas">
+          <ul className="-mx-4 -my-4 divide-y divide-line-subtle">
+            {entrevistas.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <Link
+                    href={`/entrevistas/${e.id}`}
+                    className="font-medium text-ink text-sm hover:text-accent-ink"
+                  >
+                    {e.jobTitle ?? "Entrevista"}
+                  </Link>
+                  <p className="text-ink-3 text-xs">
+                    {e.startedAt
+                      ? new Date(e.startedAt).toLocaleDateString("pt-PT", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
+                </div>
+                <Chip tone={e.status === "done" ? "strong" : "muted"}>
+                  {e.status === "done"
+                    ? "Ver transcrição"
+                    : e.status === "scheduled"
+                      ? "Agendada"
+                      : e.status}
+                </Chip>
               </li>
             ))}
           </ul>
