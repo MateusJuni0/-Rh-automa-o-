@@ -233,5 +233,5 @@ ipcMain.on("vera:status", (event, payload: { recording: boolean }) => {
   if (!fromOwnRenderer(event) || !tray) {
     return;
   }
-  tray.setToolTip(payload.recording ? "Vera — 🔴 a gravar" : "Vera — em espera");
+  tray.setToolTip(payload.recording ? "IRIS — 🔴 a gravar" : "IRIS — em espera");
 });

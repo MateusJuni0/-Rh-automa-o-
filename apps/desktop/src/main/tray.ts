@@ -19,13 +19,13 @@ function trayIcon(): Electron.NativeImage {
  */
 export function createTray(handlers: TrayHandlers): Tray {
   const tray = new Tray(trayIcon());
-  tray.setToolTip("Vera — copiloto IRIS");
+  tray.setToolTip("IRIS — copiloto");
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: "Abrir o painel web", click: handlers.onOpenWeb },
       { label: "Terminar entrevista", click: handlers.onEnd },
       { type: "separator" },
-      { label: "Sair (fechar a Vera)", click: handlers.onQuit },
+      { label: "Sair (fechar a IRIS)", click: handlers.onQuit },
     ]),
   );
   // Clique no ícone do tray também fecha o menu/foca — duplo-clique sai (atalho de teste).

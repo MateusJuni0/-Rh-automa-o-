@@ -432,7 +432,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                 <button
                   type="button"
                   className="vera-iconbtn"
-                  aria-label="Fechar Vera"
+                  aria-label="Fechar IRIS"
                   style={{ marginLeft: "auto", padding: "2px 4px" }}
                   onClick={callbacks.onEnd}
                 >
@@ -457,7 +457,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                   </>
                 ) : (
                   <span className="ct ct2" style={{ color: "#d9a64b" }}>
-                    A Vera sugere
+                    A IRIS sugere
                   </span>
                 )}
                 <span className="vera-bubble__count">
@@ -467,7 +467,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                 <button
                   type="button"
                   className="vera-iconbtn"
-                  aria-label="Fechar Vera"
+                  aria-label="Fechar IRIS"
                   style={{ marginLeft: "auto", padding: "2px 4px" }}
                   onClick={callbacks.onEnd}
                 >
@@ -513,7 +513,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
             ref={iconRef}
             className="vera-icon"
             style={{ left: pos.x, top: pos.y }}
-            aria-label="Vera: arrasta para mover, clica para abrir"
+            aria-label="IRIS: arrasta para mover, clica para abrir"
             onPointerDown={(e) => onDown(e, () => setExpanded(true))}
             onPointerMove={onMove}
             onPointerUp={onUp}
@@ -587,7 +587,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
           <div className="vera-panel__hero">
             {sug ? (
               <>
-                <div className="vera-panel__cue">A Vera sugere</div>
+                <div className="vera-panel__cue">A IRIS sugere</div>
                 <p className="vera-panel__q">{sug.pergunta}</p>
                 <div className="vera-panel__actions">
                   <button
@@ -694,7 +694,7 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
               <ul className="vera-chat__log">
                 {chat.map((turn) => (
                   <li key={turn.id} className={`vera-chat__turn vera-chat__turn--${turn.role}`}>
-                    <b>{turn.role === "bot" ? "Vera" : "Tu"}</b> · {turn.text}
+                    <b>{turn.role === "bot" ? "IRIS" : "Tu"}</b> · {turn.text}
                   </li>
                 ))}
               </ul>
@@ -704,8 +704,8 @@ export function FloatingVera({ state, elapsedMs, contexto, chat, callbacks }: Fl
                 className="vera-chat__input"
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
-                placeholder="Perguntar à Vera…"
-                aria-label="Perguntar à Vera"
+                placeholder="Perguntar à IRIS…"
+                aria-label="Perguntar à IRIS"
               />
               <button
                 type="submit"
