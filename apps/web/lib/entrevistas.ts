@@ -194,3 +194,32 @@ export async function getEntrevistaTranscript(
     factos: factRows,
   };
 }
+
+/** Item da lista global de entrevistas (todas as entrevistas da agência). */
+export interface EntrevistaListItem {
+  id: string;
+  status: string;
+  startedAt: Date | null;
+  candidateId: string | null;
+  candidateName: string | null;
+  jobTitle: string | null;
+}
+
+/** Todas as entrevistas da agência, mais recentes primeiro (para a página /entrevistas). */
+export async function listEntrevistas(db: Db, agencyId: string): Promise<EntrevistaListItem[]> {
+  return db
+    .select({
+      id: schema.interview.id,
+      status: schema.interview.status,
+      startedAt: schema.interview.startedAt,
+      candidateId: schema.interview.candidateId,
+      candidateName: schema.candidate.name,
+      jobTitle: schema.job.title,
+    })
+    .from(schema.interview)
+    .leftJoin(schema.candidate, eq(schema.candidate.id, schema.interview.candidateId))
+    .leftJoin(schema.process, eq(schema.process.id, schema.interview.processId))
+    .leftJoin(schema.job, eq(schema.job.id, schema.process.jobId))
+    .where(eq(schema.interview.agencyId, agencyId))
+    .orderBy(desc(schema.interview.startedAt));
+}
