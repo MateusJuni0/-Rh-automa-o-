@@ -20,7 +20,7 @@
 - [x] **Antes:** vaga + candidato → Role Profile (externo) → Rubric → Briefing.
 - [x] **Durante:** transcrição ao vivo (Soniox + LiveKit) + estado vivo + sugestões por WebSocket.
 - [x] **Depois:** parecer em linguagem simples + export md/pdf + email rascunho.
-- [x] **Painel lateral fixo** (não popup) durante a entrevista.
+- [x] **Overlay em app desktop** (Electron/Tauri, always-on-top + capta áudio), não browser — durante a entrevista. STT multi-idioma PT/EN/FR. Chat ao vivo + auto-dismiss.
 - [x] **Lente do cliente** (3 lentes: técnica, o que ESTE cliente quer, gaps do CV).
 
 ### Anti-achismo
@@ -45,7 +45,7 @@
   - `client_memory_fact` + embedding, `client_verdict` (calibração)
   - `interview`, `interview_tick`, `report`
   - `intake_session` (multi-mensagem Telegram), `intake_message`
-- [x] RLS multi-tenant por `agency_id` em todas as tabelas.
+- [x] **v1 single-tenant (só IRIS)** — sem RLS por agência; acesso interno total. `agency_id` fica como costura p/ v2. (Atualizado 2026-06-17.)
 - [x] Embeddings: **pgvector** no Supabase self-hosted (D3 — já confirmado).
 
 ### Modelos de IA por tarefa
@@ -70,12 +70,8 @@
 
 > Impacto: sem esta decisão, não sabemos onde configurar o scaffold.
 
-**Recomendação:** Vercel (Next.js app) + VPS (WebSocket server)
-- Vercel: deploy instantâneo, preview URLs, zero config para Next.js.
-- VPS: obrigatório para WebSocket persistente (Vercel não suporta).
-- Supabase já corre na VPS — sem infra nova.
-
-Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de deploy Vercel.
+~~**Hipótese inicial:** Vercel + VPS~~ — **SUPERSEDED** pela escolha abaixo (a Vercel saiu;
+ver `INFRA-E-MIGRACAO.md`). Mantido só como registo do raciocínio.
 
 **✅ Escolhido: Tudo na VPS** (Docker Compose — app Next.js + WebSocket + Supabase no mesmo sítio).
 
@@ -99,10 +95,8 @@ Alternativa: tudo na VPS (Docker Compose) — mais simples, perde benefícios de
 
 > Impacto: sem isto, o "durante" (coração do produto) não existe.
 
-**Recomendação: Recall.ai para MVP → LiveKit próprio quando houver volume**
-- Recall.ai: 2–3 dias de integração, ~$0.60/bot-hora, cobre Meet + Zoom + Teams, diarização por faixa perfeita.
-- LiveKit headless próprio: 3–5 semanas, mas zero custo operacional depois.
-- O que valida o produto é a qualidade das sugestões — não o mecanismo de captura. Recall agora, migrar depois.
+~~**Hipótese inicial: Recall.ai para MVP**~~ — **SUPERSEDED** pela escolha abaixo (LiveKit
+próprio desde já; reusa cmtec-voice-platform). Mantido só como registo do raciocínio.
 
 **✅ Escolhido: LiveKit próprio desde já** (reusa cmtec-voice-platform; zero custo por bot-hora. Custo: ~3–5 semanas de construção → por isso o "antes" (vaga → Role Profile → briefing) é entregue primeiro, enquanto o tempo real é montado em paralelo.)
 

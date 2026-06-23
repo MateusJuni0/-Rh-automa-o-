@@ -15,18 +15,42 @@ Monorepo (pnpm workspaces). Cada subagente é dono de **uma pasta** → zero col
 ```
 rh-copiloto/
 ├── apps/
-│   ├── web/         # Next.js 15 (App Router): UI + route handlers (/api/*)
-│   ├── ws/          # Servidor WebSocket (Node): empurra estado vivo → UI
-│   ├── realtime/    # Worker de áudio: LiveKit (entra na call) + Soniox (STT+diarização)
+│   ├── web/         # Next.js 15 (App Router): UI + route handlers (/api/*) — TODO o "resto"
+│   ├── desktop/     # App de SECRETÁRIA (Electron; Tauri = alt.): overlay ao vivo + CAPTA áudio local
+│   ├── ws/          # Servidor WebSocket (Node): empurra estado vivo → overlay desktop
+│   ├── realtime/    # Worker: LiveKit (bot entra na call) + Soniox (STT multi-idioma + diarização)
 │   └── bot/         # Ingestão: Telegram (grammy) + WhatsApp (Evolution API)
 ├── packages/
 │   ├── db/          # Drizzle schema + migrations  ← ÚNICA fonte do MODELO-DADOS.md
-│   ├── core/        # tipos + Zod schemas + CONTRATOS (importado por todos)
-│   ├── ai/          # wrappers Claude: rubric, briefing, parecer, tick + prompts
-│   └── knowledge/   # Role Profile (Exa/Brave) + RAG pgvector (candidato/cliente)
-├── docker-compose.yml   # web + ws + realtime + bot + (supabase já existe na VPS)
+│   ├── core/        # tipos + Zod schemas + CONTRATOS (importado por todos, incl. desktop)
+│   ├── ai/          # wrappers de LLM por SLOT (EXTRACTOR/ARCHITECT/LIVE via OpenRouter) + prompts
+│   └── knowledge/   # Role Profile (Exa/Brave) + RAG pgvector + ciclo de pesquisa (source_doc)
+├── services/                          # serviços Python (não pnpm) — sidecars no compose
+│   ├── agent/       # ⭐ ASSISTENTE PESSOAL: motor Hermes/Lince CLONADO (FastAPI+LangGraph+tools+auditoria) — ASSISTENTE-PESSOAL.md
+│   └── face/        # ⭐ BIOMETRIA: clone do cmtec-face (FastAPI + ONNX YuNet/SFace/liveness) — AUTENTICACAO.md
+├── docker-compose.yml   # web + ws + realtime + bot + agent + face + (supabase já na VPS)
 └── .env.enc             # sops+age (padrão CMTec) → decriptado no boot
 ```
+
+> **Adicionado 2026-06-17 (Fase 2):** `services/agent` (o assistente pessoal — motor
+> Hermes clonado, **vendorizado**, não puxa do nosso repo) e `services/face` (biometria
+> clonada). São **Python/FastAPI** → vivem em `services/` (não no pnpm), ligados por
+> contrato HTTP/WS, deployados como containers no compose e no bundle de migração
+> (`INFRA-E-MIGRACAO.md`).
+
+### Dois clientes, um backend (decisão 2026-06-17)
+- **`apps/desktop` = SÓ o "durante"** (overlay ao vivo + captura de áudio local). É um
+  **app desktop**, não um separador de browser — uma página web não fica *always-on-top*
+  por cima do Zoom/Meet. **Electron** (leve, multiplataforma); **Tauri** anotado como
+  alternativa mais leve a avaliar na construção.
+- **`apps/web` = TODO o resto** (cadastros cliente/vaga/candidato, Role Profile/rubric,
+  relatórios, Q&A, agenda do assistente proativo).
+- **Mesmo backend** (`/api/*` do Next.js + `packages/*`) serve os dois. O desktop é um
+  cliente "fino": autentica-se na API, abre WebSocket para o estado vivo, e empurra o
+  áudio captado para `realtime`. Não tem lógica de negócio própria — importa de `core`.
+- **Single-tenant v1 (só IRIS):** sem multi-tenant/RLS por agência nesta versão (ver
+  `MODELO-DADOS.md` §RLS). O `agency_id` permanece no schema como costura para o
+  futuro, mas a v1 não o usa para isolar — acesso interno é total.
 
 **Princípio:** toda a lógica partilhada (tipos, schemas, contratos) vive em
 `packages/core` e `packages/db`. As `apps/*` e os outros `packages/*` **importam**
@@ -62,15 +86,37 @@ gerados; ninguém escreve SQL fora de `packages/db`.
 | `POST /api/interviews/:id/report` | gera parecer + destila memória | `ai` (Opus), `knowledge` (RAG candidato) |
 | `POST /api/candidatos/:id/verdict` | veredito do cliente (calibração) | `db`, `knowledge` |
 | `GET  /api/candidatos/:id/chat` | Q&A RAG sobre a pasta | `knowledge`, `ai` |
+| **`POST /api/assistant/chat`** | o assistente pessoal (geral + tools) | `services/agent` |
+| **`POST /api/assistant/action/confirm`** | confirma ação `gravar`/`enviar_fora` pendente | `services/agent`, `db` |
+| **`POST /api/assistant/onboarding`** | guarda respostas da lista → `recruiter_memory_fact` | `services/agent`, `db` |
+| **`POST /api/compare`** | comparar candidatos (matriz vs critérios) | `ai`(ARCHITECT), `db` |
+| **`POST /api/sourcing`** | sourcing Apify (lead-scraper + enricher) → cria process | `services/agent`(Apify), `db` |
+| **`POST /api/auth/face/start`** \| **`/complete`** | login biométrico → sessão Supabase | `services/face`, Supabase Auth |
+| **`GET/POST /api/settings/models`** | ler/gravar o modelo por slot (catálogo OpenRouter) | `db` |
+| **`POST /api/calendar/sync`** | Google Calendar OAuth → `agenda_event` | `services/agent` |
+| **`POST /api/interviews/join`** | "vou para uma reunião"/link → o assistente põe o bot na call | `services/agent`, `realtime` |
 
 ### 2.4 WebSocket (entre `apps/ws` e a UI do painel)
-Mensagens (tipos em `packages/core`):
+Mensagens de dados (tipos em `packages/core`):
 ```jsonc
 { "type": "tick.update",      "interviewId": "...", "estado": { /* EstadoVivo */ } }
 { "type": "suggestion.next",  "interviewId": "...", "pergunta": "...", "lente": "tecnica|cliente|gap" }
 { "type": "coverage.update",  "interviewId": "...", "requisitos": [ /* status */ ] }
 { "type": "alert",            "interviewId": "...", "texto": "5 anos dito, CV diz 3" }
+{ "type": "interview.active", "interviewId": "...", "on": true }   // arranca/encerra o overlay
 ```
+**Frames de CONTROLO (auth + jobs assíncronos) — detalhe em `AGENTE-TOOLS-E-WS.md` (2026-06-17):**
+```jsonc
+// 1ª mensagem do cliente: JWT (NUNCA em query-string) → ver AUTENTICACAO §4
+{ "type": "auth",             "accessToken": "<jwt supabase>", "interviewId": "..." }   // nome canónico: accessToken (não 'token'/'access_token')
+{ "type": "auth.ok" }   { "type": "auth.error", "code": "4401|4403" }   // recusa = close 44xx
+{ "type": "auth.refresh_needed" }   // JWT a expirar → cliente reata com refresh silencioso
+// progresso de ferramenta longa do agente (sourcing, etc.)
+{ "type": "job.progress",     "jobId": "...", "estado": "a procurar… 3 perfis", "pct": 40 }
+{ "type": "job.done",         "jobId": "...", "resultRef": "..." }
+```
+> Estes frames de controlo + close codes `44xx` foram introduzidos pelos docs de Fase 2
+> e **devem entrar em `packages/core`** na construção (eram um gap do contrato — anotado).
 
 ### 2.5 Realtime → ws (interno)
 `apps/realtime` emite `transcript.partial`/`transcript.final` (falante+timestamp) →
@@ -84,17 +130,22 @@ agrega num tick → `packages/ai` (Sonnet) devolve `EstadoVivo` → publica em `
 # Supabase (self-hosted VPS — já existe)
 SUPABASE_URL=            SUPABASE_ANON_KEY=       SUPABASE_SERVICE_ROLE_KEY=
 DATABASE_URL=            # para Drizzle
-# Claude
-ANTHROPIC_API_KEY=
-# Conhecimento externo
-EXA_API_KEY=             BRAVE_API_KEY=
+# LLM — via OpenRouter (agnóstico; modelo por slot escolhido na app) — MODELOS-E-API.md
+OPENROUTER_API_KEY=      # MODEL_EXTRACTOR= MODEL_ARCHITECT= MODEL_LIVE= (defaults; trocáveis na UI)
+EMBEDDER_API_KEY=        # embeddings (ex. OpenAI) — fora do OpenRouter
+# Conhecimento externo + sourcing
+EXA_API_KEY=             BRAVE_API_KEY=           APIFY_TOKEN=   # (5 tokens + broker já no Hermes)
 # Tempo real
 LIVEKIT_URL=             LIVEKIT_API_KEY=         LIVEKIT_API_SECRET=
-SONIOX_API_KEY=
-# Ingestão
-TELEGRAM_BOT_TOKEN=      EVOLUTION_API_URL=       EVOLUTION_API_KEY=
+SONIOX_API_KEY=          # STT_PROVIDER= (trocável)
+# Biometria (services/face)
+FACE_SERVICE_URL=        FACE_S2S_SECRET=         FACE_ED25519_*=
+# Ingestão + comunicação
+TELEGRAM_BOT_TOKEN=      EVOLUTION_API_URL=       EVOLUTION_API_KEY=     RESEND_API_KEY=  # envio de email
+# Calendário (assistente proativo)
+GOOGLE_OAUTH_CLIENT_ID=  GOOGLE_OAUTH_CLIENT_SECRET=
 # App
-WS_URL=                  NEXT_PUBLIC_WS_URL=      REDIS_URL=   # sessões de intake
+WS_URL=                  NEXT_PUBLIC_WS_URL=      REDIS_URL=   # sessões de intake + estado do agente
 ```
 Guardar como `.env.enc` (sops+age, padrão CMTec) → decriptado no boot via systemd/compose.
 
@@ -109,7 +160,8 @@ ANTES (vaga)    web ──► /api/vagas ──► ai(extrai) ──► db
 ANTES (cand.)   web ──► /api/candidatos ──► ai(CV) ──► db
                             └► /api/.../match ──► ai(Sonnet) ──► db
 ANTES (roteiro) web ──► /api/briefing ──► ai(Opus, usa role_profile+rubric+RAG cliente) ──► db
-DURANTE         /api/interviews ──► realtime(LiveKit sala) ; realtime►Soniox►tick►ai(Sonnet)►EstadoVivo►ws►UI(painel)
+DURANTE         desktop(capta áudio local) ─► realtime(LiveKit sala + Soniox STT/diariz.) ─► tick ─► ai(Sonnet) ─► EstadoVivo ─► ws ─► desktop(overlay)
+                desktop(chat ao vivo "ele falou de salário?") ─► ws/api ─► ai(responde do estado+transcrição corrente, sem parar a captura)
 DEPOIS          /api/interviews/:id/report ──► ai(Opus parecer) ──► db ; destila ──► knowledge(RAG candidato, pgvector)
 CALIBRAÇÃO      /api/candidatos/:id/verdict ──► db.client_verdict ──► knowledge(afia RAG cliente)
 ```
@@ -120,22 +172,75 @@ CALIBRAÇÃO      /api/candidatos/:id/verdict ──► db.client_verdict ──
 
 **Agente 1 — Fundação (vai PRIMEIRO, todos dependem dele):**
 `packages/db` (schema+migrations) + `packages/core` (tipos+contratos+Zod) + scaffold +
-`docker-compose` + Auth + RLS multi-tenant. **Garantia:** os outros 5 importam tipos
-de `core`/`db` e arrancam.
+`docker-compose` + **Auth (Supabase + biometria)**. **v1 SINGLE-TENANT** — sem RLS por
+agência (o `agency_id` fica na costura para a v2; **não** se constrói RLS agora). Os
+outros importam tipos de `core`/`db` e arrancam.
 
 **Depois, em paralelo (cada um na sua pasta, contra os contratos de `core`):**
 | Agente | Dono de | Entrega |
 |---|---|---|
-| 2 — Conhecimento | `packages/knowledge` | Role Profile (Exa+Brave) + RAG pgvector |
-| 3 — IA | `packages/ai` | prompts + rubric/briefing/parecer/tick |
-| 4 — Web "antes" | `apps/web` | rotas + UI: vaga, candidato, match, briefing, parecer, acesso |
-| 5 — Tempo real | `apps/realtime` + `apps/ws` | LiveKit+Soniox + painel lateral |
+| 2 — Conhecimento | `packages/knowledge` | Role Profile (Exa+Brave) + RAG pgvector + ciclo de pesquisa |
+| 3 — IA | `packages/ai` | slots LLM (OpenRouter) + rubric/briefing/parecer/tick/comparação |
+| 4 — Web "antes" + assistente | `apps/web` | rotas + UI: vaga, candidato, briefing, parecer, **assistente, comparação, onboarding, definições, login biométrico** |
+| 5 — Tempo real | `apps/realtime` + `apps/ws` + `apps/desktop` | LiveKit+Soniox + WebSocket + **app desktop overlay/captura** |
 | 6 — Ingestão | `apps/bot` | Telegram + WhatsApp (mesmo motor de intake) |
+| **7 — Assistente (agente)** | **`services/agent`** | motor Hermes clonado: grafo+tools (docs/email/agenda/sourcing/calendar)+auditoria+memória que aprende |
+| **8 — Biometria** | **`services/face`** | clone do cmtec-face (enroll/verify → veredito → sessão Supabase) |
+
+> ⚠️ **Pré-requisito do Agente 8:** resolver o **bug de enroll/flash liveness** na
+> origem antes de clonar (`AUTENTICACAO §6 C1`, memória `project_cmtec_face_enroll_bug`).
 
 Cada carril valida-se com o seu bloco em [`TESTES-ACEITACAO.md`](./TESTES-ACEITACAO.md)
 e os passos de [`PLANO-CONSTRUCAO.md`](./PLANO-CONSTRUCAO.md).
 
 ---
+
+## 7. Ponteiros de reuso + tooling (para o Agente 1 não adivinhar) — 2026-06-18
+
+**De onde se clona/reaproveita (não construir do zero):**
+| O quê | Origem | Notas |
+|---|---|---|
+| **Biometria** (`services/face`) | `MateusJuni0/painel-cmtec` → `services/cmtec-face` | versão **já corrigida** (enroll-liveness, branch merged em main). Clonar como instância própria do RH (schema/role/túnel próprios) — `AUTENTICACAO.md`. |
+| **Motor do agente** (`services/agent`) | core do **Lince Brain** (repo do hermes, `workspace/projects/hermes`) | vendorizar o **core** (grafo LangGraph + tool-calling + estado Postgres + auditoria + kill switch); **deixar fora** as tools de operações da CMTec. `ASSISTENTE-PESSOAL §2`. |
+| **LiveKit + Soniox** (`apps/realtime`) | `cmtec-voice-platform` (`MateusJuni0/cmtec-voice-platform`) | a "Inês" já usa LiveKit+Soniox em produção PT; reusar transporte+STT. Confirmar credenciais. |
+| **Geração de ficheiros** (xlsx/docx/pdf) | skills de documentos da CMTec | para CVs/planilhas/relatórios (`ASSISTENTE-PESSOAL §3`). |
+| **Sourcing** | skills `lead-scraper-apify` + `lead-enricher` (Hermes) | 5 tokens Apify + token broker já em produção. |
+
+**Tooling fixado (scaffold):**
+- **Monorepo:** pnpm workspaces (`apps/*` + `packages/*`); `services/*` (Python) são containers à parte no compose.
+- **Versões:** Node 22 · Next.js **15.x** (NÃO 16 — `output:'standalone'` + `outputFileTracingRoot`) · TypeScript strict · Biome (lint+format) · Python 3.12 (serviços).
+- **Build SEMPRE fora da VPS** (CI→GHCR→pull); nunca buildar na VPS (OOM). Ver `INFRA-E-MIGRACAO`.
+
+## 8. Fronteira TS/Python + contratos de implementação (2026-06-18)
+
+### Quem escreve o quê (fecha a ambiguidade TS/Python)
+**`packages/db` (Drizzle/TS) é a fonte única do SCHEMA** (migrações). Escritores:
+- **App TS** (`apps/web`) — CRUD de negócio (candidate/job/process/report/client…).
+- **`services/face` (Python)** — escreve **só as suas tabelas** (`cmtec`/face: templates,
+  verdicts) e **empurra o veredito por S2S** ao backend Next (que persiste o resto). Não
+  toca em tabelas de negócio.
+- **`apps/realtime` (Python — LiveKit/Soniox)** — é o **escritor único** das tabelas
+  vivas da entrevista (`transcript_chunk`, `interview_tick`) — `ARQUITETURA-TEMPO-REAL §11`.
+- **`services/agent` (Python)** — escreve as **suas** tabelas (`assistant_action`,
+  `recruiter_memory_fact`, estado do grafo); o resto **via API interna** do Next.
+> Regra: cada serviço Python escreve **só o seu domínio**, contra o schema canónico
+> (tipos/migrações geradas de `packages/db`); **ninguém escreve o domínio de outro**.
+> Leituras cross-domínio = **API interna** (HTTP) ou query read-only. Sem SQL ad-hoc
+> noutro domínio.
+
+### Contratos ao nível de implementação (não só rotas)
+Em `packages/core` (Zod), partilhados:
+- **Envelope de resposta:** `{ ok: true, data } | { ok: false, error: { code, message } }`.
+  Status: 200/201 · 400 validação · 401/403 auth · 404 · 409 conflito/idempotência · 5xx.
+- **Idempotência:** writes aceitam header `Idempotency-Key` (UUID do cliente) → repetição
+  devolve o mesmo resultado (não duplica candidato/process/envio).
+- **Paginação:** cursor (`?cursor=&limit=`), resposta `{ data, next_cursor }`.
+- **WS fiável:** cada frame leva `seq` (monótono) + o cliente envia `ack`; na **reconexão**
+  o cliente manda `last_seq` e o servidor **faz replay** do que faltou (o estado vivo
+  está em `interview_tick` — fonte de resgate). Eventos têm `v` (versão) para evoluir sem
+  partir clientes.
+- **Lifecycle de job** (ferramentas longas): `job.accepted → job.progress* → job.done|job.error`
+  (já em §2.4).
 
 ## 6. Regra de ouro para os subagentes
 > Constrói contra o contrato em `packages/core`. **Nunca inventes uma junção.** Se um

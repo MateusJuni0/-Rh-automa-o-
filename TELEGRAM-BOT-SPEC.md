@@ -14,7 +14,7 @@ a dizer "ah, e esqueci de mencionar que precisa de inglês avançado", ou um PDF
 requisitos. Hoje isso fica na cabeça dela ou perde-se no chat. Com o bot:
 
 ```
-Cliente → WhatsApp da Filipa → Filipa encaminha para @RHCopilotoBot → memória atualizada
+Cliente → WhatsApp da Filipa → Filipa encaminha para @VeraBot → memória atualizada
 ```
 
 Mas há um problema que tem de ser resolvido: **quando Filipa encaminha, o bot não

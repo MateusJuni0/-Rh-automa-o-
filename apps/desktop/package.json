@@ -1,0 +1,34 @@
+{
+  "name": "desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist-build/main/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "electron .",
+    "app": "node build.mjs && electron .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@rh/core": "workspace:*",
+    "@rh/ui": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "electron": "^33.4.11",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.9"
+  }
+}

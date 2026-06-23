@@ -1,0 +1,152 @@
+# Ambiente de dev local da Vera (INFRA-E-MIGRACAO §8) — infra mínima: Postgres (pgvector) + Redis.
+# Os serviços de app (web/ws/realtime/agent/face) entram aqui à medida que ficam prontos.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm --filter @rh/db db:migrate
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev pnpm --filter @rh/db db:seed
+#
+# A password vem de env (POSTGRES_PASSWORD) com default de dev; .env é gitignored.
+#
+# ── Supabase Auth + Storage (Ω-3) — OPCIONAL, atrás do profile `supabase` ──
+# O dev normal NÃO precisa disto (a app cai no shim de cookie + storage mock sem env). Para ligar
+# a auth/storage reais LOCALMENTE (sem custo, sem cloud):
+#
+# BOOTSTRAP DA DB (UMA vez — GoTrue/PostgREST exigem-no; sem isto NÃO arrancam):
+#   docker exec vera-db-1 psql -U postgres -d vera_dev -c "
+#     CREATE ROLE anon NOLOGIN NOINHERIT;
+#     CREATE ROLE authenticated NOLOGIN NOINHERIT;
+#     CREATE ROLE service_role NOLOGIN NOINHERIT BYPASSRLS;
+#     GRANT anon, authenticated, service_role TO postgres;
+#     CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION postgres;"   # GoTrue v2.158 NÃO cria o schema auth
+#
+#   docker compose -f docker-compose.dev.yml --profile supabase up -d
+#   # se o auth arrancou ANTES do schema auth existir: docker restart vera-auth-1 (corre 52 migrações)
+#
+# Depois exporta no ambiente da web (valores de dev — NUNCA em produção):
+#   SUPABASE_URL=http://localhost:8000
+#   SUPABASE_ANON_KEY=<o anon JWT de dev>
+#   SUPABASE_SERVICE_ROLE_KEY=<o service_role JWT de dev>
+#   SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long
+# Os JWT anon/service de dev assinam-se com esse JWT_SECRET (HS256, claims {"role":"anon"|
+# "service_role","iss":"supabase"}). Gera com o supabase CLI, jwt.io, ou node+crypto. Filipa/Inês:
+#   SUPABASE_URL=http://localhost:8000 SUPABASE_SERVICE_ROLE_KEY=... \
+#   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev \
+#     pnpm --filter web exec tsx scripts/seed-supabase-auth.ts
+# Validar login (devolve access_token; password errada → 400):
+#   curl -s -X POST "http://localhost:8000/auth/v1/token?grant_type=password" \
+#     -H "apikey: $SUPABASE_ANON_KEY" -H "Content-Type: application/json" \
+#     -d '{"email":"filipa@iris.tech","password":"vera-dev-2026"}'
+#
+# ✅ Validado a correr no Windows (2026-06-20): auth/rest/storage/kong up, login email/senha OK.
+name: vera
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: vera_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - vera-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vera_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - vera-redis-data:/data
+
+  # ───────────────────────── Supabase (profile: supabase) ─────────────────────────
+  # GoTrue (Auth): email/senha real. Aponta ao Postgres `db` (schema auth criado por ele).
+  auth:
+    image: supabase/gotrue:v2.158.1
+    profiles: ["supabase"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: ${SUPABASE_URL:-http://localhost:8000}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/vera_dev?search_path=auth&sslmode=disable
+      GOTRUE_SITE_URL: ${SUPABASE_SITE_URL:-http://localhost:3000}
+      GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    expose:
+      - "9999"
+
+  # PostgREST: API REST sobre a DB (usado pelo Storage e por clientes Supabase).
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    profiles: ["supabase"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/vera_dev
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${SUPABASE_JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+    expose:
+      - "3000"
+
+  # Storage-API: buckets privados + signed URLs (CVs/áudios/pareceres).
+  storage:
+    image: supabase/storage-api:v1.11.13
+    profiles: ["supabase"]
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${SUPABASE_JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/vera_dev
+      FILE_SIZE_LIMIT: "52428800"
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - vera-storage-data:/var/lib/storage
+    expose:
+      - "5000"
+
+  # Kong: gateway que expõe auth/rest/storage num único porto (:8000) = SUPABASE_URL.
+  kong:
+    image: kong:2.8.1
+    profiles: ["supabase"]
+    depends_on:
+      - auth
+      - rest
+      - storage
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors
+    volumes:
+      - ./infra/supabase/kong.yml:/home/kong/kong.yml:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  vera-db-data:
+  vera-redis-data:
+  vera-storage-data:

@@ -1,0 +1,5 @@
+# Monorepo Vera (interno: Lince) — apps TS + packages TS.
+# services/* são Python (FastAPI) → containers no compose, fora do pnpm.
+packages:
+  - "apps/*"
+  - "packages/*"

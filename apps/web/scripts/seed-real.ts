@@ -1,0 +1,717 @@
+/**
+ * Seed de DADOS REAIS (demo IRIS Tech) — empresas TECH PORTUGUESAS reais, com logos (icon.horse),
+ * perfis fundos (sede/fundação/equipa/stack/LinkedIn), vagas representativas, + factos/critérios/
+ * reunião de intake. Idempotente (ids fixos e1000000.. / e2000000..; delete/insert dos factos/critérios).
+ *
+ *   DATABASE_URL=postgresql://postgres:postgres@localhost:5433/vera_dev \
+ *     pnpm --filter web exec tsx scripts/seed-real.ts
+ */
+import { createDb, schema } from "@rh/db";
+import { eq, inArray } from "drizzle-orm";
+
+const AGENCY = "11111111-0000-4000-8000-000000000001";
+const FILIPA = "22222222-0000-4000-8000-000000000001";
+
+interface Role {
+  title: string;
+  must: string[];
+  nice: string[];
+  contexto: string;
+}
+interface Company {
+  name: string;
+  domain: string;
+  linkedin: string;
+  sector: string;
+  location: string;
+  founded: string;
+  headcount: string;
+  tech: string[];
+  description: string;
+  valoriza: string[];
+  naoAceita: string;
+  contexto: string;
+  reuniao: string;
+  roles: Role[];
+}
+
+const COMPANIES: Company[] = [
+  {
+    name: "Feedzai",
+    domain: "feedzai.com",
+    linkedin: "https://www.linkedin.com/company/feedzai",
+    sector: "Fintech · Deteção de fraude (IA)",
+    location: "Coimbra & Lisboa, Portugal",
+    founded: "2011",
+    headcount: "600+",
+    tech: ["Java", "Python", "Spark", "Kafka", "Cassandra"],
+    description:
+      "Plataforma de IA para deteção de fraude e crime financeiro, usada por alguns dos maiores bancos do mundo. Unicórnio português fundado em Coimbra, com forte cultura de engenharia e investigação.",
+    valoriza: [
+      "Rigor de engenharia e sistemas de alta escala (milhões de transações)",
+      "Pensamento de produto e ownership do problema de ponta a ponta",
+    ],
+    naoAceita: "Não avança com quem trata segurança e fiabilidade como opcional",
+    contexto: "Equipa híbrida (Coimbra/Lisboa/remoto). Processo: 3 etapas + case técnico.",
+    reuniao:
+      '"...o perfil ideal já trabalhou com dados a escala real, não só projetos. Queremos alguém que questione o problema, não só implemente. Híbrido em Coimbra ou Lisboa, mas damos flexibilidade. Time-to-hire: 4 semanas."',
+    roles: [
+      {
+        title: "Senior Data Scientist — Fraude",
+        must: ["Python", "Machine Learning", "Spark"],
+        nice: ["Kafka", "Streaming"],
+        contexto:
+          "Modelos de deteção de fraude em tempo real sobre milhões de transações. Forte componente de feature engineering e avaliação rigorosa.",
+      },
+      {
+        title: "Senior Backend Engineer — Java",
+        must: ["Java", "Kafka", "Sistemas distribuídos"],
+        nice: ["Cassandra", "Spark"],
+        contexto:
+          "Plataforma de processamento de eventos de baixa latência. Exige experiência sólida em concorrência e sistemas distribuídos.",
+      },
+    ],
+  },
+  {
+    name: "Talkdesk",
+    domain: "talkdesk.com",
+    linkedin: "https://www.linkedin.com/company/talkdesk",
+    sector: "SaaS · Contact Center na cloud",
+    location: "Lisboa, Portugal (global)",
+    founded: "2011",
+    headcount: "1800+",
+    tech: ["Node.js", "React", "TypeScript", "Go", "AWS"],
+    description:
+      "Plataforma cloud de contact center com IA, fundada por portugueses e presente a nível global. Unicórnio com produto a escala enterprise e forte aposta em IA generativa.",
+    valoriza: [
+      "Experiência em produto SaaS a escala (multi-tenant, alta disponibilidade)",
+      "Autonomia e boa comunicação em equipa distribuída internacional",
+    ],
+    naoAceita: "Não aceita perfis que precisam de micro-gestão constante",
+    contexto: "Equipa global, inglês no dia a dia. Processo: 4 etapas (técnica + system design).",
+    reuniao:
+      '"...precisamos de seniores que peguem em ambiguidade e tragam clareza. Inglês fluente é obrigatório, a equipa é global. Damos preferência a quem já escalou produto real. Remoto OK dentro da Europa."',
+    roles: [
+      {
+        title: "Senior Frontend Engineer — React",
+        must: ["React", "TypeScript", "JavaScript"],
+        nice: ["Design systems", "WebRTC"],
+        contexto:
+          "Aplicação de contact center em tempo real (chamadas, IA, analytics). Foco em performance e experiência do agente.",
+      },
+      {
+        title: "Staff Backend Engineer — Node.js",
+        must: ["Node.js", "AWS", "Sistemas distribuídos"],
+        nice: ["Go", "Kafka"],
+        contexto:
+          "Serviços de telefonia e roteamento a escala global. Exige experiência em arquitetura e fiabilidade.",
+      },
+    ],
+  },
+  {
+    name: "Unbabel",
+    domain: "unbabel.com",
+    linkedin: "https://www.linkedin.com/company/unbabel",
+    sector: "IA · Tradução & Language Operations",
+    location: "Lisboa, Portugal",
+    founded: "2013",
+    headcount: "200+",
+    tech: ["Python", "PyTorch", "React", "Kubernetes"],
+    description:
+      "Plataforma de tradução assistida por IA (human-in-the-loop) para apoio ao cliente e conteúdo multilingue a escala. Forte equipa de investigação em NLP, em Lisboa.",
+    valoriza: [
+      "Conforto com IA/ML e produtos data-intensive",
+      "Curiosidade e vontade de experimentar (cultura de research)",
+    ],
+    naoAceita: "Não avança com perfis sem bases sólidas em Python/ML para os papéis de IA",
+    contexto: "Lisboa, modelo híbrido. Processo: 3 etapas + conversa com a equipa de research.",
+    reuniao:
+      '"...queremos alguém que goste do problema de linguagem, não só do código. Para o papel de ML, tem de ter posto modelos em produção, não só notebooks. Híbrido em Lisboa, 2 dias no escritório."',
+    roles: [
+      {
+        title: "Machine Learning Engineer — NLP",
+        must: ["Python", "PyTorch", "NLP"],
+        nice: ["MLOps", "Kubernetes"],
+        contexto:
+          "Modelos de tradução e qualidade linguística em produção. Pipeline human-in-the-loop com avaliação contínua.",
+      },
+      {
+        title: "Full-Stack Engineer — Python/React",
+        must: ["Python", "React", "TypeScript"],
+        nice: ["GraphQL", "Kubernetes"],
+        contexto:
+          "Produto de Language Operations: dashboards, fluxos de revisão humana e integrações. Do front ao back.",
+      },
+    ],
+  },
+  {
+    name: "OutSystems",
+    domain: "outsystems.com",
+    linkedin: "https://www.linkedin.com/company/outsystems",
+    sector: "Plataforma de desenvolvimento low-code",
+    location: "Lisboa, Portugal (global)",
+    founded: "2001",
+    headcount: "1700+",
+    tech: [".NET", "C#", "React", "Kubernetes", "AWS"],
+    description:
+      "Líder global em desenvolvimento low-code. Unicórnio português que permite às empresas criar aplicações a alta velocidade. Engenharia exigente, produto a escala enterprise.",
+    valoriza: [
+      "Fundamentos de engenharia fortes (algoritmos, arquitetura)",
+      "Qualidade e atenção ao detalhe em produto crítico",
+    ],
+    naoAceita: "Não aceita código sem testes nem quem ignora performance",
+    contexto: "Lisboa (híbrido). Processo: 4 etapas, inclui problema de algoritmia.",
+    reuniao:
+      '"...procuramos engenheiros com bases muito sólidas, gente que percebe o que faz por baixo da abstração. O produto é crítico para milhares de empresas, a fasquia de qualidade é alta. Híbrido em Lisboa."',
+    roles: [
+      {
+        title: "Senior Software Engineer — .NET",
+        must: ["C#", ".NET", "Arquitetura de software"],
+        nice: ["React", "Cloud"],
+        contexto:
+          "Core da plataforma low-code (compilador, runtime). Exige fundamentos fortes e cuidado com performance.",
+      },
+      {
+        title: "Cloud Platform Engineer",
+        must: ["Kubernetes", "AWS", "Go"],
+        nice: ["Terraform", "Observabilidade"],
+        contexto:
+          "Infraestrutura cloud que corre as aplicações dos clientes a escala. Fiabilidade e automação no centro.",
+      },
+    ],
+  },
+  {
+    name: "Sword Health",
+    domain: "swordhealth.com",
+    linkedin: "https://www.linkedin.com/company/sword-health",
+    sector: "Health-tech · Fisioterapia digital (IA)",
+    location: "Porto, Portugal",
+    founded: "2015",
+    headcount: "900+",
+    tech: ["Python", "React Native", "AWS", "Go"],
+    description:
+      "Health-tech de fisioterapia digital com IA e sensores de movimento. Unicórnio fundado no Porto, a tratar dor músculo-esquelética a escala internacional.",
+    valoriza: [
+      "Impacto e propósito (saúde) — gente que se importa com o utilizador final",
+      "Velocidade com qualidade num ambiente de hiper-crescimento",
+    ],
+    naoAceita: "Não avança com quem não comunica bem em equipa remota/distribuída",
+    contexto: "Porto + remoto. Processo: 3 etapas + case prático.",
+    reuniao:
+      '"...crescemos muito depressa, precisamos de gente que se mexe mas não parte tudo. O produto é clínico, a qualidade importa. Porto ou remoto. Valorizamos quem já trabalhou em saúde ou produto consumer."',
+    roles: [
+      {
+        title: "Senior Backend Engineer — Python",
+        must: ["Python", "AWS", "APIs"],
+        nice: ["Go", "Health-tech"],
+        contexto:
+          "Backend do programa clínico (sessões, progresso, alertas). Dados sensíveis, exige rigor e privacidade.",
+      },
+      {
+        title: "Mobile Engineer — React Native",
+        must: ["React Native", "TypeScript", "Mobile"],
+        nice: ["iOS", "Android"],
+        contexto:
+          "App do paciente com sensores de movimento em tempo real. Foco em experiência e fiabilidade.",
+      },
+    ],
+  },
+  {
+    name: "Remote",
+    domain: "remote.com",
+    linkedin: "https://www.linkedin.com/company/remote-com",
+    sector: "HR-tech · Contratação & payroll global",
+    location: "Remote-first (raízes em Portugal)",
+    founded: "2019",
+    headcount: "1400+",
+    tech: ["Elixir", "Ruby", "React", "PostgreSQL"],
+    description:
+      "Plataforma global de RH, contratação e payroll internacional. Empresa remote-first com forte presença portuguesa e cultura de documentação e assincronia.",
+    valoriza: [
+      "Excelente comunicação escrita (cultura async, 100% remota)",
+      "Autonomia e capacidade de trabalhar com pessoas em vários fusos",
+    ],
+    naoAceita: "Não aceita quem precisa de escritório/supervisão para render",
+    contexto: "100% remoto, async. Processo: 3-4 etapas, muito por escrito.",
+    reuniao:
+      '"...somos 100% remotos e async, por isso a escrita é tudo. Quem comunica mal por escrito não funciona aqui. Elixir é um plus mas ensinamos a quem tem boas bases. Qualquer fuso horário compatível com a equipa."',
+    roles: [
+      {
+        title: "Senior Backend Engineer — Elixir",
+        must: ["Elixir", "PostgreSQL", "APIs"],
+        nice: ["Ruby", "Phoenix"],
+        contexto:
+          "Core de payroll e contratação internacional. Domínio complexo (legal/fiscal por país), exige cuidado.",
+      },
+      {
+        title: "Senior Frontend Engineer — React",
+        must: ["React", "TypeScript", "JavaScript"],
+        nice: ["GraphQL", "Design systems"],
+        contexto:
+          "Produto self-service de onboarding e gestão de equipas globais. Muitos fluxos, foco em clareza.",
+      },
+    ],
+  },
+];
+
+interface CompanyDetails {
+  modeloTrabalho: string;
+  horario: string;
+  contrato: string;
+  idiomas: string[];
+  visaRelocation: string;
+  beneficios: string[];
+  processoEntrevista: string[];
+  equipa: string;
+}
+
+const DETAILS_BY_COMPANY: Record<string, CompanyDetails> = {
+  Feedzai: {
+    modeloTrabalho: "Híbrido (Coimbra/Lisboa, 2 dias no escritório)",
+    horario: "Flexível, core 11h-16h (WET). 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Apoio a relocation para Portugal; sem patrocínio de visto fora da UE",
+    beneficios: [
+      "Seguro de saúde",
+      "Stock options",
+      "Orçamento de formação + conferências",
+      "25 dias de férias",
+    ],
+    processoEntrevista: [
+      "Triagem de CV (Filipa)",
+      "Entrevista técnica (1h)",
+      "Case / system design",
+      "Cultural + oferta",
+    ],
+    equipa: "Squad de 6-8 engenheiros; reporta ao Engineering Manager",
+  },
+  Talkdesk: {
+    modeloTrabalho: "Remoto na Europa, ou híbrido em Lisboa",
+    horario: "Flexível; equipa global, sobreposição com fuso da Europa",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês fluente"],
+    visaRelocation: "Sem patrocínio de visto fora da UE",
+    beneficios: ["Seguro de saúde", "RSUs (ações)", "Orçamento de equipamento", "Férias flexíveis"],
+    processoEntrevista: [
+      "Triagem",
+      "Entrevista técnica",
+      "System design",
+      "Hiring manager + oferta",
+    ],
+    equipa: "Equipa distribuída; reporta a Engineering Manager",
+  },
+  Unbabel: {
+    modeloTrabalho: "Híbrido em Lisboa (2 dias no escritório)",
+    horario: "Flexível, core 10h-16h. 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Apoio a relocation para Lisboa",
+    beneficios: ["Seguro de saúde", "Stock options", "Almoços no escritório", "Formação"],
+    processoEntrevista: [
+      "Triagem",
+      "Entrevista técnica",
+      "Conversa com a equipa de research",
+      "Oferta",
+    ],
+    equipa: "Equipa de research + produto (NLP)",
+  },
+  OutSystems: {
+    modeloTrabalho: "Híbrido em Lisboa (3 dias no escritório)",
+    horario: "Flexível, com presença no horário central. 40h/semana.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)"],
+    visaRelocation: "Apoio a relocation para Portugal",
+    beneficios: ["Seguro de saúde", "Bónus anual", "Plano de carreira estruturado", "Ginásio"],
+    processoEntrevista: [
+      "Triagem",
+      "Problema de algoritmia",
+      "Entrevista técnica + design",
+      "Oferta",
+    ],
+    equipa: "Equipa de core product; reporta a Tech Lead",
+  },
+  "Sword Health": {
+    modeloTrabalho: "Remoto, ou híbrido no Porto",
+    horario: "Flexível. Ambiente de hiper-crescimento.",
+    contrato: "Efetivo (sem termo)",
+    idiomas: ["Inglês (profissional)", "Português"],
+    visaRelocation: "Sem patrocínio de visto",
+    beneficios: ["Seguro de saúde", "Stock options", "Programa de bem-estar", "Trabalho remoto"],
+    processoEntrevista: ["Triagem", "Entrevista técnica", "Case prático", "Cultural + oferta"],
+    equipa: "Squad clínico (produto); reporta a Engineering Manager",
+  },
+  Remote: {
+    modeloTrabalho: "100% remoto (qualquer país com fuso compatível)",
+    horario: "Assíncrono; sem horário fixo. Documentação no centro.",
+    contrato: "Contractor ou efetivo, via Remote (conforme o país)",
+    idiomas: ["Inglês fluente (escrito)"],
+    visaRelocation: "Trabalha de qualquer parte do mundo",
+    beneficios: ["Remoto total", "Stock options", "Orçamento de coworking", "Férias flexíveis"],
+    processoEntrevista: [
+      "Candidatura + take-home",
+      "Entrevista técnica",
+      "Conversa de equipa",
+      "Oferta",
+    ],
+    equipa: "Equipa totalmente distribuída e assíncrona",
+  },
+};
+
+/** Faixa salarial bruta anual (EUR) por nível — realista para tech sénior em PT. */
+function salarioFor(nivel: string, company: string): [number, number] {
+  const base: Record<string, [number, number]> = {
+    lead: [62000, 95000],
+    senior: [48000, 72000],
+    pleno: [40000, 58000],
+    junior: [30000, 42000],
+  };
+  const [lo, hi] = base[nivel] ?? base.pleno ?? [40000, 58000];
+  // Remote (remote-first global) paga acima da média do mercado PT.
+  return company === "Remote" ? [lo + 12000, hi + 18000] : [lo, hi];
+}
+
+const hex = (n: number, len: number): string => String(n).padStart(len, "0");
+
+async function main(): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("falta DATABASE_URL");
+  }
+  const { db, close } = createDb(databaseUrl);
+  try {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("pt-PT");
+    let ci = 0;
+    let vagas = 0;
+    for (const co of COMPANIES) {
+      ci += 1;
+      const clientId = `e1000000-0000-4000-8000-${hex(ci, 12)}`;
+      const profile = {
+        sector: co.sector,
+        website: `https://${co.domain}`,
+        description: co.description,
+        logoUrl: `https://icon.horse/icon/${co.domain}`,
+        location: co.location,
+        founded: co.founded,
+        headcount: co.headcount,
+        linkedinUrl: co.linkedin,
+        techStack: co.tech,
+      };
+      await db
+        .insert(schema.client)
+        .values({ id: clientId, agencyId: AGENCY, name: co.name, ...profile })
+        .onConflictDoNothing();
+      await db
+        .update(schema.client)
+        .set({ name: co.name, ...profile })
+        .where(eq(schema.client.id, clientId));
+
+      const oldJobIds = (
+        await db
+          .select({ id: schema.job.id })
+          .from(schema.job)
+          .where(eq(schema.job.clientId, clientId))
+      ).map((r) => r.id);
+      if (oldJobIds.length > 0) {
+        await db.delete(schema.process).where(inArray(schema.process.jobId, oldJobIds));
+      }
+      await db.delete(schema.job).where(eq(schema.job.clientId, clientId));
+      let ji = 0;
+      for (const role of co.roles) {
+        ji += 1;
+        vagas += 1;
+        const jobId = `e2000000-0000-4000-8000-${hex(ci, 6)}${hex(ji, 6)}`;
+        const slug = role.title
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
+          .replace(/[^a-z0-9]+/g, "_")
+          .slice(0, 40);
+        const lower = role.title.toLowerCase();
+        const nivel = /staff|lead|head|principal/.test(lower)
+          ? "lead"
+          : /senior|sénior/.test(lower)
+            ? "senior"
+            : "pleno";
+        const [salarioMin, salarioMax] = salarioFor(nivel, co.name);
+        const cd = DETAILS_BY_COMPANY[co.name];
+        const details = cd
+          ? {
+              modeloTrabalho: cd.modeloTrabalho,
+              localizacao: co.location,
+              horario: cd.horario,
+              salarioMin,
+              salarioMax,
+              moeda: "EUR",
+              contrato: cd.contrato,
+              idiomas: cd.idiomas,
+              visaRelocation: cd.visaRelocation,
+              dataInicio: "ASAP",
+              beneficios: cd.beneficios,
+              processoEntrevista: cd.processoEntrevista,
+              responsabilidades: [
+                role.contexto,
+                `Domínio diário de ${role.must.slice(0, 2).join(" e ")}.`,
+                "Colaboração próxima com produto e a equipa de engenharia.",
+              ],
+              equipa: cd.equipa,
+            }
+          : {};
+        await db
+          .insert(schema.job)
+          .values({
+            id: jobId,
+            agencyId: AGENCY,
+            clientId,
+            recruiterId: FILIPA,
+            title: role.title,
+            roleTypeSlug: slug,
+            requirements: {
+              roleType: slug,
+              nivel,
+              skills: { must: role.must, nice: role.nice },
+              contexto: role.contexto,
+            },
+            details,
+          })
+          .onConflictDoNothing();
+      }
+
+      await db
+        .delete(schema.clientMemoryFact)
+        .where(eq(schema.clientMemoryFact.clientId, clientId));
+      const facts: Array<{ t: string; text: string; ref?: string; snippet?: string }> = [
+        ...co.valoriza.map((text) => ({ t: "preference", text })),
+        { t: "rejection_reason", text: co.naoAceita },
+        { t: "context", text: co.contexto },
+        {
+          t: "meeting",
+          text: "Reunião de intake — alinhamento do perfil e prioridades de contratação",
+          ref: `Intake • ${dateStr}`,
+          snippet: co.reuniao,
+        },
+      ];
+      await db.insert(schema.clientMemoryFact).values(
+        facts.map((f) => ({
+          agencyId: AGENCY,
+          clientId,
+          factText: f.text,
+          factType: f.t,
+          sourceType: f.t === "meeting" ? "intake_doc" : "client_verdict",
+          sourceRef: f.ref ?? null,
+          sourceSnippet: f.snippet ?? null,
+          confirmedAt: now,
+        })),
+      );
+
+      await db.delete(schema.clientCriteria).where(eq(schema.clientCriteria.clientId, clientId));
+      const crit: Array<{ criterio: string; peso: string }> = [
+        ...co.tech.slice(0, 2).map((c) => ({ criterio: c, peso: "must" })),
+        ...co.tech.slice(2, 4).map((c) => ({ criterio: c, peso: "nice" })),
+        { criterio: "Comunicação forte e ownership", peso: "must" },
+      ];
+      await db.insert(schema.clientCriteria).values(
+        crit.map((c) => ({
+          agencyId: AGENCY,
+          clientId,
+          criterio: c.criterio,
+          peso: c.peso,
+          origem: "setup",
+        })),
+      );
+    }
+    // Liga candidatos de demo às vagas PT reais → os funis das empresas reais ganham vida.
+    const ptJob = (c: number, j: number): string =>
+      `e2000000-0000-4000-8000-${hex(c, 6)}${hex(j, 6)}`;
+    const K = {
+      sofia: "d2000000-0000-4000-8000-000000000001",
+      bruno: "d2000000-0000-4000-8000-000000000002",
+      carla: "d2000000-0000-4000-8000-000000000003",
+      tiago: "d2000000-0000-4000-8000-000000000004",
+      ines: "d2000000-0000-4000-8000-000000000005",
+    };
+    const existing = new Set(
+      (
+        await db
+          .select({ id: schema.candidate.id })
+          .from(schema.candidate)
+          .where(eq(schema.candidate.agencyId, AGENCY))
+      ).map((r) => r.id),
+    );
+    const procs = [
+      { n: 1, cand: K.sofia, job: ptJob(2, 1), stage: "submitted" }, // Talkdesk Frontend React
+      { n: 2, cand: K.carla, job: ptJob(2, 2), stage: "interview" }, // Talkdesk Backend Node
+      { n: 3, cand: K.bruno, job: ptJob(5, 1), stage: "screening" }, // Sword Backend Python
+      { n: 4, cand: K.ines, job: ptJob(3, 1), stage: "sourced" }, // Unbabel ML
+      { n: 5, cand: K.tiago, job: ptJob(4, 2), stage: "client_iv" }, // OutSystems Cloud
+      { n: 6, cand: K.sofia, job: ptJob(6, 2), stage: "screening" }, // Remote Frontend React
+    ].filter((p) => existing.has(p.cand));
+    if (procs.length > 0) {
+      await db
+        .insert(schema.process)
+        .values(
+          procs.map((p) => ({
+            id: `e4000000-0000-4000-8000-${hex(p.n, 12)}`,
+            agencyId: AGENCY,
+            candidateId: p.cand,
+            jobId: p.job,
+            recruiterId: FILIPA,
+            stage: p.stage,
+          })),
+        )
+        .onConflictDoNothing();
+    }
+
+    // Factos de ENTREVISTAS (transcrições) para os candidatos demo — mostra a Vera a atualizar o dossier.
+    type Fact = {
+      comp: string;
+      text: string;
+      quote: string;
+      ts: string;
+      level: string;
+      type: string;
+    };
+    const CAND_FACTS: Record<string, Fact[]> = {
+      [K.sofia]: [
+        {
+          comp: "React / Next.js",
+          text: "Liderou a migração de CRA para Next.js 14 (App Router) e cortou o LCP em ~40%.",
+          quote: "Passámos para o App Router e o LCP caiu quase para metade.",
+          ts: "12:34",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Design systems",
+          text: "Construiu um design system interno com mais de 80 componentes (Radix + Tailwind).",
+          quote: "Mantemos um design system com 80+ componentes, é a base de tudo.",
+          ts: "18:02",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Testes E2E",
+          text: "Pouca prática em testes end-to-end; trabalhou sobretudo com unitários.",
+          quote: "E2E, confesso, é onde tenho menos horas de voo.",
+          ts: "24:10",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+      [K.bruno]: [
+        {
+          comp: "PostgreSQL",
+          text: "Otimizou queries reduzindo o p95 de 800ms para 45ms.",
+          quote: "Reescrevemos as queries críticas e o p95 passou de 800 para 45 milissegundos.",
+          ts: "09:50",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Segurança / PCI-DSS",
+          text: "Implementou compliance PCI-DSS em toda a pipeline de pagamentos.",
+          quote: "Toda a pipeline de pagamentos é PCI-DSS, fui eu que a montei.",
+          ts: "15:20",
+          level: "ok",
+          type: "statement",
+        },
+        {
+          comp: "Frontend",
+          text: "Sem experiência prática de frontend.",
+          quote: "Frontend não é a minha praia, sou backend puro.",
+          ts: "21:05",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+      [K.carla]: [
+        {
+          comp: "GraphQL",
+          text: "Eliminou problemas N+1 com DataLoader na API GraphQL.",
+          quote: "Os N+1 desapareceram quando metemos DataLoader.",
+          ts: "11:12",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Orientação a produto",
+          text: "Levou um produto do zero ao primeiro €1M de ARR.",
+          quote: "Entrei quando éramos 4 e saímos do zero ao primeiro milhão de ARR.",
+          ts: "16:40",
+          level: "ok",
+          type: "statement",
+        },
+      ],
+      [K.tiago]: [
+        {
+          comp: "Kubernetes",
+          text: "Migrou infraestrutura de VMs para EKS e cortou custos em 35%.",
+          quote: "A migração para EKS deu-nos 35% de poupança em cloud.",
+          ts: "08:30",
+          level: "forte",
+          type: "skill_demo",
+        },
+        {
+          comp: "Observabilidade",
+          text: "Implementou observabilidade completa (Prometheus, Grafana, OpenTelemetry).",
+          quote: "Temos tudo instrumentado com OpenTelemetry e dashboards no Grafana.",
+          ts: "14:05",
+          level: "forte",
+          type: "skill_demo",
+        },
+      ],
+      [K.ines]: [
+        {
+          comp: "ML em produção",
+          text: "Deployou modelos BERT em produção e reduziu o custo de inferência em 60% com quantização.",
+          quote: "Com quantização INT8 cortámos o custo de inferência em 60%.",
+          ts: "10:18",
+          level: "ok",
+          type: "skill_demo",
+        },
+        {
+          comp: "Experiência a escala",
+          text: "Background sobretudo académico; pouca experiência de produção a grande escala.",
+          quote: "A maior parte do meu percurso foi académico, produção a escala ainda é novo.",
+          ts: "19:50",
+          level: "fraco",
+          type: "gap",
+        },
+      ],
+    };
+    for (const [cid, facts] of Object.entries(CAND_FACTS)) {
+      if (!existing.has(cid)) {
+        continue;
+      }
+      await db
+        .delete(schema.candidateMemoryFact)
+        .where(eq(schema.candidateMemoryFact.candidateId, cid));
+      await db.insert(schema.candidateMemoryFact).values(
+        facts.map((f) => ({
+          candidateId: cid,
+          agencyId: AGENCY,
+          competencia: f.comp,
+          factText: f.text,
+          evidenceQuote: f.quote,
+          evidenceTs: f.ts,
+          rubricLevel: f.level,
+          factType: f.type,
+          sourceType: "interview",
+          speaker: "candidate",
+        })),
+      );
+    }
+
+    process.stdout.write(
+      `[seed-real] concluído. ${ci} empresas PT reais, ${vagas} vagas, ${procs.length} candidatos ligados.\n`,
+    );
+  } finally {
+    await close();
+  }
+}
+
+main().catch((e: unknown) => {
+  process.stderr.write(`[seed-real] ERRO: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exitCode = 1;
+});

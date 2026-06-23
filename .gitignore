@@ -1,0 +1,42 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+dist-build/
+.next/
+out/
+*.tsbuildinfo
+
+# test / coverage
+coverage/
+.vitest/
+
+# secrets — NUNCA commitar plaintext (.env.enc sops+age é o que vai p/ git)
+.env
+.env.*
+!.env.example
+!.env.enc
+
+# supabase local
+supabase/.temp/
+supabase/.branches/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# local agent state (Claude Code)
+.claude/
+
+# Python (services/)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.ruff_cache/
+.venv/
