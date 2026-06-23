@@ -72,4 +72,11 @@ Parei por decisão consciente: **as 9 queixas estão resolvidas e o repo está T
 
 **Para testares JÁ de manhã (web, mock €0):** `pnpm --filter web dev` → http://localhost:3000 → login **`filipa@iris.tech`** / qualquer password → **Candidatos → João/Marta → "Ver transcrição"** (a da Marta tem a contradição "⚠ vs CV"). O modo mock está ativo via `apps/web/.env.development.local` (temporário); quando quiseres a auth Supabase real, apaga esse ficheiro.
 
-**Commits da noite (todos em `phase3/product`, + branch `backup/overnight-2026-06-23`):** backup `6b24aa1` · baseline+WS-boundary `9bb52eb` · transcrição/seed golden `3342d16` · rename web `fc6fb65` · lista entrevistas `ab52669` · dev-token WS `19ca482` · rename desktop `6204c66` · A1 desktop `035c23d` · snapshot evidência `c53adce` · docs `fcaf8b6`.
+**Commits da noite (todos em `phase3/product`, + branch `backup/overnight-2026-06-23`):** backup `6b24aa1` · baseline+WS-boundary `9bb52eb` · transcrição/seed golden `3342d16` · rename web `fc6fb65` · lista entrevistas `ab52669` · dev-token WS `19ca482` · rename desktop `6204c66` · A1 desktop `035c23d` · snapshot evidência `c53adce` · docs `fcaf8b6` · atalho desktop `d601378`.
+
+---
+
+## Manhã 2026-06-23 — reabrir os apps + próximo passo (.exe)
+- **Web** aberto no Chrome em `http://localhost:3000` (login `filipa@iris.tech` / qualquer senha; modo mock via `apps/web/.env.development.local`). **Desktop:** duplo-clique em **`apps/desktop/IRIS-desktop.cmd`** (abre na tua sessão, estável). Vista do overlay no browser: `http://localhost:4599`.
+- **Gotcha:** eu **não consigo manter o Electron vivo** quando o lanço da automação (a GPU/network service do Chromium crasham fora da tua sessão interativa, mesmo com `--disable-gpu`). Por isso o atalho — abre na TUA sessão, com a tua GPU.
+- **Próximo passo (pedido): empacotar um `.exe`** para abrires sem terminal. `electron-builder` ainda não está instalado. Plano (próximo chat, ~5-10 min + download): `pnpm --filter desktop add -D electron-builder` → config `build` no `package.json` (win **portable**, appId `pt.cmtecnologia.iris`, ícone) → `pnpm --filter desktop exec electron-builder --win portable`.
